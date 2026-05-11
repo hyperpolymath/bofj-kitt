@@ -1,0 +1,11 @@
+; SPDX-License-Identifier: PMPL-1.0-or-later
+
+; Minimal benchmark alias so blitz has an executable @bench target.
+; This is intentionally lightweight and deterministic.
+
+(rule
+ (alias bench)
+ (action
+  (progn
+   (echo "bench-smoke: parsing examples/hello.affine")
+   (run %{bin:affinescript} parse %{project_root}/examples/hello.affine))))

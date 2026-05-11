@@ -1,0 +1,215 @@
+# SPDX-License-Identifier: PMPL-1.0-or-later
+# STATE.a2ml — Project state checkpoint
+
+[metadata]
+project = "affinescript"
+version = "0.1.0"
+last-updated = "2026-04-12"
+status = "active"
+session-note-2026-04-12-c = "STAGE 12 (SECOND IDAPTIK SCREEN) IN PROGRESS — CharacterSelectScreen chosen as dogfood target (6 class cards: Assault/Recon/Engineer/Signals/Medic/Logistics, 1 confirm → JessicaCustomise). Plan: (1) lib/tea_cs_bridge.ml — new Wasm module, same API surface as tea_bridge.ml, 7 msgs (0-5=select class, 6=confirm), update: selected_tag=msg+1, selected_tag 1-6=class highlighted, 7=navigate. (2) lib/dune + bin/main.ml — add cs-bridge subcommand and update which_arg/interface/verify-bridge. (3) IDApTIK: AffineTEARouter.js+.res add screenJessicaCustomise=6. (4) CharacterSelectScreen.res: csTeaBridge module-level ref, card click handlers → teaDrive, applyView syncs Wasm→ReScript selectedClass, confirm → AffineTEA.update+navigate via showScreenWithTag. Seam check: push TitleScreen→CharacterSelect, select class, confirm→JessicaCustomise, back-stack correct. 173/173 tests currently passing."
+session-note-2026-04-12-b = "STAGES 7-11 COMPLETE (173/173 tests). Stage 9: per-path min/max linearity (count_uses_range, LinearDroppedOnSomePath, fn_push else-branch fix). Stage 10: tw_interface.ml multi-module boundary verifier (LinearImportCalledMultiple, LinearImportDroppedOnSomePath, CLI interface+verify-bridge cmds). Stage 11: source-level Cmd linearity — Cmd[ClickMsg] bracket syntax, quantity_of_ty_annotation returns QOne for Cmd[_], infer_usage_block declares QOne locals before subsequent stmts so uses tracked, fires LinearVariableUnused when Cmd dropped; builtins cmd_none+cmd_perform in typecheck/resolve/interp. Commit b8a0f9c."
+session-note-2026-04-12-a = "STAGE 6 (CADRE ROUTER) COMPLETE: lib/tea_router.ml generates Wasm 1.0 router module (915 bytes, WebAssembly.validate=true). RouterModel at offset 64: screen_w(+0), screen_h(+4), stack_len(+8), popup_tag(+12), stack_data[8](+16). 11 functions: init, push(Linear), pop, present_popup(Linear), dismiss_popup, resize(Linear×2), get_screen_w/h/stack_len/stack_top/popup_tag. affinescript.ownership: 3 functions with Linear params (push, present_popup, resize). affinescript.tea_layout: version=1, 5 fields. router-bridge subcommand added. 8 new E2E tests; 113 total, 0 regressions. IDApTIK: AffineTEARouter.js + AffineTEARouter.res; Navigation.res: routerBridge field + setRouterBridge + showScreenWithTag + presentPopupWithTag + dismissPopup router sync + resize router sync; TitleScreen.res: teaDrive uses showScreenWithTag/presentPopupWithTag, router.wasm loaded on first show alongside titlescreen.wasm, graceful fallback. router.wasm committed to idaptik/public/assets/wasm/. Both repos pushed. commit: affinescript 5969b7b, idaptik e3eafd1."
+session-note-2026-04-11-h = "STAGE 5 (AFFINATEA DRIVES SCENE) COMPLETE: teaDrive(engine, msgTag) is the single entry point from all 4 button handlers — update → applyView → navigate. applyView reads selected_tag via getSelected() and alpha-pulses the chosen button (0.65 → animate 1.0 over 0.22s). teaBridge loaded asynchronously on first show; graceful fallback to direct ReScript navigation when bridge is None. resize handler calls AffineTEA.setScreen(tea, width, height) to keep screen_w/h in sync with canvas. Button handlers reduced to single teaDrive call each. Navigation decision comes FROM Wasm state (selected_tag), not from button identity. Credits button wired (msgCredits) with TODO screen. IDApTIK TitleScreen is fully AffineTEA-driven for Stages 4+5."
+session-note-2026-04-11-g = "STAGE 4 (WASM/JS BRIDGE FOR IDAPTIK) COMPLETE: lib/tea_bridge.ml generates complete TitleScreen TEA bridge Wasm 1.0 module (512 bytes). TitleModel at offset 64: screen_w(+0), screen_h(+4), bgm_playing(+8), selected_tag(+12). 7 functions: init, update (branchless selected_tag=msg+1), get_screen_w/h/bgm_playing/selected, set_screen. affinescript.ownership custom section: update param kind=1 (Linear). affinescript.tea_layout custom section: version=1, 4 fields. affinescript tea-bridge subcommand added to bin/main.ml. 6 bridge E2E tests added; 101 total tests passing. AffineTEA.js + AffineTEA.res bindings in idaptik/src/app/tea/. titlescreen.wasm (512 bytes, WebAssembly.validate=true, end-to-end Node.js verified) in idaptik/public/assets/wasm/."
+session-note-2026-04-11-f = "LSP PHASE C COMPLETE: completion candidates subcommand shipped. extract_prefix_at scans backward from cursor col to extract ident prefix + dot-context flag. collect_completions filters symbol table by prefix and appends affine_keywords (suppressed in dot context). emit_completions emits JSON array {name,kind,type,detail}. complete_file + complete_cmd added to bin/main.ml (FILE LINE COL args). 6 E2E tests. 101 total, 0 regressions. NEXT: LSP Phase D."
+session-note-2026-04-11-e = "LSP PHASE B COMPLETE (commit 79c0829): hover/goto-def subcommands shipped. span_contains, find_symbol_at (refs-first then def-spans), hover_to_json/goto_def_to_json, emit_hover/emit_goto_def, run_pipeline_for_query. 89 tests. NEXT: LSP Phase C (completion candidates from symbol table)."
+session-note-2026-04-11-d = "TRAITS WIRED (commit 1ca143e): trait_registry in context; TopTrait/TopImpl in forward pass; ExprField trait fallback; find_impl unification-based; TopImpl bodies typechecked; 80 tests. NEXT: LSP Phase B."
+session-note-2026-04-11-c = "LINEAR ARROWS ENFORCED (commit d2f9b7b): (1) lambda synth — |@linear x: T| e now synthesises T -[1]-> U; (2) lambda check mode — explicit quantity annotation validated against expected TArrow; (3) quantity.ml ExprLambda — annotated params declared in env, usage verified, violations accumulated in env.errors and drained after check_function_quantities step 3; scope leakage prevented via quantities save/restore. Also fixed codegen.ml missing custom_sections field (pre-existing wasm.ml change). 75 tests, 0 regressions. NEXT: traits generic resolution → unification integration; then LSP Phase B."
+session-note-2026-04-11-b = "BUG-005 CLOSED: WasmGC silent drop+null fallbacks replaced with explicit CodegenError (UnboundFunction for missing func_indices entries, UnsupportedFeature for indirect/higher-order calls). Effects runtime SHIPPED: TopEffect now registers each op as a PerformEffect-raising VBuiltin in interp.ml (was no-op). Multi-arg handler arg_vals bug fixed. ExprResume wired to __resume__ continuation in handler env. WasmGC path: TopEffect ops registered as unreachable stubs with correct func_indices offsets; ExprHandle and ExprResume reject with UnsupportedFeature (EH proposal or CPS transform required for full dispatch)."
+
+[project-context]
+name = "affinescript"
+completion-percentage = 94
+phase = "affinatea-stage6-complete"
+tagline = "Rust-inspired language with affine types, dependent types, row polymorphism, and extensible effects"
+note = "Session 2026-04-11 final checkpoint. DONE THIS SESSION: (1) JS-face (lib/js_face.ml) + Pseudocode-face (lib/pseudocode_face.ml) — both wired into face.ml and bin/main.ml. resolve_face() wired into ALL six file handlers in bin/main.ml (parse/check/eval/compile/fmt/lint) — .rattle/.pyaff/.jsaff/.pseudoaff auto-detected without --face flag. (2) P3 packages: packages/affine-js/ (Deno ESM WASM loader, marshal/unmarshal, types.d.ts), packages/affine-ts/ (typed call helpers), packages/affine-res/ (ReScript bindings). (3) P4 educational: docs/guides/frontier-guide.adoc (6-chapter tutorial), docs/guides/warmup/ (4 warmup scripts). (4) CoffeeScript + ActionScript roadmap faces added to docs/specs/faces.md. (5) RattleScript distribution: distributions/rattlescript/ in-tree (Rust wrapper, build.rs, examples/), standalone repo hyperpolymath/rattlescript (GitHub, starred, v0.1.0-alpha released, 8 topics set, affinescript submodule, just bootstrap workflow). (6) dune build + dune runtest: clean, 0 regressions throughout. NEXT SESSION (clean thread): BUG-005 first (WasmGC silent bad codegen — replace fallback arms with CodegenError, ~30min), then effects runtime (interpreter handler dispatch + WASM codegen — the headline missing feature). Previous session note: P3 (aggregate library ecosystem) and P4 (educational materials) complete. P2 faces extended. P2 faces extended: JS-face (lib/js_face.ml) and Pseudocode-face (lib/pseudocode_face.ml) added, face.ml and bin/main.ml updated with all four active faces (canonical/python/js/pseudocode). aggregate packages: packages/affine-js/ (Deno ESM, WASM loader, marshal/unmarshal, types.d.ts), packages/affine-ts/ (typed call helpers, narrowing predicates), packages/affine-res/ (ReScript bindings with typed shortcuts and exhaustive matching). educational materials: docs/guides/frontier-guide.adoc (6-chapter unveiling tutorial), docs/guides/warmup/ (4 warmup scripts: basics/ownership/effects/rows). faces.md updated with JS-face and Pseudocode-face entries. Previously: Faces architecture (ADR-010, Priority 2) complete 2026-04-11. (1) lib/python_face.ml: source-level text preprocessor mapping Python surface syntax to canonical AffineScript — indentation→braces, def/True/False/None/and/or/not/class/pass keyword subs, elif/else chains, tail-position semicolon suppression. (2) lib/face.ml: face-aware error formatter mapping canonical error terms to face-specific vocabulary — Python face uses 'Ownership error / single-use variable' for linear violations, 'Name not found' for unbound vars, 'if/else type mismatch' for branch mismatches, renders Unit as None and Bool as bool. (3) bin/main.ml: --face [canonical|python] flag on all subcommands; parse_with_face selects preprocessor path; all error sites route through Face.format_*_error. (4) Span fidelity deferred: error spans currently refer to transformed canonical text positions (planned follow-up). (5) docs/specs/faces.md: face architecture reference doc written. (6) panic-attack audit: 1 High (search.js innerHTML — false positive but fixed to char-replacement), 2 Medium (LSP unwraps/shell heredoc — both false positives), 2 Low (TODO markers — informational). 73/73 E2E tests: 0 regressions. Seam check (items 1+2) verified: --face python on @linear double-use produces correct Python-face ownership error end-to-end."
+
+[components]
+lexer = "complete-minus-affine-tokens (ZERO/ONE tokens for quantity literals NOT emitted; blocks QTT surface syntax). float_exponent now correctly named sub-regexp — scientific notation crash fixed 2026-04-11."
+parser = "conformance-complete (ADR-009 achieved 2026-04-11). 12/12 valid tests parse. Added: optional SEMICOLON on type aliases/enums, enum leading-pipe syntax, effect op type params, ROW_VAR type params, ty_record_body/expr_record_body recursive rules for row-polymorphic records, field_name contextual keyword rule, struct literal expressions."
+type-checker-rules = "99% (bidirectional inference, Never/bottom, block divergence, variant/constructor/record-spread/mutable bindings all implemented in lib/typecheck.ml)"
+type-checker-enforcement-wiring = "wired (Typecheck.check_program is invoked from bin/main.ml on every check/compile/eval path; Quantity.check_program_quantities runs after typecheck at lib/typecheck.ml:1206; the gating IS live for the rules and quantity annotations that exist today)"
+borrow-checker = "live-gate (2026-04-11): Borrow.check_program wired into check/compile pipeline at all 4 Typecheck success sites. Emits E0501-E0506 diagnostics. PlaceVar carries variable name for readable errors (file:line:col at both use and move sites). ExprMatch arm state merging fixed. Lexical borrow lifetime clearing in check_block. BUG-004 (lambda capture tracking) still deferred — requires type info propagation. lib/borrow.ml 669 LOC."
+interpreter = "95%"
+wasm-codegen = "92% (real-world game compiles: airborne-submarine-squadron/src/main.affine → 8KB WASM)"
+wasm-gc-codegen = "70% (WasmGC proposal target: struct.new/struct.get/array.new_fixed/array.get; --wasm-gc CLI flag)"
+julia-codegen = "exists"
+lsp-phase-a = "complete"
+lsp-phase-b = "complete (2026-04-11, commit 79c0829): hover/goto-def subcommands shipped. json_output.ml: span_contains (1-based, single+multi-line), find_symbol_at (references-first then def-spans), hover_to_json/goto_def_to_json/not_found_json, emit_hover/emit_goto_def. bin/main.ml: hover + goto-def subcommands, run_pipeline_for_query tolerates typecheck errors. 4 E2E tests. 89 total."
+lsp-phase-c = "complete (2026-04-11): completion candidates subcommand shipped. json_output.ml: extract_prefix_at (scans backward from cursor col to find ident prefix + dot-context flag), collect_completions (symbol table prefix filter + affine_keywords list suppressed in dot context), emit_completions (JSON array). bin/main.ml: complete_file handler + complete_cmd (FILE LINE COL args). 6 E2E tests added (prefix extraction, prefix match, empty prefix, no-match, keyword included, dot-ctx suppresses keywords). 101 total tests, 0 regressions."
+lsp-phase-d = "complete (2026-04-11): JSON-RPC LSP server shipped as `affinescript server --stdio`. lib/lsp_server.ml: Content-Length framing, document store (URI→source), pipeline cache (URI→symbols+refs+diags), run_pipeline (temp-file + span path fixup), lsp_range (1→0-based conversion), diag_to_lsp, publish_diagnostics. Handlers: initialize (hover+definition+completion caps), didOpen/didChange (pipeline+cache+push), didClose (clear), hover (markdown+type+quantity), definition (URI+range), completion (LSP kind mapping). bin/main.ml: server_cmd in default group. 4 E2E tests. 105 total, 0 regressions."
+stdlib = "95% (5 stubs remain as extern builtins)"
+
+[stats]
+compiler-loc = 12750
+compiler-modules = 39
+lsp-files = 5
+test-files = 54
+
+[features]
+# Honest status of the headline language features advertised in README.adoc.
+# "declared-but-unwired" = surface syntax and/or internal module exists, but
+# the feature is not enforced on user programs through the CLI pipeline.
+affine-types = "wired-and-reachable (Track A Manhattan plan complete 2026-04-10. Quantity semiring in lib/quantity.ml; invoked from typecheck.ml:1206 inside the standard CLI pipeline. Surface syntax per ADR-007 hybrid: @linear/@erased/@unrestricted attributes (Option C primary) on let/stmt-let/param/lambda-param, AND :1/:0/:ω numeric sugar (Option B) on let/stmt-let. Scaled Let rule per ADR-002 implemented in lib/quantity.ml ExprLet/StmtLet — closes BUG-001 (ω-let smuggles linear values) and BUG-002 (zero-let erasure). Four regression fixtures in test/e2e/fixtures/ exercise both surface forms. Behavioural enforcement verified via E2E Quantity test suite — 4 new passing tests, 0 regressions.)"
+linear-arrows = "enforced (2026-04-11): Three-part fix landed. (1) typecheck.ml lambda synth: |@linear x: T| e now synthesises T -[1]-> U (was always QOmega). (2) typecheck.ml lambda check mode: explicit param quantity annotation validated against expected TArrow quantity; unannotated params inherit context quantity. (3) quantity.ml ExprLambda: added env.errors accumulator; annotated lambda params declared via env_declare so env_use tracks them; usage verified with check_quantity after body walk; violations pushed to env.errors and drained at end of check_function_quantities (step 4). Saved/restored env.quantities entries to prevent scope leakage. Two E2E fixtures + 2 passing tests. 75 tests total, 0 regressions. Commit d2f9b7b pushed."
+borrow-checker = "phase-3-in-progress (see lib/borrow.ml [IMPL-DEP: Phase 3])"
+row-polymorphism = "60% (records + effects rows implemented in typecheck/unify; not fully exercised end-to-end)"
+effects = "interpreter-complete (handler dispatch, PerformEffect propagation, ExprResume, multi-arg ops all wired in interp.ml 2026-04-11). WasmGC: ops registered as unreachable stubs; ExprHandle/ExprResume reject with UnsupportedFeature — full WASM dispatch needs EH proposal or CPS transform."
+dependent-types = "parse-only (TRefined AST node exists and refinement predicates parse, but predicates do not reduce; no SMT/decision procedure wired in)"
+traits = "90% (2026-04-11, commit 1ca143e): trait_registry added to typecheck context; TopTrait/TopImpl processed in forward pass; ExprField falls back to Trait.find_method_for_type on record-field failure; find_impl/find_impls_for_type use unification-based matching via fresh_impl_self_ty + Unify.unify instead of name string comparison; TopImpl bodies type-checked via check_fn_decl with Self bound; check_impl_satisfies_trait verifies required methods present. Two E2E fixtures + 2 tests. 80 total, 0 regressions. Remaining: associated type substitution in method bodies, where-clause supertrait enforcement, coherence checking.)"
+
+[track-a-manhattan]
+owner = "primary"
+scope = """
+Close the surface-syntax gap that makes affine enforcement unreachable from
+user programs. Revised 2026-04-10 after the original ETA was set against the
+incorrect premise that `Quantity.check_program_quantities` was unwired from
+the CLI — it is wired (typecheck.ml:1206) and has been since at least
+the Manhattan-recovery refactor (#19). The actual remaining work:
+
+1. AST: add `el_quantity : quantity option` to ExprLet, `sl_quantity` to
+   StmtLet. (~4 LOC + cascading pattern updates across ~10 modules that
+   match on Let.)
+2. Lexer/parser: make ZERO/ONE tokens reachable in quantity position
+   (cheapest path: accept INT 0/INT 1 in the parser's `quantity` rule,
+   leaving the lexer alone). ~3 LOC.
+3. Parser: extend `let_decl` and `stmt_let` rules with an optional
+   binder-quantity annotation. Surface-syntax choice is a language-design
+   call — see META.a2ml ADR-007 candidate.
+4. quantity.ml ExprLet/StmtLet: implement context scaling per ADR-002.
+   Snapshot before walking el_value, walk it, scale all newly-recorded
+   usages by `q`, then merge back. ~25 LOC including a `scale_usage_by`
+   helper.
+5. Two regression fixtures covering BUG-001 and the dual valid case.
+6. spec.md T-Let rewrite to show the scaling explicitly.
+
+Out of scope for Track A:
+- BUG-003 (eval_list L-to-R): SHIPPED 2026-04-10. interp.ml:347 now uses
+  fold_left + List.rev. Behavioural regression test deferred — depends on
+  the broken `let mut` interpreter path (separately tracked in the failing
+  baseline interp tests).
+- BUG-004 (lambda capture tracking): blocked on borrow checker Phase 3.
+- BUG-002 (zero-let erasure semantics): folds in with BUG-001 once
+  surface syntax exists.
+"""
+spine-files = ["lib/ast.ml", "lib/parser.mly", "lib/quantity.ml", "lib/typecheck.ml", "lib/interp.ml", "lib/codegen.ml", "lib/codegen_gc.ml", "lib/julia_codegen.ml", "lib/formatter.ml", "lib/sexpr_dump.ml", "lib/json_output.ml", "lib/linter.ml", "lib/opt.ml", "lib/desugar_traits.ml", "test/e2e/fixtures/", "docs/spec.md"]
+eta = "T+7d from 2026-04-10 (ADR-007 accepted, implementation chain unblocked)"
+blocking-decision = "RESOLVED 2026-04-10: ADR-007 accepted as hybrid C-primary + B-sugar. @linear/@erased/@unrestricted are the canonical forms emitted by tutorials, error messages, IDE tooling, and the formatter. The :1/:0/:ω numeric forms are accepted as sugar (legal in source, rewritten to attribute form by `affinescript fmt` unless --keep-quantity-sugar is set). See META.a2ml ADR-007 for full decision text."
+
+[[closed-bug]]
+id = "BUG-001"
+severity = "high"
+category = "soundness"
+title = "ω-let smuggles linear values"
+discovered = "2026-04-10"
+fixed = "2026-04-10"
+description = """
+let x :ω = linear_resource() in use_x_once(x) was previously accepted.
+The QTT-orthodox scaled Let rule (ADR-002) rejects this because scaling
+the value context by ω promotes the linear usage of `linear_resource()`
+to UMany, which the quantity checker reports as a linear-binding violation.
+"""
+fix = "lib/quantity.ml ExprLet/StmtLet cases now snapshot the env, walk the value, scale the per-variable delta by the binder quantity (via the new scale_usage helper), and merge the scaled deltas back. ExprLet was extended with el_quantity, StmtLet with sl_quantity (lib/ast.ml). Surface syntax landed per ADR-007 hybrid: @linear/@erased/@unrestricted primary + :1/:0/:ω sugar."
+verification = "test/e2e/fixtures/bug_001_omega_let_smuggles_linear.affine (Option C form) and test/e2e/fixtures/bug_001_sugar_form.affine (Option B form) — both produce the @linear-vocabulary error message and are pinned in test/test_e2e.ml as `BUG-001 attr/sugar form rejects ω-let smuggling @linear`. Behaviourally verified end-to-end through `dune runtest`. The dual valid cases (affine_let_valid.affine and affine_let_valid_sugar.affine) confirm the rule does not over-reject."
+
+[[closed-bug]]
+id = "BUG-002"
+severity = "medium"
+category = "semantics"
+title = ":0 lets do not erase their RHS"
+discovered = "2026-04-10"
+fixed = "2026-04-10"
+description = """
+let x :0 = expensive_proof_term() in body_not_using_x previously evaluated
+expensive_proof_term() and consumed its resources. The QTT-orthodox scaled
+Let rule scales the value context by 0, producing the zero context, which
+means the RHS carries no runtime obligations and may be erased.
+"""
+fix = "Closed via the same scaled-Let infrastructure as BUG-001. The quantity-checking pass now correctly drops usage contributions from the RHS of an @erased-bound let (scale_usage QZero _ = UZero), so any linear variables consumed in the RHS no longer count against their owner. The optional interpreter-side erasure (skipping eval of @erased-bound RHS) is deferred — it is an optimisation, not a correctness requirement."
+verification = "Covered transitively by the BUG-001 fixtures: the same scaling logic that closes BUG-001 closes BUG-002. A focused @erased fixture is on the follow-up backlog but not required to declare the bug fixed at the rule level."
+
+[[closed-bug]]
+id = "BUG-003"
+severity = "medium"
+category = "semantics"
+title = "eval_list evaluates right-to-left via List.fold_right"
+discovered = "2026-04-10"
+fixed = "2026-04-10"
+description = """
+lib/interp.ml:347 eval_list previously used List.fold_right with monadic
+bind, which in strict OCaml evaluates arguments right-to-left. ExprBinary
+was already left-to-right, creating internal evaluator inconsistency and a
+latent divergence point for future effects/affine enforcement. See ADR-003.
+"""
+fix = "Replaced fold_right with an explicit L-to-R recursive loop that accumulates results in reverse and reverses at the end. See lib/interp.ml `eval_list` (~12 LOC including the doc comment referencing ADR-003)."
+regression-test-status = "deferred — observable order verification requires either the mutable-binding interpreter path (currently broken in baseline; the failing 'lambda'/'simple eval' interp tests share the same root cause) or a side-effecting builtin reachable from a fixture. Both routes are out of scope for the BUG-003 fix and should be revisited once the interpreter mutation path is repaired."
+verification = "Code review against ADR-003 + dune build clean + dune runtest baseline-equivalent (22 pre-existing failures, none new, none resolved)."
+
+[[closed-bug]]
+id = "BUG-004"
+severity = "medium"
+category = "soundness"
+title = "Lambda-body usage not tracked against outer captures"
+discovered = "2026-04-10"
+fixed = "2026-04-11"
+description = """
+lib/quantity.ml ExprLambda was a no-op for outer variable usage: captures
+were not scaled by QOmega, so a lambda capturing a linear variable did not
+raise LinearVariableUsedMultiple. Borrow checker also ignored captures,
+allowing move of a captured variable after lambda creation.
+"""
+fix = """
+Two coordinated fixes (commit 48422d1):
+1. quantity.ml ExprLambda: snapshot env, walk body (shadowing lambda params),
+   compute per-variable delta, restore env, re-apply delta scaled by QOmega.
+   scale_usage QOmega UOne = UMany → LinearVariableUsedMultiple for linear captures.
+2. borrow.ml ExprLambda: collect_free walker finds all free variables in body,
+   creates Shared borrows for each captured place. Move of captured variable
+   → MoveWhileBorrowed. Borrows expire at block exit via lexical-lifetime clearing.
+   borrow_kind_name replaces show_borrow_kind for readable error messages.
+"""
+verification = "Manual smoke tests: lambda capturing moved value → 'cannot move `v` while shared-borrowed'; valid lambda (no owned captures) → passes. 73/73 tests pass."
+
+[[closed-bug]]
+id = "BUG-005"
+severity = "medium"
+category = "codegen"
+title = "WasmGC backend silently drops unknown function calls"
+discovered = "2026-04-10"
+fixed = "2026-04-11"
+description = """
+lib/codegen_gc.ml ExprApp handling silently emitted 'drop all args + push null'
+when the callee was not in the func_indices table, and did the same for
+indirect calls. This was placeholder behaviour that produced wrong code rather
+than failing loudly.
+"""
+fix = "Both fallback arms replaced with explicit CodegenError. Direct-call miss → Error (UnboundFunction id.name). Indirect/higher-order callee → Error (UnsupportedFeature \"indirect / higher-order call in WasmGC backend (call_ref not yet implemented)\"). New UnboundFunction variant added to codegen_error and format_codegen_error. commit b58178a."
+regression-test-status = "deferred — fixture needs a known-unknown function name in a WasmGC compile path"
+
+# ─── Deferred upgrade: bring .machine_readable/ to current standards ──────────
+# AffineScript predates most of the current hyperpolymath .machine_readable/
+# suite. The 6a2 core is present; the surrounding machinery is not. This is
+# logged as deferred work, separate from the Manhattan recovery, to avoid
+# scope creep into that plan.
+
+[deferred-upgrade]
+# DONE 2026-04-12 — suite upgrade completed in dedicated session (no .ml changes)
+status = "done"
+completed = "2026-04-12"
+
+added = [
+  ".machine_readable/CLADE.a2ml",
+  ".machine_readable/contractiles/ (migrated from root via git mv — history preserved)",
+  ".machine_readable/contractiles/adjust/Adjustfile.a2ml",
+  ".machine_readable/contractiles/intend/Intentfile.a2ml",
+  ".machine_readable/agent_instructions/README.adoc",
+  ".machine_readable/agent_instructions/coverage.a2ml",
+  ".machine_readable/agent_instructions/debt.a2ml",
+  ".machine_readable/agent_instructions/methodology.a2ml",
+  ".machine_readable/integrations/verisimdb.a2ml",
+  ".machine_readable/integrations/vexometer.a2ml",
+  ".machine_readable/ADJUST.contractile",
+  ".machine_readable/INTENT.contractile",
+  ".machine_readable/MUST.contractile",
+  ".machine_readable/TRUST.contractile"
+]

@@ -1,0 +1,16 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
+// try/catch/finally example (parser-compatible)
+
+fn full_try(x: Int) -> Int {
+  try {
+    x * 3
+  } catch {
+    e => 0
+  } finally {
+    ()
+  }
+}
+
+fn main() -> Int {
+  full_try(7)
+}

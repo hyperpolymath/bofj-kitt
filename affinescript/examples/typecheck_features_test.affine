@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
+// Feature sample for parser + type checker
+
+effect IO {
+  fn print(s: String) -> ();
+}
+
+effect State[S] {
+  fn get() -> S;
+  fn put(s: S) -> ();
+}
+
+trait Show {
+  fn show(x: Int) -> String;
+}
+
+impl Show for Int {
+  fn show(x: Int) -> String = "int";
+}
+
+struct File {
+  fd: own Int
+}
+
+fn takes_file(f: ref File) -> Int = 0;
+
+fn stateful() -{State[Int]}-> Int = 0;
+
+fn to_string(x: Int) -> String = show(x);
+
+fn main() -> () = ();

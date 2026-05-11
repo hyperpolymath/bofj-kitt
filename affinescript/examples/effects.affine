@@ -1,0 +1,20 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
+// Effect declarations and annotations (parser-compatible example)
+
+effect IO {
+  fn print(s: String) -> ();
+  fn read() -> String;
+}
+
+effect State[S] {
+  fn get() -> S;
+  fn put(s: S) -> ();
+}
+
+effect Exn[E] {
+  fn throw(err: E) -> Never;
+}
+
+fn increment() -{State[Int]}-> Int = 0;
+
+fn hello() -> () = ();

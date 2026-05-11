@@ -1,0 +1,38 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
+// Type-checker complete-path sample (parser-compatible)
+
+type Alias = Int;
+
+struct Point {
+  x: Int,
+  y: Int
+}
+
+enum Color {
+  Red,
+  Green,
+  Blue
+}
+
+fn make_point(x: Int, y: Int) -> Point {
+  { x: x, y: y }
+}
+
+fn origin() -> Point {
+  { x: 0, y: 0 }
+}
+
+fn mutate_counter() -> Int {
+  let mut counter = 0;
+  counter = counter + 1;
+  counter = counter + 1;
+  counter
+}
+
+fn try_with_finally(x: Int) -> Int {
+  try {
+    x * 2
+  } finally {
+    ()
+  }
+}

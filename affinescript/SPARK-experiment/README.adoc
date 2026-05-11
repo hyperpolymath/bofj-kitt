@@ -1,0 +1,52 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell
+= AffineScript SPARK Experiment
+:toc:
+
+== Purpose
+
+This directory is a sandbox for testing how a *small, explicit subset* of
+AffineScript can be translated into Ada/SPARK for proof-heavy kernels.
+
+Goal: learn what can be verified in SPARK without destabilizing AffineScript's
+mainline compiler and language roadmap.
+
+== Scope
+
+In scope:
+
+* Minimal transliteration experiments from AffineScript typed IR to SPARK-safe
+  Ada packages.
+* Explicit state-machine extraction for protocol/lifecycle logic.
+* GNATprove-oriented contracts (`Pre`, `Post`, invariants) on translated code.
+
+Out of scope:
+
+* Rewriting AffineScript itself into Ada/SPARK.
+* Full-feature parity (effects, row polymorphism, dependent/refinement surface).
+* Claims of production readiness.
+
+== First Practical Kernel
+
+The first candidate kernel is memory-pressure classification and notification
+state transitions (warning/critical/recovered), because it is:
+
+* small,
+* safety-relevant,
+* easy to compare against Rust implementation behavior.
+
+== Experiment Plan
+
+1. Define a tiny AffineScript subset grammar for deterministic control flow.
+2. Specify typed IR -> SPARK mapping rules (types, ownership states, effects as
+   explicit state transitions).
+3. Generate one SPARK package (`Memory_Guardian_Kernel`) and prove:
+   no runtime errors, total state transition coverage, bounded arithmetic.
+4. Cross-check output behavior against reference traces from Rust.
+
+== Exit Criteria
+
+* A documented subset mapping that compiles with GNAT.
+* `gnatprove` passing for the selected kernel.
+* A short "keep/drop/park" decision on whether broader SPARK bridging is worth
+  continuing for AffineScript.
