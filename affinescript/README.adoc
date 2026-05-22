@@ -1,5 +1,5 @@
 = AffineScript: The Game Developer's Secret Weapon
-// SPDX-License-Identifier: PMPL-1.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 
 image:https://img.shields.io/badge/License-PMPL--1.0-blue.svg[License: PMPL-1.0,link="https://github.com/hyperpolymath/palimpsest-license"]
 image:https://img.shields.io/badge/Built%20For-Games-red.svg[Built for Games]
@@ -460,15 +460,15 @@ For full license terms:
 - **PMPL-1.0 (Palimpsest-MPL)**: https://github.com/hyperpolymath/palimpsest-license
 
 **Game Content**: AGPL-3.0-or-later ensures game modifications remain open.
-**Core Technology**: PMPL-1.0-or-later provides permissive licensing for tooling.
+**Core Technology**: MPL-2.0 provides permissive licensing for tooling.
 
 == See Also
 
 * link:ROADMAP.adoc[Development Roadmap]
 * link:EXPLAINME.adoc[Why should you believe these claims?]
 * link:affinescript-spec.md[Language Specification]
-* https://github.com/hyperpolymath/gossamer[Gossamer - PMPL-1.0-or-later]
-* https://github.com/hyperpolymath/burble[Burble - PMPL-1.0-or-later]
+* https://github.com/hyperpolymath/gossamer[Gossamer - MPL-2.0]
+* https://github.com/hyperpolymath/burble[Burble - MPL-2.0]
 
 == Alpha-1 Release Notes
 

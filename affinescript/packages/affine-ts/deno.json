@@ -7,5 +7,5 @@
   "imports": {
     "@hyperpolymath/affine-js": "../affine-js/mod.js"
   },
-  "license": "PMPL-1.0-or-later"
+  "license": "MPL-2.0"
 }

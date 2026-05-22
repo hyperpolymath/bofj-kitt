@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: PMPL-1.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 = affine-ts
 :toc:
 :icons: font
@@ -96,5 +96,5 @@ Additional exports:
 
 == License
 
-PMPL-1.0-or-later.
+MPL-2.0.
 See link:../../LICENSE[LICENSE] at the repository root.

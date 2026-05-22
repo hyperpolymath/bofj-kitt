@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: PMPL-1.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath)
 = PseudoScript
 :toc:
@@ -183,4 +183,4 @@ PseudoScript-specific contributions (branding, examples, tutorials, the
 
 == License
 
-PMPL-1.0-or-later.  See link:LICENSE[LICENSE].
+MPL-2.0.  See link:LICENSE[LICENSE].
