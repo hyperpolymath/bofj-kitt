@@ -1,0 +1,188 @@
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github)](https://github.com/sponsors/hyperpolymath)
+
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell (hyperpolymath)
+= PseudoScript
+:toc:
+:toc-placement: preamble
+
+image:https://img.shields.io/badge/OpenSSF-Best_Practices-green?logo=opensourcesecurity[OpenSSF Best Practices,link="https://www.bestpractices.dev/en/projects/new?repo_url=https://github.com/hyperpolymath/rsr-template-repo"]
+image:https://img.shields.io/badge/License-PMPL--1.0-blue.svg[License: PMPL-1.0,link="https://github.com/hyperpolymath/palimpsest-license"]
+image:https://api.thegreenwebfoundation.org/greencheckimage/github.com[Green Web,link="https://www.thegreenwebfoundation.org/green-web-check/?url=github.com"]
+
+Pseudocode-syntax AffineScript.
+Write code that looks like pseudocode.
+Get affine resource guarantees and typed WASM out.
+
+**Status: alpha** — the syntax, type checker, and WASM output are solid.
+Effects runtime is in progress upstream.
+
+---
+
+== What it is
+
+PseudoScript is https://github.com/hyperpolymath/affinescript[AffineScript]
+with its pseudocode face pre-selected.  If you write pseudocode, you already know
+most of the syntax.
+
+The compiler checks that your resources (files, sockets, tokens) are used
+*exactly as many times as you say* — and proves it at compile time.
+No null pointer exceptions.  No use-after-free.  No silent data races.
+
+[source,pseudocode]
+----
+FUNCTION greet(name: STRING) RETURNS STRING
+    RETURN "Hello, " + name + "!"
+END FUNCTION
+
+FUNCTION main() RETURNS VOID
+    LET msg = greet("world")
+    PRINT(msg)
+END FUNCTION
+----
+
+Save as `hello.pseudo` and run:
+
+[source,bash]
+----
+pseudo eval hello.pseudo
+----
+
+== Why Pseudocode syntax?
+
+Because pseudocode programmers deserve a sound type system.
+
+PseudoScript is pseudocode's more dangerous cousin — same comfortable
+whitespace-delimited blocks, but with teeth: the compiler tracks *ownership*
+of every value so you cannot accidentally drop, duplicate, or outlive a
+resource.  You never null-check.  You never wonder if a function consumes its
+argument or borrows it.  The type says so.
+
+The mascot is a pseudocode.
+
+== Surface mappings
+
+[cols="1,1"]
+|===
+|Pseudocode surface |What it means in PseudoScript
+
+|`FUNCTION f(x: T) RETURNS R:` |function declaration
+|`TRUE` / `FALSE`    |`true` / `false`
+|`NULL`              |unit `()` — not null, genuinely nothing
+|`AND` / `OR` / `NOT` |`&&` / `||` / `!`
+|`CLASS Name:`       |`type Name` (algebraic data type)
+|`PASS`              |`()` (unit expression)
+|`IMPORT a.b`        |`use a::b;`
+|`FROM a IMPORT b`   |`use a::b;`
+|`IF cond:` / `ELSE:` |`if cond { ... } else { ... }`
+|`ELIF cond:`        |`} else if cond {`
+|`FOR x IN e:`       |`for x in e { ... }`
+|`MATCH e:`          |`match e { ... }`
+|`# comment`         |`// comment`
+|===
+
+Run `pseudo preview-pseudocode-transform <file>` to see the canonical
+AffineScript that the preprocessor generates from any `.pseudo` file.
+
+== Getting started
+
+=== Prerequisites
+
+* https://ocaml.org/[OCaml] + https://dune.build/[dune] (for the compiler)
+* https://www.rust-lang.org/[Rust] + cargo (for the `pseudo` wrapper)
+* https://just.systems/[just] (task runner)
+
+=== Install from source
+
+[source,bash]
+----
+git clone --recurse-submodules https://github.com/hyperpolymath/pseudoscript
+cd pseudoscript
+
+# Build affinescript compiler + pseudo wrapper in one step
+just bootstrap
+
+# Optional: install pseudo to ~/.cargo/bin
+just install
+----
+
+=== Usage
+
+[source,bash]
+----
+pseudo check   hello.pseudo      # type-check
+pseudo eval    hello.pseudo      # run
+pseudo compile hello.pseudo      # compile to WASM
+pseudo fmt     hello.pseudo      # format
+pseudo lint    hello.pseudo      # static analysis
+
+# See what the pseudocode preprocessor produces
+pseudo preview-pseudocode-transform hello.pseudo
+----
+
+`.pseudo` files are detected automatically — no `--face` flag needed.
+You can also use `.pyaff` if you prefer the AffineScript naming.
+
+== Ownership in one minute
+
+[source,pseudocode]
+----
+# @linear means: use this exactly once.
+FUNCTION send_token(@linear token: AuthToken) RETURNS Receipt:
+    network.submit(token)   # consumes token — compiler verifies this
+END FUNCTION
+
+# Option instead of None crashes.
+FUNCTION safe_divide(a: Int, b: Int) RETURNS Option[Int]:
+    IF b == 0:
+        NONE
+    ELSE:
+        SOME(a / b)
+    END IF
+END FUNCTION
+
+FUNCTION show(result: Option[Int]) RETURNS VOID:
+    MATCH result:
+        SOME(n) => IO.println(Int.to_string(n))
+        NONE    => IO.println("no result")
+    END MATCH
+END FUNCTION
+----
+
+The compiler rejects any program that drops a `@linear` value unused,
+uses it more than once, or tries to treat `NONE` as a value.
+
+== Relationship to AffineScript
+
+PseudoScript *is* AffineScript.  Same compiler, same type system, same WASM
+output.  The difference is `--face pseudocode` is the default and the entry
+point is `pseudo` instead of `affinescript`.
+
+The affinescript compiler lives in the `affinescript/` submodule of this
+repo.  `just update-affinescript` bumps the pointer to the latest upstream
+release — all language improvements flow through automatically.
+
+Face logic: `affinescript/lib/pseudocode_face.ml` (syntax transform) and
+`affinescript/lib/face.ml` (error vocabulary).  No compiler internals change
+when the face changes.
+
+== Alpha caveats
+
+* **Effects runtime**: `effect`/`handle` syntax is type-checked but not yet
+executed at runtime.  The effects story is coming in a near-upstream release.
+* **Closures and linear captures**: lambda-body linear capture tracking is
+conservative in the current release.
+* **Span fidelity**: error locations refer to the transformed canonical source,
+not the original `.pseudo` line numbers.  Source-map remapping is planned.
+
+== Contributing
+
+This repo is a thin distribution layer.  Language bugs and features go
+upstream: https://github.com/hyperpolymath/affinescript[hyperpolymath/affinescript].
+
+PseudoScript-specific contributions (branding, examples, tutorials, the
+`pseudo` CLI wrapper) are welcome here.
+
+== License
+
+MPL-2.0.  See link:LICENSE[LICENSE].
