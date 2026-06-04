@@ -1,3 +1,7 @@
+<!--
+SPDX-License-Identifier: MPL-2.0
+Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+-->
 # AffineScript Alpha-1 Release Notes
 
 ## 🎮 Game Developer's Edition
@@ -62,7 +66,7 @@
 - Language Server Protocol implementation
 - Standard library modules
 
-### Game Examples (AGPL-3.0-or-later)
+### Game Examples (MPL-2.0)
 - Hello World with effects
 - Resource management patterns
 - Game state machine examples
@@ -115,7 +119,7 @@ dune exec affinescript -- compile examples/hello.affine -o hello.wasm
 - Quantum-safe provenance tracking
 
 ### Game Content & Examples
-**AGPL-3.0-or-later** - GNU Affero General Public License
+**MPL-2.0** - GNU Affero General Public License
 - Covers: Game examples, assets, tutorials
 - Ensures game content remains open
 - Network use provisions for online games

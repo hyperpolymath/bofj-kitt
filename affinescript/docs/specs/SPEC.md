@@ -1,3 +1,7 @@
+<!--
+SPDX-License-Identifier: MPL-2.0
+Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+-->
 # AffineScript Language Specification v0.1
 
 A programming language combining affine types, dependent types, row polymorphism, and extensible effects.

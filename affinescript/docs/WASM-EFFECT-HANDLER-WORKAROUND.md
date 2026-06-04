@@ -1,3 +1,7 @@
+<!--
+SPDX-License-Identifier: MPL-2.0
+Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+-->
 # WASM Effect Handler Lowering Workaround
 
 **Status as of 2026-04-12**: Effect-handler lowering in WASM targets is incomplete. This document describes the workaround implementation for the bridge layer.

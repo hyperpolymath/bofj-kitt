@@ -1,7 +1,8 @@
-= AffineScript: The Game Developer's Secret Weapon
 // SPDX-License-Identifier: MPL-2.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= AffineScript: The Game Developer's Secret Weapon
 
-image:https://img.shields.io/badge/License-PMPL--1.0-blue.svg[License: PMPL-1.0,link="https://github.com/hyperpolymath/palimpsest-license"]
+image:https://img.shields.io/badge/License-PMPL--1.0-blue.svg[License: MPL-2.0,link="https://github.com/hyperpolymath/palimpsest-license"]
 image:https://img.shields.io/badge/Built%20For-Games-red.svg[Built for Games]
 image:https://img.shields.io/badge/Powered%20By-Gossamer%20%26%20Burble-orange.svg[Powered by Gossamer & Burble]
 
@@ -449,17 +450,17 @@ Both technologies share AffineScript's core philosophy: correctness by construct
 
 == License
 
-This repository is documented and distributed under AGPL-3.0-or-later. The Palimpsest-MPL license layer on top of MPL-2.0 is the licensing for:
+This repository is documented and distributed under MPL-2.0. The MPL-2.0 license layer on top of MPL-2.0 is the licensing for:
 
 * **Gossamer**: A linearly-typed webview shell for resource-safe desktop app development
 * **Burble**: High-assurance multiplayer communications platform with sub-10ms latency
 * **AffineScript**: Affine-type programming language compiling to WASM
 
 For full license terms:
-- **AGPL-3.0-or-later**: https://www.gnu.org/licenses/agpl-3.0.html
-- **PMPL-1.0 (Palimpsest-MPL)**: https://github.com/hyperpolymath/palimpsest-license
+- **MPL-2.0**: https://www.gnu.org/licenses/agpl-3.0.html
+- **MPL-2.0 (MPL-2.0)**: https://github.com/hyperpolymath/palimpsest-license
 
-**Game Content**: AGPL-3.0-or-later ensures game modifications remain open.
+**Game Content**: MPL-2.0 ensures game modifications remain open.
 **Core Technology**: MPL-2.0 provides permissive licensing for tooling.
 
 == See Also

@@ -1,3 +1,7 @@
+<!--
+SPDX-License-Identifier: MPL-2.0
+Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+-->
 # AffineScript Game Bundling & Licensing Strategy
 
 ## 🎯 Executive Summary
@@ -15,12 +19,12 @@
 **Architecture:**
 ```
 Game Distribution
-├── game.wasm              (AGPL-3.0-or-later - Game logic)
-├── game_data/             (AGPL-3.0-or-later - Game assets)
-│   ├── levels/            (AGPL-3.0-or-later)
-│   ├── textures/          (AGPL-3.0-or-later)
-│   ├── sounds/            (AGPL-3.0-or-later)
-│   └── scripts/           (AGPL-3.0-or-later)
+├── game.wasm              (MPL-2.0 - Game logic)
+├── game_data/             (MPL-2.0 - Game assets)
+│   ├── levels/            (MPL-2.0)
+│   ├── textures/          (MPL-2.0)
+│   ├── sounds/            (MPL-2.0)
+│   └── scripts/           (MPL-2.0)
 ├── affinescript/          (MPL-2.0 - Compiler)
 │   ├── compiler.wasm      (MPL-2.0)
 │   ├── stdlib/            (MPL-2.0)
@@ -29,7 +33,7 @@ Game Distribution
 │   └── runtime.wasm       (MPL-2.0)
 ├── burble/               (MPL-2.0 - Voice)
 │   └── client.wasm        (MPL-2.0)
-├── LICENSE-GAME          (AGPL-3.0-or-later)
+├── LICENSE-GAME          (MPL-2.0)
 ├── LICENSE-TECH          (MPL-2.0)
 └── README.md             (Dual licensing explanation)
 ```
@@ -75,7 +79,7 @@ graph TD
 ```markdown
 ## 🏷️ Licensing
 
-### Game Content (AGPL-3.0-or-later)
+### Game Content (MPL-2.0)
 All game-specific content including:
 - Game logic and scripts
 - Levels and assets
@@ -100,7 +104,7 @@ All compiler and runtime technology including:
 
 ### Key Difference
 - **AGPL-3.0** applies to **game content** (must remain open)
-- **PMPL-1.0** applies to **technology** (can be used freely)
+- **MPL-2.0** applies to **technology** (can be used freely)
 - **Players** only need game content (AGPL)
 - **Developers** need both (AGPL + PMPL)
 ```
@@ -114,7 +118,7 @@ cp LICENSE-AGPL-3.0 LICENSE-GAME
 Add proper license headers:
 
 ```affinescript
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell
 //
 // This file is part of the AffineScript Game
@@ -138,7 +142,7 @@ Add proper license headers:
 {
   "name": "affinescript-game",
   "version": "0.1.0-alpha.1",
-  "license": "AGPL-3.0-or-later",
+  "license": "MPL-2.0",
   "dependencies": {
     "affinescript-compiler": {
       "version": "0.1.0-alpha.1",
@@ -163,11 +167,11 @@ Add proper license headers:
 ### 1. **Player Distribution (AGPL Only)**
 ```
 Game-Player-Package.zip
-├── game.wasm              (AGPL-3.0-or-later)
-├── assets/                (AGPL-3.0-or-later)
+├── game.wasm              (MPL-2.0)
+├── assets/                (MPL-2.0)
 ├── gossamer.wasm          (MPL-2.0 - Runtime)
 ├── burble.wasm            (MPL-2.0 - Voice)
-├── LICENSE-GAME          (AGPL-3.0-or-later)
+├── LICENSE-GAME          (MPL-2.0)
 ├── LICENSE-TECH          (MPL-2.0)
 └── README.md             (Licensing explanation)
 ```
@@ -175,9 +179,9 @@ Game-Player-Package.zip
 ### 2. **Developer Distribution (AGPL + PMPL)**
 ```
 Game-Developer-Package.zip
-├── game/                  (AGPL-3.0-or-later)
-│   ├── game.wasm          (AGPL-3.0-or-later)
-│   └── assets/            (AGPL-3.0-or-later)
+├── game/                  (MPL-2.0)
+│   ├── game.wasm          (MPL-2.0)
+│   └── assets/            (MPL-2.0)
 ├── tools/                 (MPL-2.0)
 │   ├── affinescript/      (MPL-2.0)
 │   │   ├── compiler.wasm  (MPL-2.0)
@@ -188,9 +192,9 @@ Game-Developer-Package.zip
 │   └── burble/           (MPL-2.0)
 │       └── client.wasm    (MPL-2.0)
 ├── docs/                  (Dual licensed)
-│   ├── game-docs/        (AGPL-3.0-or-later)
+│   ├── game-docs/        (MPL-2.0)
 │   └── tech-docs/        (MPL-2.0)
-├── LICENSE-GAME          (AGPL-3.0-or-later)
+├── LICENSE-GAME          (MPL-2.0)
 ├── LICENSE-TECH          (MPL-2.0)
 └── README.md             (Complete licensing guide)
 ```
@@ -226,7 +230,7 @@ Game-Developer-Package.zip
 ## 📋 License Compliance Checklist
 
 ### For Game Distribution
-- [ ] ✅ Game content licensed AGPL-3.0-or-later
+- [ ] ✅ Game content licensed MPL-2.0
 - [ ] ✅ Technology licensed MPL-2.0
 - [ ] ✅ Separate LICENSE files included
 - [ ] ✅ Source code available (AGPL requirement)
@@ -257,7 +261,7 @@ Game-Developer-Package.zip
 
 This game uses a **dual licensing model**:
 
-**Game Content:** AGPL-3.0-or-later
+**Game Content:** MPL-2.0
 - All game logic, levels, assets, and data
 - Ensures game modifications remain open source
 - Required for players and developers
@@ -279,7 +283,7 @@ This game uses a **dual licensing model**:
 
 AffineScript uses a dual licensing approach to balance open game development with permissive tooling:
 
-### AGPL-3.0-or-later (Game Content)
+### MPL-2.0 (Game Content)
 
 **Applies to:**
 - Game logic and scripts
@@ -382,7 +386,7 @@ j.d.a.jewell@open.ac.uk
 
 Full license texts:
 - AGPL-3.0: https://www.gnu.org/licenses/agpl-3.0.html
-- PMPL-1.0: https://github.com/hyperpolymath/palimpsest-license
+- MPL-2.0: https://github.com/hyperpolymath/palimpsest-license
 ```
 
 ### 3. CONTRIBUTING.adoc
@@ -392,7 +396,7 @@ Full license texts:
 When contributing to AffineScript, please note:
 
 **Game Content Contributions:**
-- Licensed under AGPL-3.0-or-later
+- Licensed under MPL-2.0
 - Must be open source
 - Modifications must be shared
 
@@ -403,12 +407,12 @@ When contributing to AffineScript, please note:
 
 **Header Requirements:**
 - Game files: AGPL-3.0 SPDX identifier
-- Tech files: PMPL-1.0 SPDX identifier
+- Tech files: MPL-2.0 SPDX identifier
 - Always include copyright notice
 
 **Example Game File Header:**
 ```affinescript
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2026 Your Name
 ```
 
@@ -433,7 +437,7 @@ description: "AffineScript Game with Dual Licensing"
 [pods]
 game = { 
   path = "game",
-  license = "AGPL-3.0-or-later",
+  license = "MPL-2.0",
   main = "game.wasm"
 }
 
@@ -496,7 +500,7 @@ echo "Packages created in dist/"
 4. **License Preservation:** AGPL license must be included
 5. **Copyright Notices:** All notices must be preserved
 
-### PMPL-1.0 Requirements
+### MPL-2.0 Requirements
 1. **License Preservation:** PMPL license must be included
 2. **Copyright Notices:** All notices must be preserved
 3. **Modification Documentation:** Changes must be documented
@@ -549,5 +553,5 @@ Runtime Distribution (PMPL):
 
 **Result:** Clear AGPL licensing for game content with PMPL licensing for core technology, enabling open game development while maintaining permissive tooling licenses.
 
-SPDX-License-Identifier: AGPL-3.0-or-later AND MPL-2.0
+SPDX-License-Identifier: MPL-2.0 AND MPL-2.0
 SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: MIT OR AGPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 // Playground runtime shim for js_of_ocaml.
 //
 // Provides a browser-safe stub for `caml_unix_putenv` so the js_of_ocaml

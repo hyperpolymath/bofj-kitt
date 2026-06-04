@@ -1,3 +1,7 @@
+<!--
+SPDX-License-Identifier: MPL-2.0
+Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+-->
 # Dependent Types
 
 Dependent types allow types to depend on values, enabling compile-time verification of invariants.

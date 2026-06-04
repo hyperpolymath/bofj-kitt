@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} <{{AUTHOR_EMAIL}}>
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 = {{PROJECT_NAME}} Component Readiness Assessment
 
 *Standard:* link:https://{{FORGE}}/{{OWNER}}/standards/tree/main/component-readiness-grades[Component Readiness Grades (CRG) v2.0 STRICT] +

@@ -1,3 +1,7 @@
+<!--
+SPDX-License-Identifier: MPL-2.0
+Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+-->
 # AffineScript Submarine Damage System
 
 ## 🚨 Critical Damage Information
@@ -1068,5 +1072,5 @@ The AffineScript submarine damage system creates **realistic, component-based da
 **Version:** Alpha-1
 **Document Status:** Complete damage system specification
 
-SPDX-License-Identifier: AGPL-3.0-or-later
+SPDX-License-Identifier: MPL-2.0
 SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell and contributors
