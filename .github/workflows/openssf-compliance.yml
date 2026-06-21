@@ -2,17 +2,14 @@
 # OpenSSF Best Practices compliance gate — blocks PRs and pushes that lack
 # required files or still contain unfilled placeholder tokens.
 name: OpenSSF Compliance
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   openssf-compliance:
     runs-on: ubuntu-latest
@@ -23,7 +20,6 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           persist-credentials: false
-
       - name: Check SECURITY.md exists and has substance
         run: |
           SECFILE=""
@@ -42,7 +38,6 @@ jobs:
             exit 1
           fi
           echo "SECURITY file: OK ($SECFILE, $LINES lines)"
-
       - name: Check LICENSE exists
         run: |
           if [ ! -f "LICENSE" ] && [ ! -f "LICENSE.txt" ] && [ ! -f "LICENSE.md" ]; then
@@ -50,7 +45,6 @@ jobs:
             exit 1
           fi
           echo "LICENSE: OK"
-
       - name: Check CONTRIBUTING exists
         run: |
           if [ ! -f "CONTRIBUTING.md" ] && [ ! -f "CONTRIBUTING.adoc" ]; then
@@ -58,7 +52,6 @@ jobs:
             exit 1
           fi
           echo "CONTRIBUTING: OK"
-
       - name: Check README exists
         run: |
           if [ ! -f "README.md" ] && [ ! -f "README.adoc" ] && [ ! -f "README.rst" ] && [ ! -f "README.txt" ] && [ ! -f "README" ]; then
@@ -66,7 +59,6 @@ jobs:
             exit 1
           fi
           echo "README: OK"
-
       - name: Check .machine_readable directory and STATE.a2ml
         run: |
           if [ ! -d ".machine_readable" ]; then
@@ -79,7 +71,6 @@ jobs:
             exit 1
           fi
           echo ".machine_readable/STATE.a2ml: OK"
-
       - name: Check CHANGELOG exists
         run: |
           if [ ! -f "CHANGELOG.md" ] && [ ! -f "CHANGELOG.adoc" ] && [ ! -f "CHANGES.md" ]; then
@@ -87,7 +78,6 @@ jobs:
             exit 1
           fi
           echo "CHANGELOG: OK"
-
       - name: Check no unfilled placeholder tokens in required files
         run: |
           ERRORS=0
@@ -117,7 +107,6 @@ jobs:
             exit 1
           fi
           echo "Placeholder check: OK (no unfilled tokens in required files)"
-
       - name: Summary
         run: |
           echo "=== OpenSSF Best Practices Compliance: PASS ==="

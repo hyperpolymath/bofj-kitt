@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: MPL-2.0
+# Intentfile (A2ML) - Converted from INTENT.contractile for affinescript
+
+@abstract:
+Purpose and scope for affinescript. This file was converted from Scheme-based
+INTENT.contractile format to A2ML format.
+@end
+
+## Purpose
+
+AffineScript is a programming language with affine types and JavaScript
+
+## Anti-Purpose
+
+
+
+## If In Doubt
+
+Sensitive areas from original contractile:
