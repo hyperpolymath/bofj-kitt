@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: MPL-2.0 -->
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 # Reply to REPORT-SUM-TYPES.md — Sum Types Already Implemented
 
 **Date:** 2026-03-21
