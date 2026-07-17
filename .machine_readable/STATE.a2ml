@@ -2,26 +2,22 @@
 ;; Project state — update throughout each session
 (state
   (metadata
-    (version "1.0.1")
-    (project "rsr-template-repo")
-    (last-updated "2026-04-04"))
+    (version "1.1.0")
+    (project "bofj-kitt")
+    (last-updated "2026-07-16"))
   (project-context
-    (description "RSR Standard Repository Template — baseline for all hyperpolymath projects")
-    (primary-language "Idris2 (ABI) + Zig (FFI)")
-    (status "testing-complete"))
+    (description "Shared Developer Environment Extension Kit (the SuperChainsaw) for the BoJ (Box of Justice) server")
+    (primary-language "not yet chosen — see docs/status/ROADMAP.adoc M3")
+    (status "pre-alpha"))
   (current-position
-    (phase "testing")
-    (completion-percentage 100)
-    (milestone "CRG C - Testing & Benchmarking complete"))
+    (phase "design")
+    (completion-percentage 5)
+    (milestone "M0 — truthful identity and green governance CI"))
   (testing-summary
-    (validation-script "scripts/validate-template.sh: PASS (0 errors)")
-    (workflow-tests "tests/workflows/validate_workflows_test.sh: PASS (21/21 workflows)")
-    (integration-tests "test/integration_test.zig: PASS (placeholder template)")
-    (e2e-tests "tests/e2e/template_instantiation_test.sh: READY")
-    (benchmarks "benches/template_bench.sh: PASS (5 suites)")
-    (zig-build "Zig 0.15.2 compatible: PASS"))
+    (product-tests "none — no product code yet (pre-alpha scaffold)")
+    (workflow-tests "tests/workflows/validate_workflows_test.sh: governance workflows present + well-formed")
+    (aspect-checks "tests/aspect_tests.sh: repo-shape/observability/security scaffold"))
   (critical-next-actions
-    ("Commit test suite"
-     "Push to GitHub"
-     "Verify CI workflows pass"
-     "Document test instantiation patterns")))
+    ("M1 — finish remaining placeholder-token fills; restore a full SECURITY policy"
+     "M2 — specify the kit's first capability + BoJ integration contract"
+     "M3 — choose implementation language; re-add a real e2e workflow")))

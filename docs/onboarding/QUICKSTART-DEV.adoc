@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // Template: QUICKSTART-DEV.adoc — clone → build → test → PR
-// Replace rsr-template-repo, {{BUILD_CMD}}, {{TEST_CMD}}, {{LANG_STACK}} with actuals
-= rsr-template-repo — Quick Start for Developers
+// Replace bofj-kitt, {{BUILD_CMD}}, {{TEST_CMD}}, {{LANG_STACK}} with actuals
+= bofj-kitt — Quick Start for Developers
 :toc:
 :toclevels: 2
 
@@ -29,8 +29,8 @@ nix develop
 
 [source,bash]
 ----
-git clone https://github.com/hyperpolymath/rsr-template-repo.git
-cd rsr-template-repo
+git clone https://github.com/hyperpolymath/bofj-kitt.git
+cd bofj-kitt
 just setup-dev
 ----
 
@@ -52,7 +52,7 @@ just setup-dev
 
 [source]
 ----
-rsr-template-repo/
+bofj-kitt/
 ├── src/                  # Source code
 ├── src/abi/              # Idris2 ABI definitions (if applicable)
 ├── tests/                # Test suite
@@ -106,5 +106,5 @@ Or read `0-AI-MANIFEST.a2ml` and `.claude/CLAUDE.md` directly.
 == Get Help
 
 * **Architecture**: link:EXPLAINME.adoc[EXPLAINME.adoc]
-* **Wiki**: https://github.com/hyperpolymath/rsr-template-repo/wiki
+* **Wiki**: https://github.com/hyperpolymath/bofj-kitt/wiki
 * **Report issue**: `just help-me`

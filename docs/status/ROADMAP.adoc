@@ -1,22 +1,55 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
-= YOUR Template Repo Roadmap
+= bofj-kitt Roadmap
+
+bofj-kitt is the shared Developer Environment Extension Kit (the "SuperChainsaw")
+for the BoJ (Box of Justice) server. This roadmap maps the journey from an
+honest pre-alpha scaffold to a working, dogfooded kit.
 
 == Current Status
 
-Initial development phase.
+Pre-alpha. Identity, governance, and CI are truthful and green; there is no
+product code yet. See
+`docs/reports/audit/repo-assessment-2026-07-16.adoc` for the assessment that
+established this baseline.
 
 == Milestones
 
-=== v0.1.0 - Foundation
-* [ ] Core functionality
-* [ ] Basic documentation
-* [ ] CI/CD pipeline
+=== M0 — Truthful baseline (this pass)
+* [x] Remove the vendored affinescript subtree and uninstantiated template ABI/FFI.
+* [x] Install one consistent `bofj-kitt` identity across README, manifests, and state.
+* [x] Make governance CI pass its own estate rules (root-shape, no-`.md`-in-docs, banned-language, and OpenSSF-token checks).
+* [x] Commit this assessment and roadmap.
 
-=== v1.0.0 - Stable Release
-* [ ] Full feature set
-* [ ] Comprehensive tests
-* [ ] Production ready
+=== M1 — Finish the hygiene pass
+* [ ] Fill the remaining ~75 placeholder-token files (`container/`, `.devcontainer/`, `.github/*`, `build/*`, `.machine_readable/svc/k9/*`).
+* [ ] Restore a full SECURITY policy once PGP material exists.
+* [ ] Curate the remaining template-authored docs (keep historical records, retarget live guidance).
+
+=== M2 — Product spec
+* [ ] Define precisely what a developer-environment "extension" is for this kit.
+* [ ] Enumerate the first surfaces: devcontainer/Guix provisioning, session-protocol bootstrap, BoJ/Groove registration.
+* [ ] Write the BoJ integration contract (MCP cartridge shape, Groove manifest fields).
+* [ ] Record the decisions as ADRs under `docs/decisions/`.
+
+=== M3 — Language & scaffolding
+* [ ] Choose the implementation language from the allowed set in `.machine_readable/anchors/ANCHOR.a2ml`.
+* [ ] Add a root build manifest; wire `Justfile` `build`/`test`/`run` to it.
+* [ ] Re-add a real `.github/workflows/e2e.yml` (the template placeholder was removed at M0).
+* [ ] `rust-ci.yml` activates automatically if the language is Rust.
+
+=== M4 — First capability + tests (CRG D)
+* [ ] Ship one end-to-end capability (e.g. `kitt init` provisions a compliant environment; `kitt connect` registers it with a BoJ server).
+* [ ] Per-capability unit + integration tests; record counts in `.machine_readable/6a2/STATE.a2ml`.
+* [ ] Replace the placeholder fuzz README with a real harness.
+* [ ] Replace the generic template proofs under `verification/` with product proofs.
+
+=== M5 — Live integration & dogfooding (CRG C → B)
+* [ ] Wire live BoJ-server integration (`BOJ_SERVER_URL`, Groove manifest, mirror enablement).
+* [ ] Dogfood the kit on estate repos with no known home-context failures across an evidence window (→ CRG C).
+* [ ] Six genuinely diverse external environments with feedback fed back (→ CRG B).
 
 == Future Directions
 
-_To be determined based on community feedback._
+Beyond M5: a profile library for different environment classes (cloud / desktop
+/ embedded) and deeper BoJ cartridge coverage. Reassessed once M2 fixes the
+product's first shape.

@@ -1,8 +1,9 @@
-= LLM Warmup — rsr-template-repo (Developer)
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= LLM Warmup — bofj-kitt (Developer)
 
-== What is rsr-template-repo?
+== What is bofj-kitt?
 
-See `README.adoc` for overview.
+See `README.md` for overview: bofj-kitt is the shared Developer Environment Extension Kit for the BoJ (Box of Justice) server.
 
 == Key Commands
 

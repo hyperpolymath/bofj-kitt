@@ -1,12 +1,12 @@
 #!/bin/sh
 # SPDX-License-Identifier: MPL-2.0
-# setup.sh — Universal setup script for rsr-template-repo
+# setup.sh — Universal setup script for bofj-kitt
 #
 # Detects your shell, platform, and installs prerequisites.
 # Then hands off to `just setup` for project-specific configuration.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/hyperpolymath/rsr-template-repo/main/setup.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/hyperpolymath/bofj-kitt/main/setup.sh | sh
 #   # or after cloning:
 #   ./setup.sh
 #
@@ -167,7 +167,7 @@ install_just() {
 
 # ── Main ──
 main() {
-    printf "%s=== rsr-template-repo Setup ===%s\n\n" "$BOLD" "$RESET"
+    printf "%s=== bofj-kitt Setup ===%s\n\n" "$BOLD" "$RESET"
 
     # Detect environment
     SHELL_NAME=$(detect_shell)
@@ -198,8 +198,8 @@ main() {
     # Step 2: Check if we're in the repo directory
     if [ ! -f "Justfile" ] && [ ! -f "justfile" ]; then
         warn "Not in a repo directory (no Justfile found)"
-        info "Clone first: git clone https://github.com/hyperpolymath/rsr-template-repo.git"
-        info "Then: cd rsr-template-repo && ./setup.sh"
+        info "Clone first: git clone https://github.com/hyperpolymath/bofj-kitt.git"
+        info "Then: cd bofj-kitt && ./setup.sh"
         exit 1
     fi
 

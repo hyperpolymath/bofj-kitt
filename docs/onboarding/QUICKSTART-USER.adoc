@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // Template: QUICKSTART-USER.adoc — 5-minute path to working software
-// Replace rsr-template-repo, Rsr Template Repo — See README.adoc for details., just run, Rsr Template Repo started successfully. with actuals
-= rsr-template-repo — Quick Start for Users
+// Replace bofj-kitt, Rsr Template Repo — See README.adoc for details., just run, Rsr Template Repo started successfully. with actuals
+= bofj-kitt — Quick Start for Users
 :toc:
 :toclevels: 2
 
-== What is rsr-template-repo?
+== What is bofj-kitt?
 
 Rsr Template Repo — See README.adoc for details.
 
@@ -37,8 +37,8 @@ Before you begin, ensure you have:
 [source,bash]
 ----
 # Clone and set up
-git clone https://github.com/hyperpolymath/rsr-template-repo.git
-cd rsr-template-repo
+git clone https://github.com/hyperpolymath/bofj-kitt.git
+cd bofj-kitt
 just setup
 ----
 
@@ -61,7 +61,7 @@ just stapeln-run
 
 [source,bash]
 ----
-just install --portable --prefix=./rsr-template-repo-portable
+just install --portable --prefix=./bofj-kitt-portable
 ----
 
 == First Run
@@ -102,7 +102,7 @@ just heal
 * **In-app**: `just run --help`
 * **Guided tour**: `just tour`
 * **Report a problem**: `just help-me` (pre-fills diagnostic context)
-* **Wiki**: https://github.com/hyperpolymath/rsr-template-repo/wiki
+* **Wiki**: https://github.com/hyperpolymath/bofj-kitt/wiki
 
 == Uninstall
 

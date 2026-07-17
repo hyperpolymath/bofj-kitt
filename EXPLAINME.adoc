@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
-= RSR Template Repo - Explainme
+= bofj-kitt — Explainme
 :toc:
 :icons: font
 
-This file explains how the key template claims map to real files.
+bofj-kitt is the shared Developer Environment Extension Kit for the BoJ (Box of
+Justice) server. This file explains how its key infrastructure claims map to
+real files. The kit's product surfaces are not built yet (see
+`docs/status/ROADMAP.adoc`); what is described below is the estate governance
+and session machinery that is genuinely present.
 
 == Central Session Protocol Authority
 
@@ -56,29 +60,18 @@ Caveat:
 == Template Token Policy
 
 Claim:
-Placeholders are explicit template content until initialization.
+Any remaining placeholders are inventoried, not silent.
 
 How this is implemented:
 
-* `README.adoc` and bootstrap recipes keep `{{TOKEN}}` placeholders visible.
-* `just init` performs token replacement.
+* The CI-gated files (README, machine-readable state, `.well-known/`, etc.) have
+  had their `{{TOKEN}}` placeholders filled with bofj-kitt values.
+* The remaining ~75 non-CI-gated token files (`container/`, `.devcontainer/`,
+  parts of `.github/`) are inventoried in
+  `docs/reports/audit/repo-assessment-2026-07-16.adoc` and scheduled for
+  roadmap M1.
 
 Caveat:
 
-* Uninitialized placeholders must not be treated as project-specific truth.
-
-== Julia Registry Packages — Standalone Repo Requirement
-
-Claim:
-If this template is used to create a Julia package, it must remain a standalone repository registered with the Julia package registry.
-
-How this is implemented:
-
-* Julia's package registry (General.jl or other) expects each package to be a standalone GitHub repository with `Project.toml` at the repository root.
-* Installation via `Pkg.add()`, dependency resolution, and automated CI/CD all depend on this canonical structure.
-
-Caveat:
-
-* Do NOT move this repository into a monorepo or subdirectory, as this breaks registry registration and package discoverability.
-* See `JULIA-REGISTRY-REQUIREMENT.md` (workspace root) for the complete list of 34 registered Julia packages and enforcement rationale.
-* Non-registry Julia packages can be organized differently if they are not published to any registry.
+* Uninitialized placeholders in the M1 backlog must not be treated as
+  project-specific truth until filled.
