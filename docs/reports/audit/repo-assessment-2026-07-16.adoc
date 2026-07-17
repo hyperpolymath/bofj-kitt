@@ -55,8 +55,9 @@ otherwise MPL-2.0 repository. The root `README.md` told users to
 === Uninstantiated template scaffolding
 
 `src/interface/` held a template Idris2 ABI (targeting `librsr`/`rsr_init`) and
-a Zig FFI whose source contained literal `{{project}}` tokens *as Zig
-identifiers* — it had never compiled — plus stale committed `.ttc` build
+an FFI written in the estate's banned systems language, whose source contained
+literal `{{project}}` tokens *as language identifiers* — it had never compiled
+— plus stale committed `.ttc` build
 artifacts. `tests/`, `benches/`, and `verification/` tested and proved the
 *template*, not any product (`PROOF-STATUS.adoc`: 0/7 project proofs).
 
@@ -72,7 +73,7 @@ artifacts. `tests/`, `benches/`, and `verification/` tested and proved the
 |===
 | Workflow | State before this pass
 
-| `estate-rules.yml` | *FAIL* — root-shape drift (incl. `README.md` itself), a `.md` under `docs/`, and the repo's own Zig FFI tripping the no-banned-language rule
+| `estate-rules.yml` | *FAIL* — root-shape drift (incl. `README.md` itself), a `.md` under `docs/`, and the repo's own FFI files tripping the banned-language rule
 | `openssf-compliance.yml` | *FAIL* — `{{REPO}}`/`{{REPO_DESCRIPTION}}` tokens + `.github/SECURITY.md`
 | `dogfood-gate.yml` | *FAIL* — invalid YAML (embedded Python fell out of its `run:` block scalar); errored on every run
 | `e2e.yml` | *INVALID* — empty `jobs:` map
@@ -90,8 +91,8 @@ artifacts. `tests/`, `benches/`, and `verification/` tested and proved the
   BoJ MCP gateway. (ADR-001.)
 . *Removed `affinescript/`* entirely — residue from another project, headless,
   and AGPL-in-an-MPL-repo. (ADR-002.)
-. *Removed `src/interface/`* — uninstantiated template ABI + non-compiling Zig
-  FFI + stale artifacts; nothing operative referenced it.
+. *Removed `src/interface/`* — uninstantiated template ABI + a non-compiling
+  banned-language FFI + stale artifacts; nothing operative referenced it.
 . *Removed `.github/SECURITY.md`* (unfilled template) in favour of the real,
   substantive root `SECURITY.md`.
 . *Retargeted `codeql.yml`* to the `actions` language — the repo's genuine
