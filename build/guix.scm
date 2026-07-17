@@ -39,9 +39,6 @@
        ;;   (replace 'build (lambda _ (invoke "mix" "compile")))
        ;;   (replace 'check (lambda _ (invoke "mix" "test")))
        ;;
-       ;; Zig:
-       ;;   (replace 'build (lambda _ (invoke "zig" "build")))
-       ;;   (replace 'check (lambda _ (invoke "zig" "build" "test")))
        (delete 'configure)
        (delete 'build)
        (delete 'check)
@@ -57,7 +54,6 @@
     ;; Examples:
     ;;   rust (gnu packages rust)
     ;;   elixir (gnu packages elixir)
-    ;;   zig (gnu packages zig)
     ))
   (inputs
    (list

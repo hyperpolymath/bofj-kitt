@@ -39,10 +39,6 @@ jobs:
             echo "::notice::Detected Rust project (Cargo.toml)"
             echo "build_type=cargo" >> "$GITHUB_OUTPUT"
             cargo build --release
-          elif [ -f "build.zig" ]; then
-            echo "::notice::Detected Zig project (build.zig)"
-            echo "build_type=zig" >> "$GITHUB_OUTPUT"
-            zig build -Doptimize=ReleaseSafe
           elif [ -f "deno.json" ] || [ -f "deno.jsonc" ]; then
             echo "::notice::Detected Deno project (deno.json)"
             echo "build_type=deno" >> "$GITHUB_OUTPUT"
@@ -65,7 +61,7 @@ jobs:
             just build
           else
             echo "::error::No recognised build system found."
-            echo "Expected one of: mix.exs, Cargo.toml, build.zig, deno.json, gossamer.conf.json, gleam.toml, rebar.config, Justfile"
+            echo "Expected one of: mix.exs, Cargo.toml, deno.json, gossamer.conf.json, gleam.toml, rebar.config, Justfile"
             exit 1
           fi
 

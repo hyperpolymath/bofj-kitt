@@ -35,7 +35,6 @@
 
 # ABI/FFI STANDARD
 # ABI definitions: Idris2 with dependent types (src/interface/abi/)
-# FFI implementation: Zig with C ABI (src/interface/ffi/)
 # Generated C headers: src/interface/generated/
 
 # BUILD SYSTEM

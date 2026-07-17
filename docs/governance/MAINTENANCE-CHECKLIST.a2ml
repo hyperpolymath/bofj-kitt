@@ -133,7 +133,6 @@ quality_gate_required = [
 
 abi_ffi_policy = [
   "ABI Idris2 in src/interface/Abi/*.idr (or src/interface/abi/*.idr)",
-  "FFI Zig in ffi/**/*.zig",
 ]
 
 [should]

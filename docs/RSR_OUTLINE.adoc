@@ -104,8 +104,6 @@ just validate-rsr
 |`src/abi/`
 |Idris2 ABI definitions (Types, Layout, Foreign)
 
-|`ffi/zig/`
-|Zig FFI implementation
 
 |`generated/abi/`
 |Auto-generated C headers from Idris2 ABI
@@ -181,10 +179,6 @@ project/
 │   ├── Types.idr
 │   ├── Layout.idr
 │   └── Foreign.idr
-├── ffi/zig/                   # Zig FFI implementation
-│   ├── build.zig
-│   ├── src/main.zig
-│   └── test/integration_test.zig
 ├── generated/abi/             # Auto-generated C headers
 ├── examples/                  # Example code
 ├── guix.scm                   # Guix package
@@ -204,7 +198,7 @@ project/
 
 === Language Tiers
 
-* **Tier 1** (Gold): Rust, Elixir, Zig, Ada, Haskell, ReScript, Gleam
+* **Tier 1** (Gold): Rust, Elixir, Ada, Haskell, ReScript, Gleam
 * **Tier 2** (Silver): Nickel, Guile Scheme, Nix, Idris2, OCaml
 * **Infrastructure**: Guix channels, derivations, Julia batch scripts
 

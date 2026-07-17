@@ -27,7 +27,6 @@ self-assess:
     HAS_ELIXIR=false; [ -f "mix.exs" ] && HAS_ELIXIR=true
     HAS_RESCRIPT=false; [ -f "rescript.json" ] || [ -f "bsconfig.json" ] && HAS_RESCRIPT=true
     HAS_IDRIS=false; ls *.ipkg >/dev/null 2>&1 && HAS_IDRIS=true
-    HAS_ZIG=false; [ -f "build.zig" ] || [ -d "ffi/zig" ] && HAS_ZIG=true
     HAS_GLEAM=false; [ -f "gleam.toml" ] && HAS_GLEAM=true
     HAS_CONTAINER=false; [ -f "Containerfile" ] || [ -f "container/Containerfile" ] || [ -f "build/Containerfile" ] && HAS_CONTAINER=true
     HAS_TESTS=false; [ -d "test" ] || [ -d "tests" ] || [ -d "__tests__" ] && HAS_TESTS=true
@@ -35,7 +34,7 @@ self-assess:
     IS_LIBRARY=false; [ -f "Cargo.toml" ] && grep -q '\[lib\]' Cargo.toml 2>/dev/null && IS_LIBRARY=true
 
     echo "Detected: Rust=$HAS_RUST Elixir=$HAS_ELIXIR ReScript=$HAS_RESCRIPT"
-    echo "          Idris=$HAS_IDRIS Zig=$HAS_ZIG Gleam=$HAS_GLEAM"
+    echo "          Idris=$HAS_IDRIS Gleam=$HAS_GLEAM"
     echo "          Container=$HAS_CONTAINER Tests=$HAS_TESTS API=$HAS_API"
     echo ""
 
@@ -76,14 +75,6 @@ self-assess:
         echo "    ⚠ Consequence: no formally verified interface definitions."
     fi
 
-    if $HAS_ZIG && [ -d "src/interface/ffi" ]; then
-        echo "  ✓ src/interface/ffi/ — KEEP (Zig FFI bridge)"
-    elif ! $HAS_ZIG && [ -d "src/interface/ffi" ]; then
-        echo "  ? src/interface/ffi/ — No Zig detected."
-        echo "    → KEEP if you plan C ABI interop later."
-        echo "    → SAFE TO REMOVE if this is a pure web/scripting project."
-        echo "    ⚠ Consequence: no C-compatible FFI bridge."
-    fi
 
     if $HAS_API && [ -f ".machine_readable/integrations/groove.a2ml" ]; then
         PORT=$(grep '(port ' .machine_readable/integrations/groove.a2ml 2>/dev/null | sed 's/.*(port \([0-9]*\)).*/\1/')

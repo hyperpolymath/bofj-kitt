@@ -105,7 +105,6 @@ Run this pass at the end of a corrective/adaptive/perfective cycle:
   - no duplicate conflicting docs for same purpose (for example both `.md` and `.adoc` in root unless intentionally required)
 - [ ] Enforce ABI/FFI purity where the policy applies:
   - ABI definitions in Idris2 (`src/abi/*.idr`)
-  - FFI implementations in Zig (`ffi/**/*.zig`)
 - [ ] Ensure quality gate includes: formatting, lint, unit/integration tests, p2p/e2e checks, benchmark smoke, docs checks, security scan.
 
 ### Should
@@ -233,7 +232,7 @@ python -c "import pydantic; print(pydantic.__version__)" || echo "pydantic missi
 
 - [ ] `TODO/FIXME/XXX/HACK/STUB/PARTIAL` scan.
 - [ ] Permission policy scan (`g+w/o+w`, executable hygiene).
-- [ ] ABI/FFI policy scan (if applicable: Idris2 ABI, Zig FFI).
+- [ ] ABI/FFI policy scan (if applicable: Idris2 ABI).
 
 ```bash
 rg -n "TODO|FIXME|XXX|HACK|STUB|PARTIAL" -g '!**/.git/**' -g '!**/target/**' .
@@ -248,7 +247,7 @@ rg -n "TODO|FIXME|XXX|HACK|STUB|PARTIAL" -g '!**/.git/**' -g '!**/target/**' .
 
 ```bash
 # Adjust paths for your repo layout
-find . -type f \( -name '*.idr' -o -name '*.idris2' -o -name '*.zig' \)
+find . -type f \( -name '*.idr' -o -name '*.idris2' \)
 ```
 
 ## 5) Panic/Safety/Security Pass
@@ -414,7 +413,7 @@ Add these checks for language/compiler repositories with formal ABI/FFI constrai
 - [x] Human-readable docs synchronized (`README`, `QUICK_STATUS`, roadmap, wiki home).
 - [x] `Mustfile` invariants present and enforceable in CI.
 - [x] `Trustfile` and `Intentfile` present and complete.
-- [x] FFI/ABI purity policy enforced (`*.zig` for FFI, `*.idr`/Idris2 for ABI).
+- [x] FFI/ABI purity policy enforced (`*.idr`/Idris2 for ABI).
 - [x] `panic-attack` findings triaged with explicit severity budget for release.
 - [x] Point-to-point, end-to-end, and benchmark checks wired in one quality gate.
 - [x] CI workflows include quality + security + docs checks with explicit policy.
@@ -442,7 +441,7 @@ Repo: `/tmp/eclexia-releaseprep` (branch `release-prep`, base `533ec9e9447f37413
 ### 13.3 Code-Health Scans
 
 - [x] TODO/FIXME/STUB/PARTIAL scan run on active code paths.
-- [x] ABI/FFI file inventory run (`*.idr`, `*.zig`).
+- [x] ABI/FFI file inventory run (`*.idr`).
 - [x] Active-code marker count reduced/triaged; remaining items tracked in release audit.
 
 ### 13.4 Security/Panic Pass
@@ -472,7 +471,7 @@ Repo: `/tmp/eclexia-releaseprep` (branch `release-prep`, base `533ec9e9447f37413
 
 - [x] Stable `v1.0.0` technical gate readiness met (quality + panic scan clean).
 - [x] Parser/codegen/runtime panic-path hardening completed for scanner-flagged paths.
-- [x] Non-eclexia `proven` library checked: already Idris2-first with Zig ABI bridge; no additional integration changes required in this run.
+- [x] Non-eclexia `proven` library checked: already Idris2-first with a C ABI bridge; no additional integration changes required in this run.
 - [ ] Remote push blocked by token scope: GitHub rejected branch updates (`release-prep`, `release-prep-pushable`) due missing `workflow` OAuth scope.
 
 ### 13.8 Artifacts

@@ -118,9 +118,6 @@ RSR compliance verdict: *met* / *partial* / *not met* — Grade D floor satisfie
 | N files, N LOC
 | Note any proof modules that typecheck green.
 
-| Zig FFI modules (`ffi/zig/src/*.zig`)
-| N files, N LOC
-| Call out largest modules.
 
 | <<Repo-specific unit>> (e.g. cartridges, panels, plugins)
 | N directories/files
@@ -163,7 +160,7 @@ v2.0 C requires **per-file and per-directory orientation**. Evidence checklist:
   and note whether purpose comments, invariants, and boundary conditions
   are documented.
 - Per-subtree README: which non-trivial source subtrees lack an orienting
-  README (e.g. `<unit>/`, `.machine_readable/`, `ffi/zig/src/`).
+  README (e.g. `<unit>/`, `.machine_readable/`).
 
 === Dogfooding / home-stable evidence
 

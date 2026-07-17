@@ -87,7 +87,6 @@ build *args:
     # Examples:
     #   cargo build {{args}}                    # Rust
     #   mix compile {{args}}                    # Elixir
-    #   zig build {{args}}                      # Zig
     #   deno task build {{args}}                # Deno/ReScript
     @echo "Build complete"
 
@@ -98,7 +97,6 @@ build-release *args:
     # Examples:
     #   cargo build --release {{args}}
     #   MIX_ENV=prod mix compile {{args}}
-    #   zig build -Doptimize=ReleaseFast {{args}}
     @echo "Release build complete"
 
 # Build and watch for changes (requires entr or similar)
@@ -131,7 +129,6 @@ test *args:
     # Examples:
     #   cargo test {{args}}
     #   mix test {{args}}
-    #   zig build test {{args}}
     #   deno test {{args}}
     @echo "Tests passed!"
 
@@ -173,7 +170,6 @@ bench:
     @echo "Running benchmarks..."
     # TODO: Replace with your benchmark command. Examples:
     #   cargo bench                           # Rust criterion
-    #   zig build bench                       # Zig benchmarks
     #   mix run bench/benchmarks.exs          # Elixir benchee
     #   deno bench                            # Deno bench
     @echo "Benchmarks complete!"
@@ -662,11 +658,11 @@ release-tag version:
 
 # Count lines of code
 loc:
-    @find . \( -name "*.rs" -o -name "*.ex" -o -name "*.exs" -o -name "*.res" -o -name "*.gleam" -o -name "*.zig" -o -name "*.idr" -o -name "*.hs" -o -name "*.ncl" -o -name "*.scm" -o -name "*.adb" -o -name "*.ads" \) -not -path './target/*' -not -path './_build/*' 2>/dev/null | xargs wc -l 2>/dev/null | tail -1 || echo "0"
+    @find . \( -name "*.rs" -o -name "*.ex" -o -name "*.exs" -o -name "*.res" -o -name "*.gleam" -o -name "*.idr" -o -name "*.hs" -o -name "*.ncl" -o -name "*.scm" -o -name "*.adb" -o -name "*.ads" \) -not -path './target/*' -not -path './_build/*' 2>/dev/null | xargs wc -l 2>/dev/null | tail -1 || echo "0"
 
 # Show TODO comments
 todos:
-    @grep -rn "TODO\|FIXME\|HACK\|XXX" --include="*.rs" --include="*.ex" --include="*.res" --include="*.gleam" --include="*.zig" --include="*.idr" --include="*.hs" . 2>/dev/null || echo "No TODOs"
+    @grep -rn "TODO\|FIXME\|HACK\|XXX" --include="*.rs" --include="*.ex" --include="*.res" --include="*.gleam" --include="*.idr" --include="*.hs" . 2>/dev/null || echo "No TODOs"
 
 # Open in editor
 edit:
