@@ -33,26 +33,6 @@ cargo fuzz run my_target -- -max_total_time=300
 The `cargo fuzz init` command creates `fuzz/Cargo.toml` and `fuzz/fuzz_targets/`.
 Move or symlink those into `tests/fuzz/` to keep the RSR directory layout.
 
-=== Zig (built-in fuzzing, Zig 0.14+)
-
-[source,zig]
-----
-// tests/fuzz/fuzz_parser.zig
-const std = @import("std");
-
-test "fuzz parser" {
-    // Zig's built-in fuzz testing
-    const input = std.testing.fuzzInput(.{});
-    // Call your parser with arbitrary input
-    _ = mylib.parse(input) catch {};
-}
-----
-
-[source,bash]
-----
-zig build test --fuzz
-----
-
 === Elixir (stream_data property-based testing)
 
 [source,elixir]

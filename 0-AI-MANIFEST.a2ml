@@ -5,15 +5,15 @@
 #
 [metadata]
 version = "0.1.0"
-last-updated = "2026-04-14"
+last-updated = "2026-07-16"
 
 [project]
-name = "pseudoscript"
-purpose = "Pseudocode-syntax AffineScript. Write code that looks like pseudocode. Get affine resource guarantees and typed WASM out."
+name = "bofj-kitt"
+purpose = "Shared Developer Environment Extension Kit (the SuperChainsaw) for the BoJ (Box of Justice) server. Provisions and extends estate-compliant developer environments and registers them with the BoJ MCP gateway."
 
 [ai-allocation]
 agents = [
-  { name = "CLAUDE", role = "proofs, compilers, repo-local implementation, CI/CD, formal verification, Rust/Idris2/Zig" },
+  { name = "CLAUDE", role = "repo-local implementation, CI/CD, formal verification, kit tooling" },
   { name = "CHATGPT", role = "prose, papers, publication review, standards docs, outreach drafts, letters" },
   { name = "GEMINI", role = "estate audits, cross-repo sweeps, long-context triage, pattern detection" },
   { name = "VIBE", role = "UI/frontend, PanLL panels, ReScript components, theming, rapid prototyping" },
@@ -27,8 +27,8 @@ rules = [
 
 [work-allocation]
 items = [
-  { agent = "CLAUDE", task = "proofs, compilers, repo-local implementation, CI/CD, formal verification, Rust/Idris2/Zig" },
+  { agent = "CLAUDE", task = "repo-local implementation, CI/CD, formal verification, kit tooling" },
   { agent = "CHATGPT", task = "prose, papers, publication review, standards docs, outreach drafts, letters" },
   { agent = "GEMINI", task = "estate audits, cross-repo sweeps, long-context triage, pattern detection" },
-  { agent = "VIBE", role = "UI/frontend, PanLL panels, ReScript components, theming, rapid prototyping" },
+  { agent = "VIBE", task = "UI/frontend, PanLL panels, ReScript components, theming, rapid prototyping" },
 ]

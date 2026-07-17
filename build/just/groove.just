@@ -7,7 +7,7 @@
 # Recipes here configure and validate the Groove protocol manifest at
 # .machine_readable/integrations/groove.a2ml — port assignment, API surface
 # flags (REST/gRPC/GraphQL/WebSocket/SSE), and template-placeholder hygiene.
-# The manifest itself is consumed by the Groove bridge / zig-unified-api-adapter.
+# The manifest itself is consumed by the Groove bridge / unified API adapter.
 
 # Configure Groove protocol manifest (port assignment, API surfaces)
 groove-setup:

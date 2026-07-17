@@ -2,6 +2,7 @@
 # Cross-repo maintenance baseline (machine-readable canonical)
 
 [metadata]
+name = "maintenance-checklist"
 version = "1.1.0"
 last-updated = "2026-02-24"
 scope = "cross-repo"
@@ -133,7 +134,6 @@ quality_gate_required = [
 
 abi_ffi_policy = [
   "ABI Idris2 in src/interface/Abi/*.idr (or src/interface/abi/*.idr)",
-  "FFI Zig in ffi/**/*.zig",
 ]
 
 [should]

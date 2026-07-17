@@ -1,6 +1,0 @@
-// SPDX-License-Identifier: MPL-2.0
-// Simple test for the interpreter
-
-fn add(x: Int, y: Int) -> Int {
-  x + y
-}

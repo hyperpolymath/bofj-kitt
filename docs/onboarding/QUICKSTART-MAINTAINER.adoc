@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // Template: QUICKSTART-MAINTAINER.adoc — packaging, deploying, and maintaining
-// Replace rsr-template-repo, {{PACKAGE_NAME}}, {{DEPS}} with actuals
-= rsr-template-repo — Quick Start for Platform Maintainers
+// Replace bofj-kitt, {{PACKAGE_NAME}}, {{DEPS}} with actuals
+= bofj-kitt — Quick Start for Platform Maintainers
 :toc:
 :toclevels: 2
 
 == Overview
 
-This guide covers packaging, deploying, and maintaining rsr-template-repo for
+This guide covers packaging, deploying, and maintaining bofj-kitt for
 distribution on your platform.
 
 == Runtime Dependencies
@@ -18,8 +18,8 @@ distribution on your platform.
 
 [source,bash]
 ----
-git clone https://github.com/hyperpolymath/rsr-template-repo.git
-cd rsr-template-repo
+git clone https://github.com/hyperpolymath/bofj-kitt.git
+cd bofj-kitt
 just build-release
 ----
 
@@ -46,7 +46,7 @@ nix build
 [source,bash]
 ----
 just stapeln-export    # Generates Containerfile
-podman build -t rsr-template-repo .
+podman build -t bofj-kitt .
 ----
 
 === Manual Package
@@ -125,5 +125,5 @@ Each instance has isolated config, data, and logs.
 
 == Reporting Issues
 
-* Upstream: https://github.com/hyperpolymath/rsr-template-repo/issues
+* Upstream: https://github.com/hyperpolymath/bofj-kitt/issues
 * With diagnostic: `just help-me` (pre-fills context)

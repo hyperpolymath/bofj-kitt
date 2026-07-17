@@ -19,9 +19,9 @@ set positional-arguments := true
 import? "build/contractile.just"
 
 # Project metadata — customize these
-project := "rsr-template-repo"
+project := "bofj-kitt"
 OWNER := "hyperpolymath"
-REPO := "rsr-template-repo"
+REPO := "bofj-kitt"
 version := "0.1.0"
 tier := "infrastructure"  # 1 | 2 | infrastructure
 
@@ -87,7 +87,6 @@ build *args:
     # Examples:
     #   cargo build {{args}}                    # Rust
     #   mix compile {{args}}                    # Elixir
-    #   zig build {{args}}                      # Zig
     #   deno task build {{args}}                # Deno/ReScript
     @echo "Build complete"
 
@@ -98,7 +97,6 @@ build-release *args:
     # Examples:
     #   cargo build --release {{args}}
     #   MIX_ENV=prod mix compile {{args}}
-    #   zig build -Doptimize=ReleaseFast {{args}}
     @echo "Release build complete"
 
 # Build and watch for changes (requires entr or similar)
@@ -131,7 +129,6 @@ test *args:
     # Examples:
     #   cargo test {{args}}
     #   mix test {{args}}
-    #   zig build test {{args}}
     #   deno test {{args}}
     @echo "Tests passed!"
 
@@ -173,7 +170,6 @@ bench:
     @echo "Running benchmarks..."
     # TODO: Replace with your benchmark command. Examples:
     #   cargo bench                           # Rust criterion
-    #   zig build bench                       # Zig benchmarks
     #   mix run bench/benchmarks.exs          # Elixir benchee
     #   deno bench                            # Deno bench
     @echo "Benchmarks complete!"
@@ -185,16 +181,16 @@ readiness:
     #   cargo test --test readiness -- --nocapture
     @echo "Readiness tests complete!"
 
-# Print the current CRG grade (reads from READINESS.md '**Current Grade:** X' line)
+# Print the current CRG grade (reads "*Current Grade:* X" from docs/status/READINESS.adoc)
 crg-grade:
-    @grade=$$(grep -oP '(?<=\*\*Current Grade:\*\* )[A-FX]' READINESS.md 2>/dev/null | head -1); \
+    @grade=$$(grep -oP '(?<=\*Current Grade:\* )[A-FX]' docs/status/READINESS.adoc 2>/dev/null | head -1); \
     [ -z "$$grade" ] && grade="X"; \
     echo "$$grade"
 
 # Print a shields.io CRG badge for embedding in README files
-# Looks for '**Current Grade:** X' in READINESS.md; falls back to X
+# Looks for "*Current Grade:* X" in docs/status/READINESS.adoc; falls back to X
 crg-badge:
-    @grade=$$(grep -oP '(?<=\*\*Current Grade:\*\* )[A-FX]' READINESS.md 2>/dev/null | head -1); \
+    @grade=$$(grep -oP '(?<=\*Current Grade:\* )[A-FX]' docs/status/READINESS.adoc 2>/dev/null | head -1); \
     [ -z "$$grade" ] && grade="X"; \
     case "$$grade" in \
       A) color="brightgreen" ;; \
@@ -662,11 +658,11 @@ release-tag version:
 
 # Count lines of code
 loc:
-    @find . \( -name "*.rs" -o -name "*.ex" -o -name "*.exs" -o -name "*.res" -o -name "*.gleam" -o -name "*.zig" -o -name "*.idr" -o -name "*.hs" -o -name "*.ncl" -o -name "*.scm" -o -name "*.adb" -o -name "*.ads" \) -not -path './target/*' -not -path './_build/*' 2>/dev/null | xargs wc -l 2>/dev/null | tail -1 || echo "0"
+    @find . \( -name "*.rs" -o -name "*.ex" -o -name "*.exs" -o -name "*.res" -o -name "*.gleam" -o -name "*.idr" -o -name "*.hs" -o -name "*.ncl" -o -name "*.scm" -o -name "*.adb" -o -name "*.ads" \) -not -path './target/*' -not -path './_build/*' 2>/dev/null | xargs wc -l 2>/dev/null | tail -1 || echo "0"
 
 # Show TODO comments
 todos:
-    @grep -rn "TODO\|FIXME\|HACK\|XXX" --include="*.rs" --include="*.ex" --include="*.res" --include="*.gleam" --include="*.zig" --include="*.idr" --include="*.hs" . 2>/dev/null || echo "No TODOs"
+    @grep -rn "TODO\|FIXME\|HACK\|XXX" --include="*.rs" --include="*.ex" --include="*.res" --include="*.gleam" --include="*.idr" --include="*.hs" . 2>/dev/null || echo "No TODOs"
 
 # Open in editor
 edit:
@@ -683,7 +679,7 @@ assail:
 
 # Self-diagnostic — checks dependencies, permissions, paths
 doctor:
-    @echo "Running diagnostics for rsr-template-repo..."
+    @echo "Running diagnostics for bofj-kitt..."
     @echo "Checking required tools..."
     @command -v just >/dev/null 2>&1 && echo "  [OK] just" || echo "  [FAIL] just not found"
     @command -v git >/dev/null 2>&1 && echo "  [OK] git" || echo "  [FAIL] git not found"
@@ -693,7 +689,7 @@ doctor:
 
 # Guided tour of key features
 tour:
-    @echo "=== rsr-template-repo Tour ==="
+    @echo "=== bofj-kitt Tour ==="
     @echo ""
     @echo "1. Project structure:"
     @ls -la
@@ -708,12 +704,12 @@ tour:
 
 # Open feedback channel with diagnostic context
 help-me:
-    @echo "=== rsr-template-repo Help ==="
+    @echo "=== bofj-kitt Help ==="
     @echo "Platform: $(uname -s) $(uname -m)"
     @echo "Shell: $SHELL"
     @echo ""
     @echo "To report an issue:"
-    @echo "  https://github.com/hyperpolymath/rsr-template-repo/issues/new"
+    @echo "  https://github.com/hyperpolymath/bofj-kitt/issues/new"
     @echo ""
     @echo "Include the output of 'just doctor' in your report."
 

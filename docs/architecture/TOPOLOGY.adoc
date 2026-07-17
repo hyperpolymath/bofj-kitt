@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
-// Last updated: 2026-04-04
+// Last updated: 2026-07-16
 = Architecture Topology
 
 == System Overview
 
-RSR (Rhodium Standard Repository) template provides the canonical scaffold for all hyperpolymath projects, with integrated CI/CD, documentation, and service discovery patterns.
+bofj-kitt is the hyperpolymath estate's shared developer-environment extension
+kit. It provisions an estate-compliant developer environment, wires in the RSR
+session protocols, and registers the environment with a BoJ (Box of Justice)
+server — the estate's verified MCP gateway — for build and service discovery.
+
+NOTE: Pre-alpha. The product surfaces below are the intended topology; only the
+governance and BoJ-trigger plumbing exist today. See
+`docs/status/ROADMAP.adoc`.
 
 == Component Overview
 
@@ -12,24 +19,31 @@ RSR (Rhodium Standard Repository) template provides the canonical scaffold for a
 |===
 | Component | Language | Purpose
 
-| dogfood-gate workflow | YAML | Quality checks (CRG, security, linting)
-| eclexiaiser-validate job | YAML | Resource cost awareness scoring
-| Groove discovery | JSON | Service endpoint registration
+| session dispatcher | Shell | Binds canonical session commands to the central `standards` protocols
+| governance CI | YAML | Root-shape, OpenSSF compliance, dogfood gate, Hypatia scan, Scorecard
+| boj-build trigger | YAML | Posts build events to a BoJ server's `ssg-mcp` cartridge (gated on `BOJ_SERVER_URL`)
+| Groove discovery | JSON | Service endpoint registration (`.well-known/groove/manifest.json`)
+| kit CLI | _TBD (M3)_ | Provision/extend/connect a developer environment (not yet implemented)
 |===
 
 == Data Flow
 
 ----
-[Code Push] → [GitHub Actions] → [hypatia scan] → [eclexiaiser validate] → [Results]
+[developer environment]
+      → [bofj-kitt: provision + wire session protocols]      (M2–M3, planned)
+      → [register via Groove manifest]                       (M2, planned)
+      → [BoJ server (MCP gateway): ssg-mcp cartridge]        (boj-build.yml, live when configured)
 ----
 
 == Integration Points
 
-* *Upstream*: Hypatia (neurosymbolic CI/CD), eclexiaiser (resource scoring)
-* *Downstream*: All RSR-based repositories (500+ instances)
+* *Upstream*: `standards` (reusable CI + session-management standards),
+  Hypatia (neurosymbolic scan), eclexiaiser (resource scoring).
+* *Downstream / peer*: `boj-server` (the BoJ MCP gateway this kit extends).
 
 == Deployment
 
-* Container: Stapeln Six ecosystem
-* CI/CD: GitHub Actions → Hypatia scan → eclexiaiser-validate (6 scorecard dimensions) → Mirror
-* Service Discovery: Groove protocol (.well-known/groove/manifest.json)
+* CI/CD: GitHub Actions → Hypatia scan → dogfood gate → Scorecard → multi-forge mirror.
+* BoJ trigger: `boj-build.yml` → `${BOJ_SERVER_URL}/cartridges/ssg-mcp/invoke`
+  (no-op unless `BOJ_SERVER_URL` is set).
+* Service Discovery: Groove protocol (`.well-known/groove/manifest.json`).

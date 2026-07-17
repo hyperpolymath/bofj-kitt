@@ -2,6 +2,7 @@
 ---
 ### [TSDM_SPEC]
 id: "tsdm-standard"
+name: "tsdm-standard"
 version: "1.0.0"
 
 axes:

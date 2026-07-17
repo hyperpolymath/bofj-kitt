@@ -34,9 +34,6 @@
 # Base: cgr.dev/chainguard/wolfi-base:latest
 
 # ABI/FFI STANDARD
-# ABI definitions: Idris2 with dependent types (src/interface/abi/)
-# FFI implementation: Zig with C ABI (src/interface/ffi/)
-# Generated C headers: src/interface/generated/
 
 # BUILD SYSTEM
 # Use just (justfile) for all build, test, lint, and format tasks.

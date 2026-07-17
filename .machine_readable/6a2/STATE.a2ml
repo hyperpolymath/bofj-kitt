@@ -1,49 +1,44 @@
 # SPDX-License-Identifier: MPL-2.0
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
-# STATE.a2ml — Project state checkpoint (META-TEMPLATE)
+# STATE.a2ml — Project state checkpoint
 #
 # This is the STATE file for bofj-kitt.
-# When consumed by a new project, replace {{PLACEHOLDER}} tokens
-# and customize sections below for the target project.
 
 [metadata]
 project = "bofj-kitt"
-version = "0.2.0"
-last-updated = "2026-02-28"
+version = "0.3.0"
+last-updated = "2026-07-16"
 status = "active"  # active | paused | archived
 
 [project-context]
 name = "bofj-kitt"
-purpose = "Canonical RSR-compliant repository template providing scaffolding for all hyperpolymath projects — including CI/CD, AI manifests, ABI/FFI standards, container ecosystem, and governance infrastructure."
-completion-percentage = 95
+purpose = "Shared Developer Environment Extension Kit (the SuperChainsaw) for the BoJ (Box of Justice) server — provisions and extends estate-compliant developer environments and registers them with the BoJ MCP gateway."
+completion-percentage = 5
 
 [position]
-phase = "maintenance"      # design | implementation | testing | maintenance | archived
-maturity = "production"    # experimental | alpha | beta | production | lts
+phase = "design"           # design | implementation | testing | maintenance | archived
+maturity = "experimental"  # experimental | alpha | beta | production | lts
 
 [route-to-mvp]
 milestones = [
-  { name = "Phase 0: Core scaffolding (justfile, CI/CD, .machine_readable)", completion = 100 },
-  { name = "Phase 1: ABI/FFI standard (Idris2/Zig templates)", completion = 100 },
-  { name = "Phase 1b: AI Gatekeeper Protocol (0-AI-MANIFEST.a2ml)", completion = 100 },
-  { name = "Phase 1c: TOPOLOGY.md standard and guide", completion = 100 },
-  { name = "Phase 1d: Maintenance gate (axes, checklist, approach)", completion = 100 },
-  { name = "Phase 1e: Trustfile / contractiles", completion = 100 },
-  { name = "Phase 2: Container ecosystem templates (stapeln)", completion = 100 },
-  { name = "Phase 3: Multi-forge sync hardening", completion = 0 },
-  { name = "Phase 4: Nix/Guix reproducible shells", completion = 50 },
+  { name = "M0: Truthful identity + green governance CI + committed assessment/roadmap", completion = 90 },
+  { name = "M1: Finish placeholder-token fills; restore full SECURITY policy; curate template docs", completion = 0 },
+  { name = "M2: Product spec — define an 'extension'; kit artifact list; BoJ integration contract", completion = 0 },
+  { name = "M3: Choose implementation language; re-add real e2e workflow", completion = 0 },
+  { name = "M4: First shippable kit artifact + per-capability tests (CRG D)", completion = 0 },
+  { name = "M5: Live BoJ-server integration + dogfooding (CRG C -> B)", completion = 0 },
 ]
 
 [blockers-and-issues]
-# No active blockers
+# Blocked on product definition (M2): testing and language choice cannot begin
+# until the kit's first capability is specified.
 
 [critical-next-actions]
 actions = [
-  "Container templates complete — test with `just container-init`",
-  "Validate container templates across wolfi-base and static Chainguard images",
-  "Harden multi-forge sync for GitLab/Bitbucket mirroring edge cases",
-  "Expand Nix/Guix development shell templates",
+  "M1 — fill the remaining ~75 placeholder-token files (container/, .devcontainer/, .github/*)",
+  "M1 — restore a full SECURITY policy once PGP material exists",
+  "M2 — specify the kit's first capability and its BoJ integration contract",
 ]
 
 [maintenance-status]
@@ -54,11 +49,5 @@ open-warnings = 0
 open-failures = 0
 
 [ecosystem]
-part-of = ["RSR Framework", "stapeln ecosystem"]
-depends-on = ["stapeln", "selur-compose", "cerro-torre", "svalinn", "vordr", "k9-svc"]
-
-# ---------------------------------------------------------------------------
-# NOTE FOR CONSUMERS: When using this template to create a new repo, reset
-# the fields above to your project's values and replace all {{PLACEHOLDER}}
-# tokens. The milestones above describe the TEMPLATE's evolution, not yours.
-# ---------------------------------------------------------------------------
+part-of = ["BoJ (Box of Justice) ecosystem", "RSR Framework"]
+depends-on = ["boj-server"]

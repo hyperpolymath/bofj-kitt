@@ -3,188 +3,107 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 SPDX-FileCopyrightText: 2025-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 -->
 
-[![OpenSSF Best Practices](https://img.shields.io/badge/OpenSSF-Best_Practices-green?logo=opensourcesecurity)](https://www.bestpractices.dev/en/projects/new?repo_url=https://github.com/hyperpolymath/rsr-template-repo)
 [![License: MPL-2.0](https://img.shields.io/badge/License-MPL--2.0-blue.svg)](https://www.mozilla.org/MPL/2.0/)
-<embed
-src="https://api.thegreenwebfoundation.org/greencheckimage/github.com"
-data-link="https://www.thegreenwebfoundation.org/green-web-check/?url=github.com" />
+[![Docs: CC-BY-SA-4.0](https://img.shields.io/badge/Docs-CC--BY--SA--4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 
-Pseudocode-syntax AffineScript. Write code that looks like pseudocode.
-Get affine resource guarantees and typed WASM out.
+# bofj-kitt
 
-**Status: alpha** — the syntax, type checker, and WASM output are solid.
-Effects runtime is in progress upstream.
+**Shared Developer Environment Extension Kit** — the "SuperChainsaw" for the
+**BoJ (Box of Justice) server**.
 
-------------------------------------------------------------------------
+> **Status: pre-alpha scaffold.** This repository has its identity, governance,
+> and CI in place, but **no product code yet**. What the kit will do is
+> specified in [the roadmap](docs/status/ROADMAP.adoc); how it got to this
+> honest baseline is recorded in the
+> [repo assessment](docs/reports/audit/repo-assessment-2026-07-16.adoc).
 
-# What it is
+---
 
-PseudoScript is
-[AffineScript](https://github.com/hyperpolymath/affinescript) with its
-pseudocode face pre-selected. If you write pseudocode, you already know
-most of the syntax.
+## What it is
 
-The compiler checks that your resources (files, sockets, tokens) are
-used **exactly as many times as you say** — and proves it at compile
-time. No null pointer exceptions. No use-after-free. No silent data
-races.
+bofj-kitt is the hyperpolymath estate's shared **developer-environment layer**.
+The estate runs on the [RSR (Rhodium Standard Repository)](https://github.com/hyperpolymath/standards)
+framework — every repo carries the same governance, session protocols, and
+machine-readable state. bofj-kitt's job is to make that environment
+**provisionable and extensible from one place** instead of copy-pasted per repo:
 
-```pseudocode
-FUNCTION greet(name: STRING) RETURNS STRING
-    RETURN "Hello, " + name + "!"
-END FUNCTION
+- **provision** an estate-compliant developer environment (devcontainer / Guix /
+  toolchains — the scaffolding under [`.devcontainer/`](.devcontainer/),
+  [`container/`](container/), and [`build/`](build/));
+- **wire in** the estate session protocols (the dispatcher under
+  [`session/`](session/); see [EXPLAINME.adoc](EXPLAINME.adoc));
+- **register** the environment with a **BoJ server** — the estate's verified
+  MCP gateway — over the Groove service-discovery manifest. The
+  [`boj-build`](.github/workflows/boj-build.yml) workflow already posts build
+  events to a BoJ server's `ssg-mcp` cartridge when `BOJ_SERVER_URL` is set.
 
-FUNCTION main() RETURNS VOID
-    LET msg = greet("world")
-    PRINT(msg)
-END FUNCTION
-```
+The BoJ server itself lives at
+[hyperpolymath/boj-server](https://github.com/hyperpolymath/boj-server).
 
-Save as `hello.pseudo` and run:
+## Why "SuperChainsaw"?
 
-```bash
-pseudo eval hello.pseudo
-```
+A chainsaw for a developer environment: one tool that cuts through the
+repetitive work of standing up, extending, and connecting a compliant dev setup
+across the estate — rather than reproducing it by hand in every repository.
 
-# Why Pseudocode syntax?
+## Status & honesty
 
-Because pseudocode programmers deserve a sound type system.
+This repo was scaffolded from the RSR template and has been brought to a
+**truthful baseline**: one consistent identity, governance CI that passes its
+own estate rules, and a committed assessment + roadmap. It deliberately does
+**not** claim working features it does not have.
 
-PseudoScript is pseudocode’s more dangerous cousin — same comfortable
-whitespace-delimited blocks, but with teeth: the compiler tracks
-**ownership** of every value so you cannot accidentally drop, duplicate,
-or outlive a resource. You never null-check. You never wonder if a
-function consumes its argument or borrows it. The type says so.
+- **CRG grade: X (Untested)** — see [READINESS](docs/status/READINESS.adoc). No
+  product components exist yet, so there is nothing to grade.
+- The vendored copy of another project (AffineScript) and an uninstantiated
+  template ABI/FFI have been removed; see the
+  [assessment](docs/reports/audit/repo-assessment-2026-07-16.adoc) for the full
+  before/after.
 
-The mascot is a pseudocode.
+## The journey (roadmap)
 
-# Surface mappings
+| Milestone | Goal |
+|---|---|
+| **M0** *(this pass)* | Truthful identity, green governance CI, committed assessment + roadmap |
+| **M1** | Finish placeholder-token fills; restore a full SECURITY policy; curate remaining template docs |
+| **M2** | Product spec — define what an "extension" is; the kit's first surfaces; the BoJ integration contract |
+| **M3** | Choose the implementation language; re-add a real end-to-end workflow |
+| **M4** | First shippable kit capability + per-capability tests → CRG **D** |
+| **M5** | Live BoJ-server integration + dogfooding → CRG **C**, then external targets → **B** |
 
-| Pseudocode surface | What it means in PseudoScript |
-|----|----|
-| `FUNCTION` `f(x:` `T)` `RETURNS` `R:` | function declaration |
-| `TRUE` / `FALSE` | `true` / `false` |
-| `NULL` | unit `()` — not null, genuinely nothing |
-| `AND` / `OR` / `NOT` | `&&` / \` |
-|  | \` / `!` |
-| `CLASS` `Name:` | `type` `Name` (algebraic data type) |
-| `PASS` | `()` (unit expression) |
-| `IMPORT` `a.b` | `use` `a::b;` |
-| `FROM` `a` `IMPORT` `b` | `use` `a::b;` |
-| `IF` `cond:` / `ELSE:` | `if` `cond` `{` `…` `}` `else` `{` `…` `}` |
-| `ELIF` `cond:` | `}` `else` `if` `cond` `{` |
-| `FOR` `x` `IN` `e:` | `for` `x` `in` `e` `{` `…` `}` |
-| `MATCH` `e:` | `match` `e` `{` `…` `}` |
-| `#` `comment` |  |
+Full detail: [docs/status/ROADMAP.adoc](docs/status/ROADMAP.adoc).
 
-Run `pseudo` `preview-pseudocode-transform` `<file>` to see the
-canonical AffineScript that the preprocessor generates from any
-`.pseudo` file.
+## Repository shape
 
-# Getting started
+- [`session/`](session/) — session-protocol dispatcher (integration layer over
+  the central `standards` repo).
+- [`.machine_readable/`](.machine_readable/) — machine-readable state, AI
+  manifests, contractiles, and estate metadata (`CLADE.a2ml` holds this repo's
+  registry identity).
+- [`.github/workflows/`](.github/workflows/) — estate governance CI (root-shape,
+  OpenSSF compliance, dogfood gate, Hypatia scan, Scorecard, secret scanner,
+  BoJ build trigger, multi-forge mirror).
+- [`docs/`](docs/) — governance, status, onboarding, and reports (AsciiDoc; the
+  estate does not permit `.md` under `docs/`).
+- [`verification/`](verification/) — a five-prover verification skeleton
+  (Idris2, Coq, Lean4, Agda, TLA+) awaiting product-specific proofs.
 
-## Prerequisites
+## Building & running
 
-- [OCaml](https://ocaml.org/) + [dune](https://dune.build/) (for the
-  compiler)
+There is nothing to build yet — the implementation language is chosen at M3.
+The [`Justfile`](Justfile) exposes the estate's task surface (session commands,
+CRG grading, changelog, governance checks); product `build`/`test`/`run`
+recipes are wired once the kit's first capability lands (M2–M3).
 
-- [Rust](https://www.rust-lang.org/) + cargo (for the `pseudo` wrapper)
+## Contributing
 
-- [just](https://just.systems/) (task runner)
+See [CONTRIBUTING.md](CONTRIBUTING.md). This is an early-stage estate repo;
+the most useful contributions right now are on the product spec (M2) — what a
+BoJ dev-environment "extension" should be.
 
-## Install from source
+## License
 
-```bash
-git clone --recurse-submodules https://github.com/hyperpolymath/pseudoscript
-cd pseudoscript
+- **Code:** [MPL-2.0](LICENSE).
+- **Documentation:** CC-BY-SA-4.0.
 
-# Build affinescript compiler + pseudo wrapper in one step
-just bootstrap
-
-# Optional: install pseudo to ~/.cargo/bin
-just install
-```
-
-## Usage
-
-```bash
-pseudo check   hello.pseudo      # type-check
-pseudo eval    hello.pseudo      # run
-pseudo compile hello.pseudo      # compile to WASM
-pseudo fmt     hello.pseudo      # format
-pseudo lint    hello.pseudo      # static analysis
-
-# See what the pseudocode preprocessor produces
-pseudo preview-pseudocode-transform hello.pseudo
-```
-
-`.pseudo` files are detected automatically — no `--face` flag needed.
-You can also use `.pyaff` if you prefer the AffineScript naming.
-
-# Ownership in one minute
-
-```pseudocode
-# @linear means: use this exactly once.
-FUNCTION send_token(@linear token: AuthToken) RETURNS Receipt:
-    network.submit(token)   # consumes token — compiler verifies this
-END FUNCTION
-
-# Option instead of None crashes.
-FUNCTION safe_divide(a: Int, b: Int) RETURNS Option[Int]:
-    IF b == 0:
-        NONE
-    ELSE:
-        SOME(a / b)
-    END IF
-END FUNCTION
-
-FUNCTION show(result: Option[Int]) RETURNS VOID:
-    MATCH result:
-        SOME(n) => IO.println(Int.to_string(n))
-        NONE    => IO.println("no result")
-    END MATCH
-END FUNCTION
-```
-
-The compiler rejects any program that drops a `@linear` value unused,
-uses it more than once, or tries to treat `NONE` as a value.
-
-# Relationship to AffineScript
-
-PseudoScript **is** AffineScript. Same compiler, same type system, same
-WASM output. The difference is `--face` `pseudocode` is the default and
-the entry point is `pseudo` instead of `affinescript`.
-
-The affinescript compiler lives in the `affinescript/` submodule of this
-repo. `just` `update-affinescript` bumps the pointer to the latest
-upstream release — all language improvements flow through automatically.
-
-Face logic: `affinescript/lib/pseudocode_face.ml` (syntax transform) and
-`affinescript/lib/face.ml` (error vocabulary). No compiler internals
-change when the face changes.
-
-# Alpha caveats
-
-- **Effects runtime**: `effect`/`handle` syntax is type-checked but not
-  yet executed at runtime. The effects story is coming in a
-  near-upstream release.
-
-- **Closures and linear captures**: lambda-body linear capture tracking
-  is conservative in the current release.
-
-- **Span fidelity**: error locations refer to the transformed canonical
-  source, not the original `.pseudo` line numbers. Source-map remapping
-  is planned.
-
-# Contributing
-
-This repo is a thin distribution layer. Language bugs and features go
-upstream:
-[hyperpolymath/affinescript](https://github.com/hyperpolymath/affinescript).
-
-PseudoScript-specific contributions (branding, examples, tutorials, the
-`pseudo` CLI wrapper) are welcome here.
-
-# License
-
-MPL-2.0. See [LICENSE](LICENSE).
+See [`LICENSES/`](LICENSES/) for the full texts.

@@ -1,5 +1,5 @@
 ; SPDX-License-Identifier: MPL-2.0
-; INTENT.contractile — Purpose and scope for rsr-template-repo
+; INTENT.contractile — Purpose and scope for bofj-kitt
 ; Helps LLM/SLM agents understand what this repo IS and IS NOT.
 ;
 ; Part of the contractile family: MUST, TRUST, DUST, INTENT, ADJUST
@@ -31,7 +31,7 @@
 
 (intent-contractile
   (version "1.0.0")
-  (repo "rsr-template-repo")
+  (repo "bofj-kitt")
 
   ; === Purpose (what this repo IS) ===
   (purpose
@@ -51,7 +51,6 @@
   (architectural-invariants
     ; *REMINDER: List the foundational decisions*
     ; ("Idris2 for ABI definitions — dependent types prove interface correctness")
-    ; ("Zig for FFI — zero-cost C ABI compatibility")
     ; ("Elixir for supervision — OTP fault tolerance")
   )
 
@@ -59,7 +58,6 @@
   (ask-before-touching
     ; *REMINDER: List areas where LLMs should check before modifying*
     ; "src/abi/ — formal proofs, changes require re-verification"
-    ; "ffi/zig/ — C ABI boundary, changes affect all language bindings"
     ; ".machine_readable/ — checkpoint files, format is specified"
   )
 

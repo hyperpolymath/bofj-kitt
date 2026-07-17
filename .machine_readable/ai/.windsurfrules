@@ -35,9 +35,6 @@
 # Base: cgr.dev/chainguard/wolfi-base:latest or cgr.dev/chainguard/static:latest.
 
 # ABI/FFI
-# ABI: Idris2 with dependent types (src/interface/abi/).
-# FFI: Zig with C ABI (src/interface/ffi/).
-# Headers: src/interface/generated/.
 
 # BUILD: Use just (justfile) for all tasks.
 # STYLE: Descriptive names. Document all files. SPDX headers everywhere.

@@ -41,13 +41,6 @@
 #       mix deps.get --only prod && mix compile && mix release
 #   # Output: /build/_build/prod/rel/{{SERVICE_NAME}}/
 #
-# --- Zig ---
-#   RUN apk add --no-cache zig build-base
-#   COPY build.zig build.zig.zon ./
-#   COPY src/ ./src/
-#   RUN zig build -Doptimize=ReleaseFast
-#   # Output: /build/zig-out/bin/{{SERVICE_NAME}}
-#
 FROM cgr.dev/chainguard/wolfi-base:latest AS builder
 
 # TODO: Install your language toolchain
@@ -98,7 +91,6 @@ WORKDIR /app
 # Examples:
 #   COPY --from=builder /build/target/release/{{SERVICE_NAME}} /app/{{SERVICE_NAME}}
 #   COPY --from=builder /build/_build/prod/rel/{{SERVICE_NAME}} /app/release/
-#   COPY --from=builder /build/zig-out/bin/{{SERVICE_NAME}} /app/{{SERVICE_NAME}}
 
 # Copy entrypoint script
 COPY container/entrypoint.sh /app/entrypoint.sh

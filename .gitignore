@@ -102,7 +102,6 @@ sync_report*.txt
 
 # Hypatia scan cache (local-only)
 .hypatia/
-.zig-cache/
 target/
 node_modules/
 _build/
@@ -119,3 +118,6 @@ dist/
 # target/build/) — only the root-level path is exempt.
 !/build/
 !/build/**
+
+# Claude Code local session artifacts (permission grants, not repo content)
+.claude/

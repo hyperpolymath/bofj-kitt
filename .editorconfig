@@ -26,9 +26,6 @@ indent_size = 2
 [*.exs]
 indent_size = 2
 
-[*.zig]
-indent_size = 4
-
 [*.ada]
 indent_size = 3
 

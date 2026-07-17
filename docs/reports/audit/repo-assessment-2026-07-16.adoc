@@ -1,0 +1,156 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= bofj-kitt — Repository Potential Assessment
+:date: 2026-07-16
+:toc:
+
+Date: 2026-07-16 +
+Repository: `hyperpolymath/bofj-kitt` +
+Assessor: Claude (repo-potential-assessment session)
+
+== Executive summary
+
+bofj-kitt was scaffolded from the RSR (Rhodium Standard Repository) template on
+2026-03-16 and, until this pass, had never been given its own identity. It
+carried *three contradictory identities*, ~88 files of unfilled `{{TOKEN}}`
+placeholders, a vendored 4.9 MB copy of an unrelated project, and governance CI
+that failed deterministically on several of its own estate rules.
+
+The repository's only recorded statement of purpose was its GitHub description:
+*"Shared Developer Environment Extension Kitt (also known as the SuperChainsaw
+for the BoJ Server)"*. This assessment adopts that as the project's purpose and
+brings the repository to an honest baseline (milestone *M0*): one truthful
+identity, governance CI that passes its own rules, and this committed
+assessment plus a roadmap.
+
+*No product code was written in this pass.* The kit itself is specified as
+future work in `docs/status/ROADMAP.adoc`.
+
+== Findings (state as discovered)
+
+=== Identity: a three-way split
+
+[cols="2,3", options="header"]
+|===
+| Source | Claimed identity
+
+| `README.md`, `0-AI-MANIFEST.a2ml`, `6a2/ECOSYSTEM.a2ml` | "pseudoscript" — a pseudocode-syntax AffineScript language
+| `Justfile`, `.machine_readable/STATE.a2ml`, `TOPOLOGY.adoc`, `TEST-NEEDS.adoc` | "rsr-template-repo" — the estate's repo template itself
+| `.machine_readable/CLADE.a2ml` | "bofj-kitt" — the only correct identity (registry uuid `f46cc03d-…`)
+|===
+
+None of the three had been reconciled. The `6a2/STATE.a2ml` even described the
+repo as the *template*, at "95% / production" — a claim about the scaffolding's
+completeness, not any product.
+
+=== Vendored affinescript subtree
+
+`affinescript/` was a 608-file, 4.9 MB copy of a different project
+(`hyperpolymath/affinescript`), committed directly (not a submodule — there was
+no `.gitmodules`). It was *headless* (missing its `bin/` CLI, so the compiler
+could not build from this copy) and carried its own `LICENSE-AGPL-3.0` inside an
+otherwise MPL-2.0 repository. The root `README.md` told users to
+`git clone --recurse-submodules` — an instruction that was false here.
+
+=== Uninstantiated template scaffolding
+
+`src/interface/` held a template Idris2 ABI (targeting `librsr`/`rsr_init`) and
+an FFI written in the estate's banned systems language, whose source contained
+literal `{{project}}` tokens *as language identifiers* — it had never compiled
+— plus stale committed `.ttc` build
+artifacts. `tests/`, `benches/`, and `verification/` tested and proved the
+*template*, not any product (`PROOF-STATUS.adoc`: 0/7 project proofs).
+
+=== Placeholder-token census
+
+~88 files carried unfilled `{{TOKEN}}` placeholders. Three of them blocked CI
+(scanned by `openssf-compliance.yml`): `META.a2ml`, `ECOSYSTEM.a2ml`, and a
+406-line unfilled `.github/SECURITY.md`.
+
+=== CI health (as discovered)
+
+[cols="2,3", options="header"]
+|===
+| Workflow | State before this pass
+
+| `estate-rules.yml` | *FAIL* — root-shape drift (incl. `README.md` itself), a `.md` under `docs/`, and the repo's own FFI files tripping the banned-language rule
+| `openssf-compliance.yml` | *FAIL* — `{{REPO}}`/`{{REPO_DESCRIPTION}}` tokens + `.github/SECURITY.md`
+| `dogfood-gate.yml` | *FAIL* — invalid YAML (embedded Python fell out of its `run:` block scalar); errored on every run
+| `e2e.yml` | *INVALID* — empty `jobs:` map
+| `rhodibot.yml` | dead `workflow_run` trigger (listened for a workflow name that did not exist)
+| `codeql.yml` | scanned `javascript-typescript` — no such code after the affinescript removal
+| `rust-ci.yml` | benign no-op (reusable's detect job skips without a `Cargo.toml`)
+| Scorecard, secret-scanner, hypatia-scan, governance, mirror, boj-build, … | healthy or secret-gated no-ops
+|===
+
+== Decisions taken this pass
+
+. *Purpose.* bofj-kitt is the shared Developer Environment Extension Kit (the
+  "SuperChainsaw") for the BoJ (Box of Justice) server — it provisions and
+  extends estate-compliant developer environments and registers them with the
+  BoJ MCP gateway. (ADR-001.)
+. *Removed `affinescript/`* entirely — residue from another project, headless,
+  and AGPL-in-an-MPL-repo. (ADR-002.)
+. *Removed `src/interface/`* — uninstantiated template ABI + a non-compiling
+  banned-language FFI + stale artifacts; nothing operative referenced it.
+. *Removed `.github/SECURITY.md`* (unfilled template) in favour of the real,
+  substantive root `SECURITY.md`.
+. *Retargeted `codeql.yml`* to the `actions` language — the repo's genuine
+  executable surface is its workflows.
+. *Deferred the implementation-language choice* to roadmap M3. (ADR-003.)
+
+== Potential — where the greatest value is
+
+The estate has hundreds of RSR repos and elaborate per-repo governance, but no
+single *shared developer-environment layer*. That is exactly the gap bofj-kitt's
+description names, and the raw materials are already here:
+
+* devcontainer + container trees (`.devcontainer/`, `container/`, `build/`) — the
+  provisioning surface;
+* the session-protocol dispatcher (`session/dispatch.sh`) — estate session
+  integration;
+* Groove service-discovery stubs and `features/boj-server/` — the BoJ
+  registration surface;
+* a live BoJ trigger (`.github/workflows/boj-build.yml` posts to
+  `${BOJ_SERVER_URL}/cartridges/ssg-mcp/invoke`).
+
+A plausible first product: a `kitt` CLI that (a) provisions an estate-compliant
+dev environment, (b) bootstraps the session protocols, and (c) registers the
+environment with a BoJ server via a Groove manifest.
+
+== Roadmap
+
+Full detail (with checklists) lives in `docs/status/ROADMAP.adoc`. Summary:
+
+[cols="1,4", options="header"]
+|===
+| Milestone | Goal
+
+| *M0* (this pass) | Truthful identity, green governance CI, committed assessment + roadmap
+| *M1* | Finish the ~75 deferred token fills; restore a full SECURITY policy; curate remaining template docs
+| *M2* | Product spec — define an "extension"; the kit's first surfaces; the BoJ integration contract
+| *M3* | Choose the implementation language; re-add a real `e2e.yml`; rust-ci auto-activates if Rust
+| *M4* | First shippable capability + per-capability tests → CRG *D*; replace template proofs with product proofs
+| *M5* | Live BoJ-server integration + dogfooding → CRG *C*, then six diverse external targets → *B*
+|===
+
+== Appendix A — deferred token-file inventory (M1)
+
+Not CI-gated, so deferred to M1: `container/*` (`Containerfile`, `manifest.toml`,
+`compose.toml`, `.gatekeeper.yaml`), `.devcontainer/*`, `.github/CONTRIBUTING.md`,
+`.github/CODEOWNERS`, `.github/CODE_OF_CONDUCT.md`, `.github/GOVERNANCE.md`,
+`build/setup.sh` residual command tokens, `.machine_readable/svc/k9/*`,
+`docs/attribution/*`, and the `docs/status/PROOF-*.adoc` `{{PROJECT}}` headers.
+
+== Appendix B — files intentionally left with template identity
+
+Historical/provenance records that correctly reference their origin, kept as-is:
+`docs/decisions/0001-adopt-rsr-standard.adoc`,
+`docs/governance/TEMPLATE-STANDARDS-AUDIT.adoc`,
+`docs/reports/audit/pillar-audit-2026-04-15.adoc`,
+`docs/proposals/root-cleanup.adoc`,
+`docs/governance/CRG-AUDIT-TEMPLATE.adoc` (a reusable template), and the
+`rsr-template-repo` lineage entries in the ECOSYSTEM manifests. External
+references to the `rsr-template-repo` and `standards` repos in
+`docs/practice/*` point at genuinely separate estate repositories and are
+correct.

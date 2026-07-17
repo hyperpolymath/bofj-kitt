@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
-<!-- Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} ({{OWNER}}) <{{AUTHOR_EMAIL}}> -->
-<!-- Authoritative source: docs/AI-CONVENTIONS.md -->
+<!-- Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk> -->
+<!-- Authoritative source: docs/practice/AI-CONVENTIONS.adoc -->
 
 # Copilot Instructions
 
@@ -13,7 +13,7 @@
 
 - SPDX: `MPL-2.0` on all new files.
 - Never use AGPL-3.0.
-- Copyright: `{{AUTHOR}} ({{OWNER}}) <{{AUTHOR_EMAIL}}>`
+- Copyright: `Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>`
 
 ## Code Style
 
@@ -43,12 +43,6 @@
 - Use Podman, never Docker.
 - Name the file `Containerfile`, never `Dockerfile`.
 - Base image: `cgr.dev/chainguard/wolfi-base:latest`.
-
-## ABI/FFI
-
-- ABI definitions in Idris2 (`src/interface/abi/`).
-- FFI implementations in Zig (`src/interface/ffi/`).
-- Generated C headers in `src/interface/generated/`.
 
 ## State Files
 

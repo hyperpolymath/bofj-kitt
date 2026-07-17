@@ -2,7 +2,10 @@
 ;; Ecosystem position and relationships
 (ecosystem
   (version "1.0.0")
-  (name "{{REPO}}")
-  (type "library")
-  (purpose "{{REPO_DESCRIPTION}}")
-  (related-projects))
+  (name "bofj-kitt")
+  (type "tooling")
+  (purpose "Shared Developer Environment Extension Kit (the SuperChainsaw) for the BoJ (Box of Justice) server")
+  (related-projects
+    (project (name "boj-server") (relation "host/consumer — the BoJ MCP gateway this kit extends"))
+    (project (name "rsr-template-repo") (relation "lineage — the RSR scaffold this repo was created from"))
+    (project (name "standards") (relation "governance — estate-wide reusable CI and session standards"))))

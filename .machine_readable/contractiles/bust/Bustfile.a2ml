@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 Bust {
-    name: "rsr-template-repo"
+    name: "bofj-kitt"
     version: "1.0.0"
     description: "Rollback procedures when something breaks in the meta-repo"
 

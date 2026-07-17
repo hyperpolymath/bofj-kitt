@@ -13,11 +13,15 @@
 
 # ─── Authority files (template-mandated) ─────────────────────────────────────
 README.adoc
+README.md                  # GitHub landing page (.md renders on GitHub/Glama; see PR #35)
 AUDIT.adoc
 EXPLAINME.adoc
 0-AI-MANIFEST.a2ml         # thin pointer to .machine_readable/0.1-AI-MANIFEST.a2ml
 LICENSE
+LICENSES/                  # REUSE-convention license texts (MPL-2.0, CC-BY-SA-4.0)
 CHANGELOG.md
+CONTRIBUTING.md            # root path checked by openssf-compliance.yml; recreated by rhodibot
+SECURITY.md                # root path checked by openssf-compliance.yml; recreated by rhodibot
 
 # ─── Build entry points (must live at root for their tooling) ────────────────
 Justfile                   # delegates phases to build/just/*.just
@@ -54,5 +58,4 @@ container/                 # may host Containerfile if not at build/
 # ─── Tolerated pending follow-up (re-evaluate when item lands) ───────────────
 .gitlab-ci.yml             # TODO: relocate to ci/.gitlab-ci.yml after GitLab project-setting update
 .pre-commit-config.yaml    # TODO: relocate to ci/.pre-commit-config.yaml after invocation pattern decided
-affinescript/              # AffineScript source subtree consumed by this template
 tools/                     # TODO: consolidate with scripts/ or document the split (pending decision)

@@ -7,14 +7,12 @@
 # applied by the probot/settings app when changes are pushed to the default
 # branch. Install the app at: https://github.com/apps/settings
 #
-# Template file — replace {{REPO}} and {{DESCRIPTION}} with actual values.
-
 # ─── Repository Settings ───────────────────────────────────────────────────────
 
 repository:
-  name: "{{REPO}}"
-  description: "{{DESCRIPTION}}"
-  homepage: "https://github.com/hyperpolymath/{{REPO}}"
+  name: "bofj-kitt"
+  description: "Shared Developer Environment Extension Kit (the SuperChainsaw) for the BoJ (Box of Justice) server"
+  homepage: "https://github.com/hyperpolymath/bofj-kitt"
   private: false
   has_issues: true
   has_projects: true

@@ -34,7 +34,7 @@ owns = [
 ]
 
 [implementation-policy]
-allowed = ["Rust", "Idris2", "Zig", "Scheme", "Shell", "Just", "AsciiDoc", "Markdown"]
+allowed = ["Rust", "Idris2", "Scheme", "Shell", "Just", "AsciiDoc", "Markdown"]
 forbidden = ["Node.js", "npm"]
 
 [golden-path]

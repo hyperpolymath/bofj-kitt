@@ -136,7 +136,7 @@ jobs:
             -type f \( -name '*.rs' -o -name '*.ex' -o -name '*.exs' -o -name '*.res' \
               -o -name '*.js' -o -name '*.ts' -o -name '*.json' -o -name '*.toml' \
               -o -name '*.yml' -o -name '*.yaml' -o -name '*.md' -o -name '*.adoc' \
-              -o -name '*.idr' -o -name '*.zig' -o -name '*.v' -o -name '*.jl' \
+              -o -name '*.idr' -o -name '*.v' -o -name '*.jl' \
               -o -name '*.gleam' -o -name '*.hs' -o -name '*.ml' -o -name '*.sh' \) \
             -exec grep -Prl "$PATTERNS" {} \; > /tmp/empty-lint-results.txt 2>/dev/null
           EL_EXIT=$?
@@ -202,14 +202,14 @@ jobs:
             fi
           fi
 
-          # Check for Groove endpoint code (Rust, Elixir, Zig, V)
-          if grep -rl 'well-known/groove' --include='*.rs' --include='*.ex' --include='*.zig' --include='*.v' --include='*.res' . 2>/dev/null | head -1 | grep -q .; then
+          # Check for Groove endpoint code (Rust, Elixir)
+          if grep -rl 'well-known/groove' --include='*.rs' --include='*.ex' --include='*.res' . 2>/dev/null | head -1 | grep -q .; then
             HAS_GROOVE_CODE="true"
           fi
 
           # Check if this repo likely serves HTTP (has server/listener code)
           HAS_SERVER="false"
-          if grep -rl 'TcpListener\|Bandit\|Plug.Cowboy\|httpz\|vweb\|axum::serve\|actix_web' --include='*.rs' --include='*.ex' --include='*.zig' --include='*.v' . 2>/dev/null | head -1 | grep -q .; then
+          if grep -rl 'TcpListener\|Bandit\|Plug.Cowboy\|httpz\|vweb\|axum::serve\|actix_web' --include='*.rs' --include='*.ex' . 2>/dev/null | head -1 | grep -q .; then
             HAS_SERVER="true"
           fi
 
@@ -258,26 +258,26 @@ jobs:
 
           # Validate TOML structure using Python 3.11+ tomllib
           python3 -c "
-import tomllib, sys
-with open('eclexiaiser.toml', 'rb') as f:
-    data = tomllib.load(f)
-project = data.get('project', {})
-if not project.get('name', '').strip():
-    print('ERROR: project.name is required', file=sys.stderr)
-    sys.exit(1)
-functions = data.get('functions', [])
-if not functions:
-    print('ERROR: at least one [[functions]] entry is required', file=sys.stderr)
-    sys.exit(1)
-for fn in functions:
-    if not fn.get('name', '').strip():
-        print('ERROR: function name cannot be empty', file=sys.stderr)
-        sys.exit(1)
-    if not fn.get('source', '').strip():
-        print(f'ERROR: function {fn[\"name\"]} has no source path', file=sys.stderr)
-        sys.exit(1)
-print(f'Valid: {project[\"name\"]} ({len(functions)} function(s))')
-" || {
+          import tomllib, sys
+          with open('eclexiaiser.toml', 'rb') as f:
+              data = tomllib.load(f)
+          project = data.get('project', {})
+          if not project.get('name', '').strip():
+              print('ERROR: project.name is required', file=sys.stderr)
+              sys.exit(1)
+          functions = data.get('functions', [])
+          if not functions:
+              print('ERROR: at least one [[functions]] entry is required', file=sys.stderr)
+              sys.exit(1)
+          for fn in functions:
+              if not fn.get('name', '').strip():
+                  print('ERROR: function name cannot be empty', file=sys.stderr)
+                  sys.exit(1)
+              if not fn.get('source', '').strip():
+                  print(f'ERROR: function {fn[\"name\"]} has no source path', file=sys.stderr)
+                  sys.exit(1)
+          print(f'Valid: {project[\"name\"]} ({len(functions)} function(s))')
+          " || {
             echo "::error file=eclexiaiser.toml::Invalid eclexiaiser.toml — see step output for details"
             exit 1
           }
@@ -337,7 +337,7 @@ print(f'Valid: {project[\"name\"]} ({len(functions)} function(s))')
           fi
 
           # Groove manifest or code?
-          if [ -f ".well-known/groove/manifest.json" ] || grep -rl 'well-known/groove' --include='*.rs' --include='*.ex' --include='*.zig' . 2>/dev/null | head -1 | grep -q .; then
+          if [ -f ".well-known/groove/manifest.json" ] || grep -rl 'well-known/groove' --include='*.rs' --include='*.ex' . 2>/dev/null | head -1 | grep -q .; then
             SCORE=$((SCORE + 1))
             GROOVE_STATUS=":white_check_mark:"
           else
