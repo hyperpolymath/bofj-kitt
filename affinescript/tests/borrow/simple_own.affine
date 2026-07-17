@@ -1,6 +1,0 @@
-// SPDX-License-Identifier: MPL-2.0
-// Simple test of own parameter
-
-fn test(own x: Int) -> Int {
-  x
-}

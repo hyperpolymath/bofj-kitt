@@ -194,11 +194,8 @@ git mv TEMPLATE-STANDARDS-AUDIT.adoc docs/governance/
 
 === Hygiene: case collisions in `affinescript/stdlib/`
 
-Cloning the template on a case-insensitive filesystem (Windows, default macOS)
-silently drops files because of pairs like `Math.affine` vs `math.affine`.
-
-Pick one canonical case per name and `git mv` the duplicates away. Keeping
-both is not portable.
+Resolved 2026-07-16: the vendored affinescript/ subtree was removed from
+bofj-kitt.
 
 == Justfile recipe
 

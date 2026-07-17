@@ -54,5 +54,4 @@ container/                 # may host Containerfile if not at build/
 # ─── Tolerated pending follow-up (re-evaluate when item lands) ───────────────
 .gitlab-ci.yml             # TODO: relocate to ci/.gitlab-ci.yml after GitLab project-setting update
 .pre-commit-config.yaml    # TODO: relocate to ci/.pre-commit-config.yaml after invocation pattern decided
-affinescript/              # AffineScript source subtree consumed by this template
 tools/                     # TODO: consolidate with scripts/ or document the split (pending decision)
