@@ -17,7 +17,7 @@ on:
     - cron: '0 6 * * 1'  # Every Monday at 06:00 UTC
   workflow_dispatch:       # Manual trigger
   workflow_run:
-    workflows: ["Hypatia Neurosymbolic Analysis"]
+    workflows: ["Hypatia Security Scan"]
     types: [completed]
 
 permissions:

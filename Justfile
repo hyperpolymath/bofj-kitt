@@ -181,16 +181,16 @@ readiness:
     #   cargo test --test readiness -- --nocapture
     @echo "Readiness tests complete!"
 
-# Print the current CRG grade (reads from READINESS.md '**Current Grade:** X' line)
+# Print the current CRG grade (reads "*Current Grade:* X" from docs/status/READINESS.adoc)
 crg-grade:
-    @grade=$$(grep -oP '(?<=\*\*Current Grade:\*\* )[A-FX]' READINESS.md 2>/dev/null | head -1); \
+    @grade=$$(grep -oP '(?<=\*Current Grade:\* )[A-FX]' docs/status/READINESS.adoc 2>/dev/null | head -1); \
     [ -z "$$grade" ] && grade="X"; \
     echo "$$grade"
 
 # Print a shields.io CRG badge for embedding in README files
-# Looks for '**Current Grade:** X' in READINESS.md; falls back to X
+# Looks for "*Current Grade:* X" in docs/status/READINESS.adoc; falls back to X
 crg-badge:
-    @grade=$$(grep -oP '(?<=\*\*Current Grade:\*\* )[A-FX]' READINESS.md 2>/dev/null | head -1); \
+    @grade=$$(grep -oP '(?<=\*Current Grade:\* )[A-FX]' docs/status/READINESS.adoc 2>/dev/null | head -1); \
     [ -z "$$grade" ] && grade="X"; \
     case "$$grade" in \
       A) color="brightgreen" ;; \
