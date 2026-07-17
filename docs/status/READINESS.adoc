@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
-// Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} <{{AUTHOR_EMAIL}}>
-= {{PROJECT_NAME}} Component Readiness Assessment
+// Copyright (c) 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= bofj-kitt Component Readiness Assessment
 
-*Standard:* link:https://{{FORGE}}/{{OWNER}}/standards/tree/main/component-readiness-grades[Component Readiness Grades (CRG) v2.0 STRICT] +
-*Assessed:* {{CURRENT_DATE}} +
-*Assessor:* {{AUTHOR}} +
-*Previous assessment:* _<date or "none">_
+*Standard:* link:https://github.com/hyperpolymath/standards/tree/main/component-readiness-grades[Component Readiness Grades (CRG) v2.0 STRICT] +
+*Assessed:* 2026-07-16 +
+*Assessor:* Jonathan D.A. Jewell +
+*Previous assessment:* _none_
 
 *Current Grade:* X
 
