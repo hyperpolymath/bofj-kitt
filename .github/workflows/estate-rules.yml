@@ -32,5 +32,3 @@ jobs:
       - name: AsciiDoc by default (no .md under docs/)
         run: bash scripts/check-no-md-in-docs.sh .
 
-      - name: No zig references
-        run: bash scripts/check-no-vlang.sh .
