@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-# Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} ({{OWNER}}) <{{AUTHOR_EMAIL}}>
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # K9 Validator: Methodology Guard
 # Checks that agent work respects methodology constraints declared in
@@ -44,7 +44,7 @@ let methodology_guard = {
       description = "STATE.a2ml must not contain template placeholders",
       severity = "warning",
       file = ".machine_readable/6a2/STATE.a2ml",
-      reject_patterns = ["{{PLACEHOLDER}}", "{{PROJECT}}", "rsr-template-repo"],
+      reject_patterns = ["{{PLACEHOLDER}}", "BOFJ_KITT", "rsr-template-repo"],
     },
 
     coverage_updated = {

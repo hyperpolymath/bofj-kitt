@@ -74,7 +74,7 @@ artifacts. `tests/`, `benches/`, and `verification/` tested and proved the
 | Workflow | State before this pass
 
 | `estate-rules.yml` | *FAIL* — root-shape drift (incl. `README.md` itself), a `.md` under `docs/`, and the repo's own FFI files tripping the banned-language rule
-| `openssf-compliance.yml` | *FAIL* — `{{REPO}}`/`{{REPO_DESCRIPTION}}` tokens + `.github/SECURITY.md`
+| `openssf-compliance.yml` | *FAIL* — `bofj-kitt`/`{{REPO_DESCRIPTION}}` tokens + `.github/SECURITY.md`
 | `dogfood-gate.yml` | *FAIL* — invalid YAML (embedded Python fell out of its `run:` block scalar); errored on every run
 | `e2e.yml` | *INVALID* — empty `jobs:` map
 | `rhodibot.yml` | dead `workflow_run` trigger (listened for a workflow name that did not exist)
@@ -140,7 +140,7 @@ Not CI-gated, so deferred to M1: `container/*` (`Containerfile`, `manifest.toml`
 `compose.toml`, `.gatekeeper.yaml`), `.devcontainer/*`, `.github/CONTRIBUTING.md`,
 `.github/CODEOWNERS`, `.github/CODE_OF_CONDUCT.md`, `.github/GOVERNANCE.md`,
 `build/setup.sh` residual command tokens, `.machine_readable/svc/k9/*`,
-`docs/attribution/*`, and the `docs/status/PROOF-*.adoc` `{{PROJECT}}` headers.
+`docs/attribution/*`, and the `docs/status/PROOF-*.adoc` `BOFJ_KITT` headers.
 
 == Appendix B — files intentionally left with template identity
 
