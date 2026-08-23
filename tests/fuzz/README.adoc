@@ -53,7 +53,7 @@ defmodule MyPropertyTest do
 end
 ----
 
-=== ReScript / Deno (fast-check)
+=== AffineScript / Deno (fast-check)
 
 [source,javascript]
 ----

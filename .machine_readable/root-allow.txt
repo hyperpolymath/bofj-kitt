@@ -40,7 +40,7 @@ coordination.k9            # repo-local session binding (template-mandated)
 .github/                   # CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, workflows/
 .machine_readable/         # AI manifests, contractiles, custom-format configs
 .well-known/
-build/                     # contractile.just, setup.sh, flake.{nix,lock}, guix.scm, .guix-channel, Containerfile
+build/                     # contractile.just, setup.sh, flake.{guix,lock}, guix.scm, .guix-channel, Containerfile
 ci/                        # .gitlab-ci.yml, .pre-commit-config.yaml (root shims if tools require)
 docs/                      # onboarding/, status/, governance/, ...
 session/                   # dispatch.sh, custom-checks.k9, local-hooks.sh

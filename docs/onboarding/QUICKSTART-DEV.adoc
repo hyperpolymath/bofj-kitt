@@ -18,11 +18,11 @@
 guix shell
 ----
 
-=== Option B: Nix (fallback)
+=== Option B: Guix (fallback)
 
 [source,bash]
 ----
-nix develop
+guix develop
 ----
 
 === Option C: Manual
@@ -60,7 +60,7 @@ bofj-kitt/
 ├── .machine_readable/    # Checkpoint files (STATE, META, ECOSYSTEM)
 ├── Justfile              # Task runner recipes
 ├── guix.scm              # Guix environment
-├── flake.nix             # Nix environment (fallback)
+├── flake.guix             # Guix environment (fallback)
 └── 0-AI-MANIFEST.a2ml    # AI agent entry point
 ----
 

@@ -16,7 +16,7 @@ agents = [
   { name = "CLAUDE", role = "repo-local implementation, CI/CD, formal verification, kit tooling" },
   { name = "CHATGPT", role = "prose, papers, publication review, standards docs, outreach drafts, letters" },
   { name = "GEMINI", role = "estate audits, cross-repo sweeps, long-context triage, pattern detection" },
-  { name = "VIBE", role = "UI/frontend, PanLL panels, ReScript components, theming, rapid prototyping" },
+  { name = "VIBE", role = "UI/frontend, PanLL panels, AffineScript components, theming, rapid prototyping" },
 ]
 
 [policy]
@@ -30,7 +30,7 @@ items = [
   { agent = "CLAUDE", task = "repo-local implementation, CI/CD, formal verification, kit tooling" },
   { agent = "CHATGPT", task = "prose, papers, publication review, standards docs, outreach drafts, letters" },
   { agent = "GEMINI", task = "estate audits, cross-repo sweeps, long-context triage, pattern detection" },
-  { agent = "VIBE", task = "UI/frontend, PanLL panels, ReScript components, theming, rapid prototyping" },
+  { agent = "VIBE", task = "UI/frontend, PanLL panels, AffineScript components, theming, rapid prototyping" },
 ]
 
 <!-- BEGIN requires-initialisation -->
