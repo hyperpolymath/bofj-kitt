@@ -48,8 +48,8 @@ sed -i "s/{{CURRENT_DATE}}/$(date +%Y-%m-%d)/g" $(grep -rl '{{CURRENT_DATE}}' .)
 
 | Placeholder | Description | Example | Files |
 |---|---|---|---|
-| `{{PROJECT_NAME}}` | Human-readable project name | `My Project` | SECURITY.md, CODE_OF_CONDUCT.md, TOPOLOGY.md, STATE.a2ml, Justfile, GOVERNANCE.md, MAINTAINERS.md, flake.nix, devcontainer.json |
-| `{{PROJECT_DESCRIPTION}}` | One-line description | `A tool for X` | flake.nix |
+| `{{PROJECT_NAME}}` | Human-readable project name | `My Project` | SECURITY.md, CODE_OF_CONDUCT.md, TOPOLOGY.md, STATE.a2ml, Justfile, GOVERNANCE.md, MAINTAINERS.md, flake.guix, devcontainer.json |
+| `{{PROJECT_DESCRIPTION}}` | One-line description | `A tool for X` | flake.guix |
 | `{{REPO}}` | Repository name (slug) | `my-project` | CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md, cliff.toml |
 | `{{OWNER}}` | GitHub/GitLab org or username | `my-org` | SPDX headers, CONTRIBUTING.md, SECURITY.md, GOVERNANCE.md, MAINTAINERS.md, CODEOWNERS, mirror.yml, cliff.toml |
 | `{{FORGE}}` | Git forge domain | `github.com` | CONTRIBUTING.md |
@@ -131,7 +131,7 @@ After replacing all placeholders, verify none remain:
 ```bash
 grep -rn '{{' . --include='*.md' --include='*.adoc' --include='*.a2ml' \
   --include='*.scm' --include='*.idr' --include='*.res' \
-  --include='Justfile' --include='*.nix' --include='*.toml' --include='*.yml' \
+  --include='Justfile' --include='*.guix' --include='*.toml' --include='*.yml' \
   --include='*.yaml' --include='*.hs' --include='*.ncl' --include='*.txt' \
   --include='*.json' --include='Containerfile' --include='dep5' \
   | grep -v 'PLACEHOLDERS.md' | grep -v 'node_modules'

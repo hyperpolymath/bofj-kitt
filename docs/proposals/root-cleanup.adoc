@@ -107,7 +107,7 @@ phase-specific just files from `build/`.
 mkdir -p build
 git mv contractile.just build/
 git mv setup.sh         build/
-git mv flake.nix        build/
+git mv flake.guix        build/
 [ -f flake.lock ]   && git mv flake.lock      build/
 git mv guix.scm         build/
 git mv .guix-channel    build/
