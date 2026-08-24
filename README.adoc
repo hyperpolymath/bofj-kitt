@@ -1,0 +1,129 @@
+https://www.mozilla.org/MPL/2.0/[image:https://img.shields.io/badge/License-MPL--2.0-blue.svg[License:
+MPL-2.0]]
+https://creativecommons.org/licenses/by-sa/4.0/[image:https://img.shields.io/badge/Docs-CC--BY--SA--4.0-lightgrey.svg[Docs:
+CC-BY-SA-4.0]]
+
+== bofj-kitt
+
+*Shared Developer Environment Extension Kit* — the "`SuperChainsaw`" for
+the *BoJ (Box of Justice) server*.
+
+____
+*Status: pre-alpha scaffold.* This repository has its identity,
+governance, and CI in place, but *no product code yet*. What the kit
+will do is specified in link:docs/status/ROADMAP.adoc[the roadmap]; how
+it got to this honest baseline is recorded in the
+link:docs/reports/audit/repo-assessment-2026-07-16.adoc[repo
+assessment].
+____
+
+'''''
+
+=== What it is
+
+bofj-kitt is the hyperpolymath estate’s shared *developer-environment
+layer*. The estate runs on the
+https://github.com/hyperpolymath/standards[RSR (Rhodium Standard
+Repository)] framework — every repo carries the same governance, session
+protocols, and machine-readable state. bofj-kitt’s job is to make that
+environment *provisionable and extensible from one place* instead of
+copy-pasted per repo:
+
+* *provision* an estate-compliant developer environment (devcontainer /
+Guix / toolchains — the scaffolding under
+link:.devcontainer/[`+.devcontainer/+`],
+link:container/[`+container/+`], and link:build/[`+build/+`]);
+* *wire in* the estate session protocols (the dispatcher under
+link:session/[`+session/+`]; see EXPLAINME.adoc);
+* *register* the environment with a *BoJ server* — the estate’s verified
+MCP gateway — over the Groove service-discovery manifest. The
+link:.github/workflows/boj-build.yml[`+boj-build+`] workflow already
+posts build events to a BoJ server’s `+ssg-mcp+` cartridge when
+`+BOJ_SERVER_URL+` is set.
+
+The BoJ server itself lives at
+https://github.com/hyperpolymath/boj-server[hyperpolymath/boj-server].
+
+=== Why "`SuperChainsaw`"?
+
+A chainsaw for a developer environment: one tool that cuts through the
+repetitive work of standing up, extending, and connecting a compliant
+dev setup across the estate — rather than reproducing it by hand in
+every repository.
+
+=== Status & honesty
+
+This repo was scaffolded from the RSR template and has been brought to a
+*truthful baseline*: one consistent identity, governance CI that passes
+its own estate rules, and a committed assessment + roadmap. It
+deliberately does *not* claim working features it does not have.
+
+* *CRG grade: X (Untested)* — see
+link:docs/status/READINESS.adoc[READINESS]. No product components exist
+yet, so there is nothing to grade.
+* The vendored copy of another project (AffineScript) and an
+uninstantiated template ABI/FFI have been removed; see the
+link:docs/reports/audit/repo-assessment-2026-07-16.adoc[assessment] for
+the full before/after.
+
+=== The journey (roadmap)
+
+[width="100%",cols="50%,50%",options="header",]
+|===
+|Milestone |Goal
+|*M0* _(this pass)_ |Truthful identity, green governance CI, committed
+assessment + roadmap
+
+|*M1* |Finish placeholder-token fills; restore a full SECURITY policy;
+curate remaining template docs
+
+|*M2* |Product spec — define what an "`extension`" is; the kit’s first
+surfaces; the BoJ integration contract
+
+|*M3* |Choose the implementation language; re-add a real end-to-end
+workflow
+
+|*M4* |First shippable kit capability + per-capability tests → CRG *D*
+
+|*M5* |Live BoJ-server integration + dogfooding → CRG *C*, then external
+targets → *B*
+|===
+
+Full detail: docs/status/ROADMAP.adoc.
+
+=== Repository shape
+
+* link:session/[`+session/+`] — session-protocol dispatcher (integration
+layer over the central `+standards+` repo).
+* link:.machine_readable/[`+.machine_readable/+`] — machine-readable
+state, AI manifests, contractiles, and estate metadata (`+CLADE.a2ml+`
+holds this repo’s registry identity).
+* link:.github/workflows/[`+.github/workflows/+`] — estate governance CI
+(root-shape, OpenSSF compliance, dogfood gate, Hypatia scan, Scorecard,
+secret scanner, BoJ build trigger, multi-forge mirror).
+* link:docs/[`+docs/+`] — governance, status, onboarding, and reports
+(AsciiDoc; the estate does not permit `+.md+` under `+docs/+`).
+* link:verification/[`+verification/+`] — a five-prover verification
+skeleton (Idris2, Coq, Lean4, Agda, TLA+) awaiting product-specific
+proofs.
+
+=== Building & running
+
+There is nothing to build yet — the implementation language is chosen at
+M3. The link:Justfile[`+Justfile+`] exposes the estate’s task surface
+(session commands, CRG grading, changelog, governance checks); product
+`+build+`/`+test+`/`+run+` recipes are wired once the kit’s first
+capability lands (M2–M3).
+
+=== Contributing
+
+See CONTRIBUTING.md. This is an early-stage estate repo; the most useful
+contributions right now are on the product spec (M2) — what a BoJ
+dev-environment "`extension`" should be.
+
+=== License
+
+* *Code:* link:LICENSE[MPL-2.0].
+* *Documentation:* CC-BY-SA-4.0.
+
+See link:LICENSES/[`+LICENSES/+`] for the full texts.
