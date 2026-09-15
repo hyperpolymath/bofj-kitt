@@ -130,8 +130,8 @@ jobs:
           fi
 
           # --- 6. Check for issues we can't auto-fix ---
-          if [ ! -f "0-AI-MANIFEST.a2ml" ] && [ ! -f "AI.a2ml" ]; then
-            ISSUES="$ISSUES\n- Missing AI manifest (0-AI-MANIFEST.a2ml)"
+          if [ ! -f "0-AI-MANIFEST.deed" ] && [ ! -f "0-AI-MANIFEST.a2ml" ] && [ ! -f "AI.a2ml" ]; then
+            ISSUES="$ISSUES\n- Missing AI manifest (0-AI-MANIFEST.deed, or legacy 0-AI-MANIFEST.a2ml)"
           fi
 
           if [ ! -f "LICENSE" ] && [ ! -f "LICENSE.md" ] && [ ! -f "LICENSE.txt" ]; then
