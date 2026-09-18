@@ -20,8 +20,11 @@ EXPLAINME.adoc
 LICENSE
 LICENSES/                  # REUSE-convention license texts (MPL-2.0, CC-BY-SA-4.0)
 CHANGELOG.md
+CHANGELOG.adoc             # Current changelog after the AsciiDoc migration.
 CONTRIBUTING.md            # root path checked by openssf-compliance.yml; recreated by rhodibot
+CONTRIBUTING.adoc          # Current contributor guide after the AsciiDoc migration.
 SECURITY.md                # root path checked by openssf-compliance.yml; recreated by rhodibot
+SECURITY.adoc              # Current security policy after the AsciiDoc migration.
 
 # ─── Build entry points (must live at root for their tooling) ────────────────
 Justfile                   # delegates phases to build/just/*.just
@@ -38,6 +41,7 @@ coordination.k9            # repo-local session binding (template-mandated)
 .devcontainer/             # VS Code dev container spec; tool-required at root
 .git/
 .github/                   # CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, workflows/
+www/                       # site-operations bundle; canonical .well-known/ lives at www/.well-known/ (issue #53)
 .machine_readable/         # AI manifests, contractiles, custom-format configs
 .well-known/
 build/                     # contractile.just, setup.sh, flake.{guix,lock}, guix.scm, .guix-channel, Containerfile
