@@ -41,6 +41,7 @@ coordination.k9            # repo-local session binding (template-mandated)
 .devcontainer/             # VS Code dev container spec; tool-required at root
 .git/
 .github/                   # CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, workflows/
+REQUIRES_INITIALISATION.adoc # minting marker: lists the tokens the estate top-up pass deliberately left unfilled; stays until those answers exist (owner ruling, 2026-09-18)
 www/                       # site-operations bundle; canonical .well-known/ lives at www/.well-known/ (issue #53)
 .machine_readable/         # AI manifests, contractiles, custom-format configs
 .well-known/
