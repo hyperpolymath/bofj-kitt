@@ -119,3 +119,12 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 [optional body]
 
 [optional footer]
+
+## Contribution workflow
+
+_Carried over from the former root `CONTRIBUTING.adoc` when the guide moved to `.github/`, so nothing is lost._
+
+1. Fork the repository
+2. Create a feature branch
+3. Ensure SPDX headers on all files
+4. Submit a pull request
