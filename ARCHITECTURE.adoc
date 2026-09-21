@@ -1,0 +1,30 @@
+= Architecture of bofj-kitt
+
+This document describes the layout of this repository as it actually
+exists, per the estate Required Files gate (substance over presence).
+
+== Layout
+
+* `.devcontainer/` — .devcontainer — repository component
+* `.github/` — GitHub workflows, labels and repository configuration
+* `.machine_readable/` — .machine_readable — repository component
+* `LICENSES/` — LICENSES — repository component
+* `build/` — build — repository component
+* `container/` — container — repository component
+* `docs/` — documentation
+* `examples/` — worked examples
+* `features/` — features — repository component
+* `scripts/` — maintenance and automation scripts
+* `session/` — session — repository component
+* `src/` — primary source code
+* `tests/` — test suites and fixtures
+* `tools/` — developer tooling
+* `verification/` — verification — repository component
+* `www/` — www — repository component
+
+== Data flow
+
+The entry points and the CI definition under `.github/workflows/` are the
+authoritative description of how the pieces above fit together; where a
+README exists at the root it narrates usage. This file intentionally
+names only directories that exist here.
