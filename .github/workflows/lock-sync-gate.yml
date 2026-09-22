@@ -55,6 +55,11 @@ jobs:
           git checkout -q FETCH_HEAD
           echo "checked out ${SHA}"
 
+      - name: Install GNU awk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gawk
+
       - name: Verify lockfile synchronisation
         run: |
           set -euo pipefail
