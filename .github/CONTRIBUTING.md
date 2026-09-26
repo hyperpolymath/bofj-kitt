@@ -35,11 +35,11 @@ bofj-kitt/
 │   └── contractiles/    # Policy contracts (k9, dust, lust, must, trust)
 ├── .well-known/         # Protocol files (Perimeter 1-3)
 ├── .github/             # GitHub config (Perimeter 1)
+│   ├── CONTRIBUTING.md  # This file
 │   ├── ISSUE_TEMPLATE/
 │   └── workflows/
 ├── CHANGELOG.md
 ├── CODE_OF_CONDUCT.md
-├── CONTRIBUTING.md      # This file
 ├── GOVERNANCE.md
 ├── LICENSE
 ├── MAINTAINERS.md
@@ -119,3 +119,12 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 [optional body]
 
 [optional footer]
+
+## Contribution workflow
+
+_Carried over from the former root `CONTRIBUTING.adoc` when the guide moved to `.github/`, so nothing is lost._
+
+1. Fork the repository
+2. Create a feature branch
+3. Ensure SPDX headers on all files
+4. Submit a pull request

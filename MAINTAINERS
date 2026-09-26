@@ -1,0 +1,15 @@
+= MAINTAINERS
+
+Owner and maintainer of bofj-kitt
+--------------------------------------------------
+
+* Jonathan D.A. Jewell (@hyperpolymath) — repository owner and lead maintainer.
+* Every change to this repository is reviewed and merged by @hyperpolymath,
+  including dependency bumps and CI workflow edits.
+* Direct pushes to the default branch are limited to the owner; all other
+  changes arrive through pull requests and land via squash merge.
+* Security-relevant reports go to the owner account above rather than a
+  public issue.
+* This repository is part of the hyperpolymath estate and follows the
+  estate-wide governance, document-format and CI conventions enforced by
+  hyperpolymath/cicd-suite (the Central Estate CI/CD Audit).
