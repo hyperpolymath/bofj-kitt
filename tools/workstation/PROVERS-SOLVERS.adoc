@@ -1,0 +1,4 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Provers & solvers installed locally
+Formal-methods tooling used across the repos (Agda/Lean/Coq/Idris/TLA+/SPARK/
+Kani/Creusot/Z3/CVC5/Yices/Why3) plus the Echidna Solidity-analysis family.
