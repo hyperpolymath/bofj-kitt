@@ -1,0 +1,4 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Languages installed locally
+Derived from GitHub Linguist across hyperpolymath / JoshuaJewell / metadatastician.
+Method key: apt · rustup · cargo · mise · pack · npm · binary · deferred.
