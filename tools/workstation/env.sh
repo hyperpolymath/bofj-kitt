@@ -15,5 +15,5 @@ export ELAN_HOME="$DEV_TOOLS/opt/elan"
 export JULIA_DEPOT_PATH="$DEV_TOOLS/opt/julia-depot:"
 export OPAMROOT="$DEV_TOOLS/opt/opam"
 export BUN_INSTALL="$DEV_TOOLS/opt/bun"
-export PATH="$CARGO_HOME/bin:$ELAN_HOME/bin:$MISE_DATA_DIR/shims:$PACK_DIR/bin:$DEV_TOOLS/languages/bin:$DEV_TOOLS/provers-solvers/bin:$DEV_TOOLS/opt/gh/bin:$DEV_TOOLS/bin:$HOME/.local/bin:$PATH"
+export PATH="$CARGO_HOME/bin:$ELAN_HOME/bin:$MISE_DATA_DIR/shims:$BUN_INSTALL/bin:$PACK_DIR/bin:$DEV_TOOLS/languages/bin:$DEV_TOOLS/provers-solvers/bin:$DEV_TOOLS/opt/gh/bin:$DEV_TOOLS/bin:$HOME/.local/bin:$PATH"
 if command -v mise >/dev/null 2>&1; then eval "$(mise activate bash 2>/dev/null || true)"; fi
