@@ -14,7 +14,7 @@
     {id: "why3find", role: "policy:rust", method: "opam", pin: "resolve", verify: "why3find --help"},
     {id: "gnatprove", role: "policy:ada", method: "release asset (alire-project/GNAT-FSF-builds)", pin: "14.1.0-1", verify: "gnatprove --version"},
     {id: "idris2", role: "policy:engineering", method: "pack (Chez Scheme bootstrap)", pin: "0.8.0", verify: "idris2 --version"},
-    {id: "agda-2.6.3", role: "policy:theory-source", method: "cabal", pin: "2.6.3", verify: "agda-2.6.3 --version", notes: "echo-types, ordinal-notation; stdlib 1.7.3 (upstream-listed for 2.6.3); the bundle build must type-check each repo against the stdlib it pins before release"},
+    {id: "agda-2.6.3", role: "policy:theory-source", method: "cabal", pin: "2.6.3", verify: "agda-2.6.3 --version", notes: "echo-types, ordinal-notation. Their CI pins stdlib v2.3, which upstream lists for Agda 2.8 (it lists 1.7.2/1.7.3 for 2.6.3); the bundle build must type-check each repo against the stdlib it pins before release"},
     {id: "agda-2.6.4.3", role: "policy:theory-source", method: "cabal", pin: "2.6.4.3", verify: "agda-2.6.4.3 --version", notes: "choreographic-types, epistemic-types; stdlib 2.1 (upstream-listed for 2.6.4.3)"},
     {id: "rocq", role: "policy:recheck", method: "opam", pin: "resolve", verify: "coqc --version"},
     {id: "lean", role: "policy:recheck", method: "release asset (elan + lean4 toolchains)", pin: "resolve", verify: "lean --version", notes: "no Mathlib; projects select a toolchain via lean-toolchain"},
