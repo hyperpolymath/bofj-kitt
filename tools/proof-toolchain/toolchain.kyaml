@@ -2,6 +2,8 @@
 # Proof toolchain manifest: the one hand-edited source (see DESIGN.adoc).
 # pin "resolve" means the bundle build picks the version and records it in
 # toolchain.lock.json; a concrete pin is honoured as written.
+# "resolve-stable" excludes prereleases; "from <tool> <file>" derives the pin
+# from another tool's compatibility pin, which is resolved first.
 {
   schema: 1,
   prefix: "/opt/hyperpolymath/provers",
@@ -12,17 +14,17 @@
     {id: "why3find", role: "policy:rust", method: "opam", pin: "resolve", verify: "why3find --help"},
     {id: "gnatprove", role: "policy:ada", method: "release asset (alire-project/GNAT-FSF-builds)", pin: "14.1.0-1", verify: "gnatprove --version"},
     {id: "idris2", role: "policy:engineering", method: "pack (Chez Scheme bootstrap)", pin: "0.8.0", verify: "idris2 --version"},
-    {id: "agda-2.6.3", role: "policy:theory-source", method: "cabal", pin: "2.6.3", verify: "agda-2.6.3 --version", notes: "echo-types, ordinal-notation; stdlib 2.3"},
-    {id: "agda-2.6.4.3", role: "policy:theory-source", method: "cabal", pin: "2.6.4.3", verify: "agda-2.6.4.3 --version", notes: "choreographic-types, epistemic-types; stdlib 2.1"},
+    {id: "agda-2.6.3", role: "policy:theory-source", method: "cabal", pin: "2.6.3", verify: "agda-2.6.3 --version", notes: "echo-types, ordinal-notation. Their CI pins stdlib v2.3, which upstream lists for Agda 2.8 (it lists 1.7.2/1.7.3 for 2.6.3); the bundle build must type-check each repo against the stdlib it pins before release"},
+    {id: "agda-2.6.4.3", role: "policy:theory-source", method: "cabal", pin: "2.6.4.3", verify: "agda-2.6.4.3 --version", notes: "choreographic-types, epistemic-types; stdlib 2.1 (upstream-listed for 2.6.4.3)"},
     {id: "rocq", role: "policy:recheck", method: "opam", pin: "resolve", verify: "coqc --version"},
     {id: "lean", role: "policy:recheck", method: "release asset (elan + lean4 toolchains)", pin: "resolve", verify: "lean --version", notes: "no Mathlib; projects select a toolchain via lean-toolchain"},
-    {id: "agda2dedukti", role: "transport", method: "cabal", pin: "resolve", verify: "agda2dedukti --version", notes: "record which Agda version it accepts in the lock"},
+    {id: "agda2dedukti", role: "transport", method: "stack (Deducteam/Agda2Dedukti, which pins its own Agda fork)", pin: "resolve", verify: "Agda2Dedukti-exe --help", notes: "the upstream executable is Agda2Dedukti-exe; record its Agda fork and the Agda versions it accepts in the lock"},
     {id: "dedukti", role: "transport", method: "opam", pin: "resolve", verify: "dk check --help"},
     {id: "lambdapi", role: "transport", method: "opam", pin: "resolve", verify: "lambdapi --version"},
     {id: "kani", role: "exception:rust", method: "cargo (kani-verifier, then cargo kani setup)", pin: "resolve", verify: "cargo kani --version"},
-    {id: "charon", role: "exception:rust", method: "cargo (from its repository)", pin: "resolve", verify: "charon --version"},
+    {id: "charon", role: "exception:rust", method: "cargo (from its repository)", pin: "from aeneas charon-pin", verify: "charon --version", notes: "never resolved on its own: checked out at the commit in the pinned Aeneas charon-pin file"},
     {id: "aeneas", role: "exception:rust", method: "opam (from its repository)", pin: "resolve", verify: "aeneas -help", notes: "check its Lean library for Mathlib; Rocq back end if so"},
-    {id: "tlc", role: "exception:recorded", method: "release asset (tlaplus tla2tools.jar)", pin: "v1.8.0", verify: "tlc -h"},
+    {id: "tlc", role: "exception:recorded", method: "release asset (tlaplus tla2tools.jar) plus a bundled tlc launcher (java -cp tla2tools.jar tlc2.TLC)", pin: "resolve-stable", verify: "tlc -h", notes: "pin a stable tagged release with its sha256 in the lock; v1.8.0 is a rolling prerelease rebuilt on every master commit"},
     {id: "isabelle", role: "exception:recorded", method: "release asset", pin: "resolve", verify: "isabelle version", notes: "supplementary evidence only"},
     {id: "z3", role: "backend", method: "release asset", pin: "resolve", verify: "z3 --version"},
     {id: "cvc5", role: "backend", method: "release asset", pin: "resolve", verify: "cvc5 --version"},

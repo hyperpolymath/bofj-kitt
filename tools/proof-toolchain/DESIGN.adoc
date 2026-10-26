@@ -71,7 +71,8 @@ tool it could not run as present (PROOF-POLICY §6).
 
 |`provers.sh render`
 |Regenerates `../workstation/PROVERS-SOLVERS.adoc` from the manifest, so the
-human index cannot drift from what is installed.
+human index cannot drift from the declared set. What a given machine has
+installed is `doctor`'s job, not `render`'s.
 
 |Guix manifest
 |The tools that Guix packages are also projected into a Guix manifest for
