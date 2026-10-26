@@ -40,7 +40,7 @@ evidence doesn't support the claim.
 *Evidence gates (v2.0 is stricter than v1.0):*
 
 * *D*: RSR-compliant + per-capability tests + documented scope. Test matrix
-  must cite counts and live in `.machine_readable/descriptiles/STATE.a2ml` or CI.
+  must cite counts and live in `.machine_readable/6a2/STATE.a2ml` or CI.
 * *C*: All of D, plus active dogfooding in home context with *no known
   home-context failures over an evidence window*, plus *deep per-file and
   per-directory annotation* (purpose, boundaries, invariants,
@@ -65,7 +65,7 @@ Below B, any publication must be explicitly abstract or provisional.
 |===
 | Metric | Value | Source
 
-| Test count | _<N>_ | `.machine_readable/descriptiles/STATE.a2ml` or CI
+| Test count | _<N>_ | `.machine_readable/6a2/STATE.a2ml` or CI
 | Formal-verification posture | _<N `believe_me` / `sorry` / `Admitted` — irreducible only>_ | grep of proof dirs
 | Dangerous patterns (`assert_total`, `unsafeCoerce`, `Obj.magic`) | _<N>_ | grep 2026-08-05
 | Per-unit README coverage | _<M/N (percentage)>_ | filesystem scan of unit dirs
@@ -179,7 +179,7 @@ Real-world external feedback confirming value. Populate
 * `docs/governance/CRG-AUDIT-<DATE>.adoc` — formal audit (populate from
   `rsr-template-repo/docs/governance/CRG-AUDIT-TEMPLATE.adoc`).
 * `docs/practice/DOGFOOD-LOG.adoc` — dated dogfood evidence (required for C).
-* `.machine_readable/descriptiles/STATE.a2ml` — authoritative state (canonical keys
+* `.machine_readable/6a2/STATE.a2ml` — authoritative state (canonical keys
   `[dogfooding-status]`, `[external-targets]`, `[issues-fed-back]`,
   `[field-signal]`).
 

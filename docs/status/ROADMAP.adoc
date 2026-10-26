@@ -39,7 +39,7 @@ established this baseline.
 
 === M4 — First capability + tests (CRG D)
 * [ ] Ship one end-to-end capability (e.g. `kitt init` provisions a compliant environment; `kitt connect` registers it with a BoJ server).
-* [ ] Per-capability unit + integration tests; record counts in `.machine_readable/descriptiles/STATE.a2ml`.
+* [ ] Per-capability unit + integration tests; record counts in `.machine_readable/6a2/STATE.a2ml`.
 * [ ] Replace the placeholder fuzz README with a real harness.
 * [ ] Replace the generic template proofs under `verification/` with product proofs.
 

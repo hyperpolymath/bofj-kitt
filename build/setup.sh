@@ -6,8 +6,9 @@
 # Then hands off to `just setup` for project-specific configuration.
 #
 # Usage:
-#   # After cloning and reviewing the script:
-#   sh build/setup.sh
+#   curl -fsSL https://raw.githubusercontent.com/hyperpolymath/bofj-kitt/main/setup.sh | sh
+#   # or after cloning:
+#   ./setup.sh
 #
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath)
 
@@ -127,33 +128,6 @@ detect_platform() {
     esac
 }
 
-# ── Verified just bootstrap (upstream 1.40.0 installer) ──
-install_just_from_script() (
-    # Keep downloaded code private and remove it on every exit path.
-    JUST_BOOTSTRAP_DIR=$(mktemp -d) || return 1
-    trap 'rm -rf "$JUST_BOOTSTRAP_DIR"' EXIT
-    trap 'exit 1' HUP INT TERM
-    JUST_BOOTSTRAP_FILE="$JUST_BOOTSTRAP_DIR/install.sh"
-    JUST_BOOTSTRAP_SHA256="2f811850e7833bf2191df55683f861d09b8a9cd2d1aac5f2adff597b3d675aa4"
-
-    curl --proto '=https' --tlsv1.2 -fsSL \
-        https://raw.githubusercontent.com/casey/just/679a9403ac29d7fc9045285453e58e2534d98d8d/www/install.sh \
-        -o "$JUST_BOOTSTRAP_FILE" || return 1
-    if command -v sha256sum >/dev/null 2>&1; then
-        JUST_BOOTSTRAP_ACTUAL=$(sha256sum "$JUST_BOOTSTRAP_FILE") || return 1
-    elif command -v shasum >/dev/null 2>&1; then
-        JUST_BOOTSTRAP_ACTUAL=$(shasum -a 256 "$JUST_BOOTSTRAP_FILE") || return 1
-    else
-        fail "A SHA-256 tool (sha256sum or shasum) is required to verify the just installer"
-        return 1
-    fi
-    if [ "${JUST_BOOTSTRAP_ACTUAL%% *}" != "$JUST_BOOTSTRAP_SHA256" ]; then
-        fail "just installer checksum mismatch; refusing to execute"
-        return 1
-    fi
-    bash "$JUST_BOOTSTRAP_FILE" --tag 1.40.0 --to /usr/local/bin
-)
-
 # ── Install just ──
 install_just() {
     if command -v just >/dev/null 2>&1; then
@@ -167,7 +141,7 @@ install_just() {
         dnf)        sudo dnf install -y just ;;
         apt)        sudo apt-get install -y just 2>/dev/null || {
                         # just not in older apt repos — use installer
-                        install_just_from_script
+                        curl -fsSL https://just.systems/install.sh | bash -s -- --to /usr/local/bin
                     } ;;
         pacman)     sudo pacman -S --noconfirm just ;;
         apk)        sudo apk add just ;;
@@ -179,7 +153,7 @@ install_just() {
         nix)        nix-env -iA nixpkgs.just ;;
         *)
             info "Using just installer script..."
-            install_just_from_script
+            curl -fsSL https://just.systems/install.sh | bash -s -- --to /usr/local/bin
             ;;
     esac
 

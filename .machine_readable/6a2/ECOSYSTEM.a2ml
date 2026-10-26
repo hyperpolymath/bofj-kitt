@@ -3,7 +3,6 @@
 # Converted from ECOSYSTEM.scm on 2026-04-14
 
 [metadata]
-version = "1.0.0"
 project = "bofj-kitt"
 ecosystem = "hyperpolymath"
 

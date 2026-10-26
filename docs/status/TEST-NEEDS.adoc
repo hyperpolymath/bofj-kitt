@@ -37,7 +37,7 @@ See `docs/status/ROADMAP.adoc` and
 * [ ] Land the first shippable kit capability (e.g. `kitt init` provisioning a
   compliant dev environment; `kitt connect` registering with a BoJ server).
 * [ ] Per-capability unit + integration tests, with counts recorded in
-  `.machine_readable/descriptiles/STATE.a2ml`.
+  `.machine_readable/6a2/STATE.a2ml`.
 * [ ] Re-add a real `.github/workflows/e2e.yml` exercising the capability
   end-to-end (the template placeholder was removed in the 2026-07-16 pass).
 * [ ] Replace the placeholder fuzz README with an actual harness once there is

@@ -5,8 +5,6 @@
 # Architecture decisions, design rationale, governance.
 
 [metadata]
-project = "bofj-kitt"
-legacy-schema-version = "1.0.0"  # Former S-expression META schema; current TOML version follows.
 version = "0.1.0"
 last-updated = "2026-04-11"
 
@@ -25,8 +23,6 @@ adrs = [
 ]
 
 [development-practices]
-code-review = "required"
-branch-protection = "enabled"
 build-tool = "just"
 container-runtime = "podman"
 ci-platform = "github-actions"

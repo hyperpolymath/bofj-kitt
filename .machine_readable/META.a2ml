@@ -1,0 +1,10 @@
+;; SPDX-License-Identifier: MPL-2.0
+;; Architecture decisions and development practices
+(meta
+  (version "1.0.0")
+  (project "bofj-kitt")
+  (architecture-decisions)
+  (development-practices
+    (code-review "required")
+    (branch-protection "enabled")
+    (ci-cd "github-actions")))

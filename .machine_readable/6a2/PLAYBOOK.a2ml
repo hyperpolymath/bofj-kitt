@@ -13,7 +13,7 @@ last-updated = "2026-04-11"
 # target = "container"  # container | binary | library | wasm
 
 [incident-response]
-# 1. Check .machine_readable/descriptiles/STATE.a2ml for current status
+# 1. Check .machine_readable/STATE.a2ml for current status
 # 2. Review recent commits and CI results
 # 3. Run `just validate` to check compliance
 # 4. Run `just security` to audit for vulnerabilities
@@ -61,7 +61,7 @@ enforcement-workflow = ".github/workflows/estate-rules.yml"
 
 # === Required directories ===
 # .github/             CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, workflows/
-# .machine_readable/   AI manifests (0.1-AI-MANIFEST.a2ml), descriptiles/ checkpoints,
+# .machine_readable/   AI manifests (0.1-AI-MANIFEST.a2ml), 6a2/ checkpoints,
 #                      contractiles/, configs/, anchors/, policies/, scripts/, svc/
 # build/               contractile.just, flake.guix, guix.scm, Containerfile,
 #                      just/*.just (Justfile section imports)
