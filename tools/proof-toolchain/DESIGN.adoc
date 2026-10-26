@@ -146,7 +146,7 @@ plus the supporting tools the mapped provers need.
 |`exception:rust` |Kani; Aeneas with Charon (PROOF-POLICY §4.1)
 |`exception:recorded` |TLA+ (`tlc`); Isabelle (supplementary only)
 |`runtime` |Rust toolchains (rustup, the toolchains Creusot and Kani pin) and a Java runtime for the `tlc` launcher, bundled rather than taken from the host
-|`backend` |Z3, CVC5, Alt-Ergo, E prover, Vampire
+|`backend` |Z3, CVC5, Yices, Alt-Ergo, E prover, Vampire
 |===
 
 The estate's own `echidna` (the prover dispatcher) is a *consumer* of this

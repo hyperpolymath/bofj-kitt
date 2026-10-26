@@ -6,41 +6,44 @@
 # from what that tool's pinned revision names (a file such as charon-pin or
 # creusot-deps.opam, its README, or the revision itself); <tool> is resolved
 # first. "consumer lean-toolchain files" takes every toolchain the consumer
-# repos pin.
+# repos pin. A list of pins means every one is installed and locked.
 # verify is a smoke test that the tool runs; version (when present) is the
 # command whose output must contain the locked version, so doctor can tell
 # PRESENT from DRIFT. Without version, verify's output is used.
 # $PREFIX in a command stands for the prefix field below.
+# Smoke fixtures named by verify commands live in smoke/ beside this file and
+# are installed to $PREFIX/share/smoke/ by the bundle build.
 {
   schema: 1,
   prefix: "/opt/hyperpolymath/provers",
   policy: "standards 3-practice/PROOF-POLICY.adoc",
   tools: [
-    {id: "rust", role: "runtime", method: "rustup into the prefix (toolchains named by Creusot's and Kani's rust-toolchain files)", pin: "from creusot rust-toolchain", verify: "cargo --version", notes: "every toolchain Creusot and Kani pin is installed; neither uses a host Rust"},
+    {id: "rust", role: "runtime", method: "rustup into the prefix (toolchains named by Creusot's and Kani's rust-toolchain files)", pin: ["from creusot rust-toolchain", "from kani rust-toolchain"], verify: "cargo --version", notes: "every toolchain Creusot and Kani pin is installed; neither uses a host Rust"},
     {id: "creusot", role: "policy:rust", method: "cargo (Creusot INSTALL script, pinned nightly)", pin: "resolve", verify: "cargo creusot --version", needs: ["rust", "why3", "why3find", "z3", "cvc5", "alt-ergo"]},
     {id: "why3", role: "policy:rust", method: "opam", pin: "from creusot creusot-deps.opam", verify: "why3 --version"},
     {id: "why3find", role: "policy:rust", method: "opam", pin: "from creusot creusot-deps.opam", verify: "why3find --help", version: "why3find --version"},
     {id: "gnatprove", role: "policy:ada", method: "release asset (alire-project/GNAT-FSF-builds)", pin: "14.1.0-1", verify: "gnatprove --version"},
     {id: "idris2", role: "policy:engineering", method: "pack (Chez Scheme bootstrap)", pin: "0.8.0", verify: "idris2 --version"},
-    {id: "agda-2.6.3", role: "policy:theory-source", method: "cabal", pin: "2.6.3", verify: "agda-2.6.3 --version", notes: "echo-types, ordinal-notation. Their CI pins stdlib v2.3, which upstream lists for Agda 2.8 (it lists 1.7.2/1.7.3 for 2.6.3); the bundle build must type-check each repo against the stdlib it pins before release"},
-    {id: "agda-2.6.4.3", role: "policy:theory-source", method: "cabal", pin: "2.6.4.3", verify: "agda-2.6.4.3 --version", notes: "choreographic-types, epistemic-types; stdlib 2.1 (upstream-listed for 2.6.4.3)"},
+    {id: "agda-2.6.3", role: "policy:theory-source", method: "cabal into its own store ($PREFIX/agda/2.6.3), exposed only as the wrapper bin/agda-2.6.3", pin: "2.6.3", verify: "agda-2.6.3 --version", notes: "echo-types, ordinal-notation. Their CI pins stdlib v2.3, which upstream lists for Agda 2.8 (it lists 1.7.2/1.7.3 for 2.6.3); the bundle build must type-check each repo against the stdlib it pins before release"},
+    {id: "agda-2.6.4.3", role: "policy:theory-source", method: "cabal into its own store ($PREFIX/agda/2.6.4.3), exposed only as the wrapper bin/agda-2.6.4.3", pin: "2.6.4.3", verify: "agda-2.6.4.3 --version", notes: "choreographic-types, epistemic-types; stdlib 2.1 (upstream-listed for 2.6.4.3)"},
     {id: "agda-stdlib-2.3", role: "policy:theory-source", method: "release archive (agda/agda-stdlib tag v2.3) registered in the bundle's Agda libraries file", pin: "v2.3", verify: "test -f $PREFIX/lib/agda-stdlib-2.3/standard-library.agda-lib", notes: "the stdlib echo-types and ordinal-notation CI pins"},
     {id: "agda-stdlib-2.1", role: "policy:theory-source", method: "release archive (agda/agda-stdlib tag v2.1) registered in the bundle's Agda libraries file", pin: "v2.1", verify: "test -f $PREFIX/lib/agda-stdlib-2.1/standard-library.agda-lib", notes: "the stdlib choreographic-types and epistemic-types pin"},
     {id: "rocq", role: "policy:recheck", method: "opam", pin: "resolve", verify: "coqc --version"},
     {id: "lean", role: "policy:recheck", method: "release asset (elan + every lean4 toolchain listed in toolchains)", pin: "consumer lean-toolchain files", verify: "lean --version", notes: "no Mathlib. Each consumer repo's lean-toolchain and the Aeneas Lean backend's are preinstalled and hashed; elan is set never to download, so a missing toolchain fails instead of fetching", toolchains: "enumerated in the lock from the consumer repos and aeneas backends/lean/lean-toolchain"},
-    {id: "agda2dedukti-theories", role: "transport", method: "theory/dk and theory/lp/AgdaTheory from the pinned Agda2Dedukti revision, installed on the Dedukti include path and as a Lambdapi package", pin: "from agda2dedukti revision", verify: "lambdapi check of a module that requires AgdaTheory"},
-    {id: "agda2dedukti", role: "transport", method: "stack (Deducteam/Agda2Dedukti, which pins its own Agda fork)", pin: "resolve", verify: "translate and check the bundled smoke module with Agda2Dedukti-exe, dk check and lambdapi check", version: "Agda2Dedukti-exe --version", notes: "the upstream executable is Agda2Dedukti-exe; record its Agda fork and the Agda versions it accepts in the lock"},
+    {id: "agda2dedukti-theories", role: "transport", method: "theory/dk and theory/lp/AgdaTheory from the pinned Agda2Dedukti revision, installed on the Dedukti include path and as a Lambdapi package", pin: "from agda2dedukti revision", verify: "lambdapi check $PREFIX/share/smoke/agda-theory.lp"},
+    {id: "agda2dedukti", role: "transport", method: "stack (Deducteam/Agda2Dedukti, which pins its own Agda fork)", pin: "resolve", verify: "sh $PREFIX/share/smoke/agda2dedukti-roundtrip.sh", version: "Agda2Dedukti-exe --version", notes: "the upstream executable is Agda2Dedukti-exe; record its Agda fork and the Agda versions it accepts in the lock. the script translates smoke/Smoke.agda with Agda2Dedukti-exe and checks the output with dk check and lambdapi check; it exits non-zero if any step fails"},
     {id: "dedukti", role: "transport", method: "opam (pinned source revision)", pin: "from agda2dedukti README", verify: "dk check --help", version: "dk --version", notes: "the Dedukti revision Agda2Dedukti's install notes name as tested; the released opam Dedukti may be too old"},
     {id: "lambdapi", role: "transport", method: "opam (pinned source revision)", pin: "from agda2dedukti README", verify: "lambdapi --version", notes: "the Lambdapi version or revision Agda2Dedukti's install notes name as tested"},
     {id: "kani", role: "exception:rust", method: "cargo (kani-verifier, then cargo kani setup)", pin: "resolve", verify: "cargo kani --version", needs: ["rust"]},
     {id: "charon", role: "exception:rust", method: "cargo (from its repository)", pin: "from aeneas charon-pin", verify: "charon --version", notes: "never resolved on its own: checked out at the commit in the pinned Aeneas charon-pin file"},
-    {id: "aeneas-lean-backend", role: "exception:rust", method: "backends/lean from the pinned Aeneas revision with its Lake dependencies, prebuilt for its own lean-toolchain", pin: "from aeneas revision", verify: "lake build in the bundled backend directory", notes: "if its Lake dependencies include Mathlib, the Rocq backend replaces it (PROOF-POLICY no-Mathlib rule)"},
+    {id: "aeneas-lean-backend", role: "exception:rust", method: "backends/lean from the pinned Aeneas revision with its Lake dependencies, prebuilt for its own lean-toolchain", pin: "from aeneas revision", verify: "lake build in the bundled backend directory", notes: "today it depends on Mathlib, and the Rocq backend has an unsound mk_array axiom (Aeneas #1116), so per PROOF-POLICY §4.1 no backend qualifies and Aeneas results are recorded ASSUMED; it is bundled so that status can be produced and so a qualifying revision drops in"},
     {id: "aeneas", role: "exception:rust", method: "opam (from its repository)", pin: "resolve", verify: "aeneas -help", version: "aeneas -version", notes: "generated Lean imports backends/lean from the same revision", needs: ["aeneas-lean-backend"]},
     {id: "tlc", role: "exception:recorded", method: "release asset (tlaplus tla2tools.jar) plus a bundled tlc launcher (java -cp $PREFIX/lib/tla/tla2tools.jar tlc2.TLC, absolute so it runs from any directory)", pin: "resolve-stable", verify: "tlc -h", needs: ["jre"], notes: "pin a stable tagged release with its sha256 in the lock; v1.8.0 is a rolling prerelease rebuilt on every master commit"},
     {id: "jre", role: "runtime", method: "release asset (Eclipse Temurin JRE, Java 17 or later)", pin: "resolve-stable", verify: "java -version", notes: "bundled so the tlc launcher does not depend on a host Java"},
     {id: "isabelle", role: "exception:recorded", method: "release asset", pin: "resolve", verify: "isabelle version", notes: "supplementary evidence only"},
     {id: "z3", role: "backend", method: "release asset", pin: "resolve", verify: "z3 --version"},
     {id: "cvc5", role: "backend", method: "release asset", pin: "resolve", verify: "cvc5 --version"},
+    {id: "yices", role: "backend", method: "release asset (SRI-CSL yices2)", pin: "resolve-stable", verify: "yices --version"},
     {id: "alt-ergo", role: "backend", method: "opam", pin: "resolve", verify: "alt-ergo --version"},
     {id: "eprover", role: "backend", method: "source build", pin: "resolve", verify: "eprover --version"},
     {id: "vampire", role: "backend", method: "release asset (vprover/vampire)", pin: "v4.9casc2024", verify: "vampire --version"},
