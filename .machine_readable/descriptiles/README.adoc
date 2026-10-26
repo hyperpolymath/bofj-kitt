@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Descriptile locations
+
+This directory holds the six canonical TOML-format A2ML records previously
+stored under `.machine_readable/6a2/`. Active metadata readers and writers
+now use this directory. The duplicate S-expression META and ECOSYSTEM
+records have been consolidated here: META retains their review and branch
+protection policies, project identity and former schema version; ECOSYSTEM
+retains the version and the same three project relationships.
+
+The older S-expression `.machine_readable/STATE.a2ml` remains a required
+compatibility input for `.github/workflows/openssf-compliance.yml`.
+Removing that retired path also requires updating the workflow's required
+file and placeholder checks. It cannot be removed independently without
+breaking that existing CI consumer.
