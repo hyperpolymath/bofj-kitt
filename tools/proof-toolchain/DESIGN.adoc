@@ -125,8 +125,10 @@ the host or the network. Three rules keep it so:
   another (a translator feeding a checker), its `verify` runs the pair on a
   bundled smoke input instead of a help probe.
 
-elan is configured never to download, so a toolchain missing from the bundle
-fails loudly instead of being fetched behind the lock's back.
+rustup and elan are configured never to install a toolchain on demand, so a
+toolchain missing from the bundle fails loudly instead of being fetched behind
+the lock's back. An entry that locks several toolchains is verified once per
+toolchain, so `doctor` cannot pass on whichever one happens to be the default.
 
 == Roles
 

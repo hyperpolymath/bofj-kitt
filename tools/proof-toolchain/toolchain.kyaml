@@ -10,7 +10,9 @@
 # verify is a smoke test that the tool runs; version (when present) is the
 # command whose output must contain the locked version, so doctor can tell
 # PRESENT from DRIFT. Without version, verify's output is used.
-# $PREFIX in a command stands for the prefix field below.
+# $PREFIX in a command stands for the prefix field below. A command that
+# names $TOOLCHAIN runs once for each toolchain in the entry's toolchains
+# field, and every run must pass, so one missing toolchain fails the entry.
 # Smoke fixtures named by verify commands live in smoke/ beside this file and
 # are installed to $PREFIX/share/smoke/ by the bundle build.
 {
@@ -18,7 +20,7 @@
   prefix: "/opt/hyperpolymath/provers",
   policy: "standards 3-practice/PROOF-POLICY.adoc",
   tools: [
-    {id: "rust", role: "runtime", method: "rustup into the prefix (toolchains named by Creusot's and Kani's rust-toolchain files)", pin: ["from creusot rust-toolchain", "from kani rust-toolchain"], verify: "cargo --version", notes: "every toolchain Creusot and Kani pin is installed; neither uses a host Rust"},
+    {id: "rust", role: "runtime", method: "rustup into the prefix (toolchains named by Creusot's and Kani's rust-toolchain files)", pin: ["from creusot rust-toolchain", "from kani rust-toolchain"], verify: "rustup run $TOOLCHAIN cargo --version", notes: "every toolchain Creusot and Kani pin is installed; neither uses a host Rust. rustup is set never to install a toolchain on demand, so a missing one fails instead of being fetched", toolchains: "enumerated in the lock from the creusot and kani rust-toolchain files"},
     {id: "creusot", role: "policy:rust", method: "cargo (Creusot INSTALL script, pinned nightly)", pin: "resolve", verify: "cargo creusot --version", needs: ["rust", "why3", "why3find", "z3", "cvc5", "alt-ergo"]},
     {id: "why3", role: "policy:rust", method: "opam", pin: "from creusot creusot-deps.opam", verify: "why3 --version"},
     {id: "why3find", role: "policy:rust", method: "opam", pin: "from creusot creusot-deps.opam", verify: "why3find --help", version: "why3find --version"},
@@ -29,7 +31,7 @@
     {id: "agda-stdlib-2.3", role: "policy:theory-source", method: "release archive (agda/agda-stdlib tag v2.3) registered in the bundle's Agda libraries file", pin: "v2.3", verify: "test -f $PREFIX/lib/agda-stdlib-2.3/standard-library.agda-lib", notes: "the stdlib echo-types and ordinal-notation CI pins"},
     {id: "agda-stdlib-2.1", role: "policy:theory-source", method: "release archive (agda/agda-stdlib tag v2.1) registered in the bundle's Agda libraries file", pin: "v2.1", verify: "test -f $PREFIX/lib/agda-stdlib-2.1/standard-library.agda-lib", notes: "the stdlib choreographic-types and epistemic-types pin"},
     {id: "rocq", role: "policy:recheck", method: "opam", pin: "resolve", verify: "coqc --version"},
-    {id: "lean", role: "policy:recheck", method: "release asset (elan + every lean4 toolchain listed in toolchains)", pin: "consumer lean-toolchain files", verify: "lean --version", notes: "no Mathlib. Each consumer repo's lean-toolchain and the Aeneas Lean backend's are preinstalled and hashed; elan is set never to download, so a missing toolchain fails instead of fetching", toolchains: "enumerated in the lock from the consumer repos and aeneas backends/lean/lean-toolchain"},
+    {id: "lean", role: "policy:recheck", method: "release asset (elan + every lean4 toolchain listed in toolchains)", pin: "consumer lean-toolchain files", verify: "elan run $TOOLCHAIN lean --version", notes: "no Mathlib. Each consumer repo's lean-toolchain and the Aeneas Lean backend's are preinstalled and hashed; elan is set never to download, so a missing toolchain fails instead of fetching", toolchains: "enumerated in the lock from the consumer repos and aeneas backends/lean/lean-toolchain"},
     {id: "agda2dedukti-theories", role: "transport", method: "theory/dk and theory/lp/AgdaTheory from the pinned Agda2Dedukti revision, installed on the Dedukti include path and as a Lambdapi package", pin: "from agda2dedukti revision", verify: "lambdapi check $PREFIX/share/smoke/agda-theory.lp"},
     {id: "agda2dedukti", role: "transport", method: "stack (Deducteam/Agda2Dedukti, which pins its own Agda fork)", pin: "resolve", verify: "sh $PREFIX/share/smoke/agda2dedukti-roundtrip.sh", version: "Agda2Dedukti-exe --version", notes: "the upstream executable is Agda2Dedukti-exe; record its Agda fork and the Agda versions it accepts in the lock. the script translates smoke/Smoke.agda with Agda2Dedukti-exe and checks the output with dk check and lambdapi check; it exits non-zero if any step fails"},
     {id: "dedukti", role: "transport", method: "opam (pinned source revision)", pin: "from agda2dedukti README", verify: "dk check --help", version: "dk --version", notes: "the Dedukti revision Agda2Dedukti's install notes name as tested; the released opam Dedukti may be too old"},
