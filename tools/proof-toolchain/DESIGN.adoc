@@ -108,6 +108,26 @@ container engine. CI and the dispatchers can run containers. So the tarball
 is the primary artefact and the image wraps the same tree, rather than the
 other way round.
 
+== The closure rule
+
+The bundle is complete only if nothing a tool needs at run time comes from
+the host or the network. Three rules keep it so:
+
+. *Everything a tool loads is an entry.* Runtimes (Rust toolchains, a Java
+  runtime), libraries (the Agda standard libraries, Agda2Dedukti's theories,
+  Aeneas's Lean backend) and every Lean toolchain a consumer pins are
+  manifest entries, fetched and hashed like the tools themselves.
+. *Coupled versions derive from the tool that drives them.* Why3 and why3find
+  come from Creusot's `creusot-deps.opam`, Charon from Aeneas's `charon-pin`,
+  Dedukti and Lambdapi from Agda2Dedukti's tested revisions. Nothing coupled
+  is resolved on its own.
+. *A producer is checked end to end.* Where a tool's output is consumed by
+  another (a translator feeding a checker), its `verify` runs the pair on a
+  bundled smoke input instead of a help probe.
+
+elan is configured never to download, so a toolchain missing from the bundle
+fails loudly instead of being fetched behind the lock's back.
+
 == Roles
 
 Each manifest entry carries one role. The roles are PROOF-POLICY's mapping,
@@ -125,7 +145,7 @@ plus the supporting tools the mapped provers need.
 |`transport` |agda2dedukti, Dedukti (`dkcheck`), Lambdapi. agda2dedukti tracks particular Agda versions; the manifest records which Agda it accepts.
 |`exception:rust` |Kani; Aeneas with Charon (PROOF-POLICY §4.1)
 |`exception:recorded` |TLA+ (`tlc`); Isabelle (supplementary only)
-|`runtime` |A Java runtime for the `tlc` launcher, bundled rather than taken from the host
+|`runtime` |Rust toolchains (rustup, the toolchains Creusot and Kani pin) and a Java runtime for the `tlc` launcher, bundled rather than taken from the host
 |`backend` |Z3, CVC5, Alt-Ergo, E prover, Vampire
 |===
 
