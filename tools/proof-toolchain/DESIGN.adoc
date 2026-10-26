@@ -84,10 +84,22 @@ does not carry (estate ruling 2026-05-18).
 
 opam switches, elan toolchains and Alire builds embed absolute paths, so a
 bundle built at one path does not run at another. Every target therefore
-unpacks at `/opt/hyperpolymath/provers`. The workstation's `env.sh` adds
-`/opt/hyperpolymath/provers/bin` to `PATH` beside its existing homes; the
+unpacks at `/opt/hyperpolymath/provers`. The install step of <<plan>> also
+adds `/opt/hyperpolymath/provers/bin` to the workstation's `env.sh` `PATH`
+beside its existing homes (it is not there yet); the
 tools it already builds natively stay where they are until the bundle covers
 them.
+
+=== Which systems the bundle runs on
+
+Copying native binaries to the same path does not make them run on a host
+with an older C library or missing shared libraries. The bundle is therefore
+built inside a pinned builder image whose glibc is the declared minimum, with
+every shared library that is not part of that baseline copied under
+`lib/` and found through the binaries' run path. Before a bundle is
+released, `provers.sh doctor` must pass on each supported target: the CI
+runner image, the agent-session image and the workstation's distribution.
+The lock records the builder image digest and the glibc minimum.
 
 === Why a release asset first, image second
 
@@ -108,11 +120,12 @@ plus the supporting tools the mapped provers need.
 |`policy:rust` |Creusot (with Why3 and Why3find)
 |`policy:ada` |gnatprove (SPARK)
 |`policy:engineering` |Idris2 (with pack)
-|`policy:theory-source` |Agda with its standard library. Two versions side by side, 2.6.3 and 2.6.4.3, because the theory repos pin both; a repo selects its own.
+|`policy:theory-source` |Agda with its standard library. The standard libraries are their own entries, so the bundle fetches, pins and hashes them like any other input. Two versions side by side, 2.6.3 and 2.6.4.3, because the theory repos pin both; a repo selects its own.
 |`policy:recheck` |Rocq (`coqc`), Lean (elan with pinned toolchains; no Mathlib)
 |`transport` |agda2dedukti, Dedukti (`dkcheck`), Lambdapi. agda2dedukti tracks particular Agda versions; the manifest records which Agda it accepts.
 |`exception:rust` |Kani; Aeneas with Charon (PROOF-POLICY §4.1)
 |`exception:recorded` |TLA+ (`tlc`); Isabelle (supplementary only)
+|`runtime` |A Java runtime for the `tlc` launcher, bundled rather than taken from the host
 |`backend` |Z3, CVC5, Alt-Ergo, E prover, Vampire
 |===
 
