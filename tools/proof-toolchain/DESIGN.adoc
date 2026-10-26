@@ -1,0 +1,152 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Proof toolchain: design
+:toc:
+
+One declared set of provers, solvers and translators, made available
+wherever estate proofs run: the workstation, online agent sessions, CI
+runners, and the echidna family's dispatchers. Which prover carries which
+obligation is decided by `3-practice/PROOF-POLICY.adoc` in `standards`; this
+kit decides how those tools get onto a machine and how a machine reports
+which of them it has.
+
+Status: design, not built. Nothing here installs anything yet; the build
+steps are in <<plan>>.
+
+== The problem it solves
+
+The same tools are installed four different ways today, and each way fails
+differently:
+
+* *The workstation* (`~/developer/tools`, see `../workstation/`) installs
+  through rustup, cargo, elan, pack, Alire and opam, with full network. It
+  works, but nothing records which versions it holds.
+* *Online agent sessions* (Claude Code cloud sessions, claude.ai skills)
+  cannot reach `opam.ocaml.org`, `alire.ada.dev`, or GitHub source
+  archives. They can reach GitHub *release assets*. So Creusot's Why3 back
+  ends, Lambdapi, Dedukti, agda2dedukti and Idris2 cannot be built there at
+  all, and every session that needs them fails or reports a leg it never ran.
+* *CI runners* have the network but not the time: a cold opam build of
+  Creusot's back ends or of agda2dedukti costs tens of minutes per job.
+* *Dispatchers* (echidna, echidnabot, proof-burrower) need binaries at known
+  paths and a way to tell which provers a host really has.
+
+== The design in one line
+
+Build once where the network is open, ship one relocatable-by-prefix bundle
+as a release asset and a container image, and let every target unpack the
+same bytes and report what it holds in one machine-readable form.
+
+== Parts
+
+[cols="1,3",options="header"]
+|===
+|Part |What it is
+
+|`toolchain.kyaml`
+|The manifest, and the only hand-edited file. One entry per tool: its id,
+its role under PROOF-POLICY, how it is built, its pin, and the command that
+proves it runs. Roles are listed below.
+
+|`toolchain.lock.json`
+|Tool-owned lock, written only by the bundle build (I-JSON, JCS). Records the
+resolved version, the source URL and the SHA-256 of every input, and the
+SHA-256 of the produced bundle and image digest. Never hand-edited.
+
+|Bundle build (CI)
+|A workflow on a full-network runner builds every tool into the fixed prefix
+`/opt/hyperpolymath/provers`, then publishes
+`provers-<date>-x86_64-linux.tar.zst` as a GitHub release asset of this repo
+and an OCI image (Wolfi base) containing the same tree, both pinned in the
+lock.
+
+|`provers.sh install`
+|Fetches the bundle named in the lock, checks its SHA-256, and unpacks it at
+the prefix. The same command serves the workstation, a session's setup
+script, and a CI job. A release asset is reachable from all three.
+
+|`provers.sh doctor`
+|Reports each manifest entry as `PRESENT <version>`, `DRIFT <have> != <lock>`,
+or `UNAVAILABLE <reason>`, as text and as one JCS object. It never reports a
+tool it could not run as present (PROOF-POLICY §6).
+
+|`provers.sh render`
+|Regenerates `../workstation/PROVERS-SOLVERS.adoc` from the manifest, so the
+human index cannot drift from what is installed.
+
+|Guix manifest
+|The tools that Guix packages are also projected into a Guix manifest for
+Guix-primary hosts. The bundle is the sealed escape hatch for the tail Guix
+does not carry (estate ruling 2026-05-18).
+|===
+
+=== Why a fixed prefix
+
+opam switches, elan toolchains and Alire builds embed absolute paths, so a
+bundle built at one path does not run at another. Every target therefore
+unpacks at `/opt/hyperpolymath/provers`. The workstation's `env.sh` adds
+`/opt/hyperpolymath/provers/bin` to `PATH` beside its existing homes; the
+tools it already builds natively stay where they are until the bundle covers
+them.
+
+=== Why a release asset first, image second
+
+Agent sessions can download a release asset but usually cannot run a
+container engine. CI and the dispatchers can run containers. So the tarball
+is the primary artefact and the image wraps the same tree, rather than the
+other way round.
+
+== Roles
+
+Each manifest entry carries one role. The roles are PROOF-POLICY's mapping,
+plus the supporting tools the mapped provers need.
+
+[cols="1,3",options="header"]
+|===
+|Role |Tools
+
+|`policy:rust` |Creusot (with Why3 and Why3find)
+|`policy:ada` |gnatprove (SPARK)
+|`policy:engineering` |Idris2 (with pack)
+|`policy:theory-source` |Agda with its standard library. Two versions side by side, 2.6.3 and 2.6.4.3, because the theory repos pin both; a repo selects its own.
+|`policy:recheck` |Rocq (`coqc`), Lean (elan with pinned toolchains; no Mathlib)
+|`transport` |agda2dedukti, Dedukti (`dkcheck`), Lambdapi. agda2dedukti tracks particular Agda versions; the manifest records which Agda it accepts.
+|`exception:rust` |Kani; Aeneas with Charon (PROOF-POLICY §4.1)
+|`exception:recorded` |TLA+ (`tlc`); Isabelle (supplementary only)
+|`backend` |Z3, CVC5, Alt-Ergo, E prover, Vampire
+|===
+
+The estate's own `echidna` (the prover dispatcher) is a *consumer* of this
+toolchain, not part of it. Trail of Bits' Echidna (a Solidity fuzzer), which
+`../workstation/PROVERS-SOLVERS.adoc` currently lists, is a different tool
+that shares the name; the manifest names it `echidna-solidity` if it stays.
+
+== How the estate uses it
+
+* *echidna and echidnabot* read `provers.sh doctor --json` to decide which
+  `ProverKind` backends a host can actually serve, instead of probing
+  binaries one by one.
+* *The BoJ server* receives the same JSON when the kit registers an
+  environment (README, "register"), so a remote caller can see which
+  provers an environment offers before dispatching to it.
+* *The proof-craft skill* stops carrying its own installer:
+  `install-toolchains.sh` becomes `provers.sh install` plus `doctor`, and the
+  skill's canonical copy lives in this kit.
+* *Recheck records* (the echidna hand-off of 2026-10-26) can cite the lock's
+  translator and prover versions by hash, which answers "which agda2dedukti,
+  which Agda" for every transported leg.
+
+[[plan]]
+== Build plan (stacked PRs)
+
+. This design and the manifest. `provers.sh render` regenerates the
+  workstation index from it.
+. `provers.sh doctor`, text and JSON. Useful at once on the workstation,
+  before any bundle exists.
+. The bundle build workflow and `provers.sh install`. It produces the first
+  release asset and image and writes the lock.
+. Consumers: the session setup-script snippet, the CI usage pattern, the
+  echidna capability read, and proof-craft's switch to `provers.sh`.
+
+This is the kit's first concrete capability (roadmap M2–M4). It needs no
+choice of implementation language: the scripts are POSIX shell over `yq`
+(Go) and `jq`.

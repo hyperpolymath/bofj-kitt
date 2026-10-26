@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: MPL-2.0
+# Proof toolchain manifest: the one hand-edited source (see DESIGN.adoc).
+# pin "resolve" means the bundle build picks the version and records it in
+# toolchain.lock.json; a concrete pin is honoured as written.
+{
+  schema: 1,
+  prefix: "/opt/hyperpolymath/provers",
+  policy: "standards 3-practice/PROOF-POLICY.adoc",
+  tools: [
+    {id: "creusot", role: "policy:rust", method: "cargo (Creusot INSTALL script, pinned nightly)", pin: "resolve", verify: "cargo creusot --version", needs: ["why3", "why3find", "z3", "cvc5", "alt-ergo"]},
+    {id: "why3", role: "policy:rust", method: "opam", pin: "resolve", verify: "why3 --version"},
+    {id: "why3find", role: "policy:rust", method: "opam", pin: "resolve", verify: "why3find --help"},
+    {id: "gnatprove", role: "policy:ada", method: "release asset (alire-project/GNAT-FSF-builds)", pin: "14.1.0-1", verify: "gnatprove --version"},
+    {id: "idris2", role: "policy:engineering", method: "pack (Chez Scheme bootstrap)", pin: "0.8.0", verify: "idris2 --version"},
+    {id: "agda-2.6.3", role: "policy:theory-source", method: "cabal", pin: "2.6.3", verify: "agda-2.6.3 --version", notes: "echo-types, ordinal-notation; stdlib 2.3"},
+    {id: "agda-2.6.4.3", role: "policy:theory-source", method: "cabal", pin: "2.6.4.3", verify: "agda-2.6.4.3 --version", notes: "choreographic-types, epistemic-types; stdlib 2.1"},
+    {id: "rocq", role: "policy:recheck", method: "opam", pin: "resolve", verify: "coqc --version"},
+    {id: "lean", role: "policy:recheck", method: "release asset (elan + lean4 toolchains)", pin: "resolve", verify: "lean --version", notes: "no Mathlib; projects select a toolchain via lean-toolchain"},
+    {id: "agda2dedukti", role: "transport", method: "cabal", pin: "resolve", verify: "agda2dedukti --version", notes: "record which Agda version it accepts in the lock"},
+    {id: "dedukti", role: "transport", method: "opam", pin: "resolve", verify: "dk check --help"},
+    {id: "lambdapi", role: "transport", method: "opam", pin: "resolve", verify: "lambdapi --version"},
+    {id: "kani", role: "exception:rust", method: "cargo (kani-verifier, then cargo kani setup)", pin: "resolve", verify: "cargo kani --version"},
+    {id: "charon", role: "exception:rust", method: "cargo (from its repository)", pin: "resolve", verify: "charon --version"},
+    {id: "aeneas", role: "exception:rust", method: "opam (from its repository)", pin: "resolve", verify: "aeneas -help", notes: "check its Lean library for Mathlib; Rocq back end if so"},
+    {id: "tlc", role: "exception:recorded", method: "release asset (tlaplus tla2tools.jar)", pin: "v1.8.0", verify: "tlc -h"},
+    {id: "isabelle", role: "exception:recorded", method: "release asset", pin: "resolve", verify: "isabelle version", notes: "supplementary evidence only"},
+    {id: "z3", role: "backend", method: "release asset", pin: "resolve", verify: "z3 --version"},
+    {id: "cvc5", role: "backend", method: "release asset", pin: "resolve", verify: "cvc5 --version"},
+    {id: "alt-ergo", role: "backend", method: "opam", pin: "resolve", verify: "alt-ergo --version"},
+    {id: "eprover", role: "backend", method: "source build", pin: "resolve", verify: "eprover --version"},
+    {id: "vampire", role: "backend", method: "release asset (vprover/vampire)", pin: "v4.9casc2024", verify: "vampire --version"},
+  ],
+}

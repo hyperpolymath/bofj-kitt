@@ -14,7 +14,7 @@ These files describe the toolchain layout of the shared developer workstation th
 | Index header for the locally installed languages, with the method key (apt, rustup, cargo, mise, pack, binary, deferred).
 
 | `PROVERS-SOLVERS.adoc`
-| Index header for the formal-methods tooling (Agda, Lean, Coq, Idris, TLA+, SPARK, Kani, Creusot, Z3, CVC5, Yices, Why3, Echidna).
+| Pointer to the proof-toolchain manifest (`../proof-toolchain/toolchain.kyaml`), which declares every prover, solver and translator.
 |===
 
 == Provenance

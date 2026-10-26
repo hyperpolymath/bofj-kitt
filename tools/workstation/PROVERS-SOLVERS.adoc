@@ -1,4 +1,12 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 = Provers & solvers installed locally
-Formal-methods tooling used across the repos (Agda/Lean/Coq/Idris/TLA+/SPARK/
-Kani/Creusot/Z3/CVC5/Yices/Why3) plus the Echidna Solidity-analysis family.
+
+The formal-methods tooling used across the estate is declared in
+`../proof-toolchain/toolchain.kyaml`, one entry per tool with its role under
+standards `3-practice/PROOF-POLICY.adoc`. That manifest is the list; this
+page will be regenerated from it by `provers.sh render` (see
+`../proof-toolchain/DESIGN.adoc`) and should not grow a second list by hand.
+
+Trail of Bits' Echidna (a Solidity fuzzer), which this page listed before,
+shares its name with the estate's `echidna` prover dispatcher. It is not a
+prover and is not in the manifest.
