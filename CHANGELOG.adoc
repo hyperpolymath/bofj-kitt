@@ -7,3 +7,43 @@ Changelog], and this project adheres to
 https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 === [Unreleased]
+
+==== Added
+
+* `docs/proposals/environment-of-environments.adoc` — how the kit becomes
+  the environment of environments: an environment manifest beside the
+  toolchain manifest, one capability record, rendered projections, the
+  agent-session leg, BoJ registration, and coverage of echidna's core
+  backends; with measured reachability from one agent session and the
+  experiments to run before building.
+* `docs/proposals/awesome-estate-maths-proving.adoc` — the awesome lists to
+  create in `stuff-of-awe` for maths, proving and solving, derived from
+  echidna's prover roster, and the tools echidna itself lacks.
+* `docs/proposals/boj-prover-solver-cartridges.adoc` — three BoJ cartridges
+  (`provers-mcp`, `solvers-mcp`, `code-verifiers-mcp`) on the capability
+  record seam, what the store's `proof-mcp` becomes, and where
+  Quintessence, Apodeixis.jl, atoma and bactarin land.
+* `tools/proof-toolchain/toolchain.kyaml` — HOL Light, HOL4, ACL2, Mizar
+  and PVS as `exception:recorded` entries, with Poly/ML and SBCL as their
+  bundled runtimes (E6, owner decision 2026-10-27; PVS added after review
+  showed its SBCL source build is BSD-3-Clause): the kit now declares all
+  twelve of echidna's core backends. Smoke fixtures and wrappers are under
+  `tools/proof-toolchain/smoke/`, installed by `install-smoke.sh` and
+  tested against stub provers by `tests/proof_smoke_wrappers_test.sh`.
+* `tools/environments/` — `environments.kyaml` (environment classes with a
+  `measured` block), `probe-reachability.sh` and `hosts.txt` (experiment
+  X1: reachability probe, HEAD by default, one-byte GET with `--get`).
+
+==== Changed
+
+* `build/setup.sh` — when no system package provides `just`, setup runs
+  `cargo install just --version 1.56.0 --locked` (the estate mise.lock pin,
+  above the `just` >= 1.42 floor) instead of piping a remote installer to
+  `bash`; covered by `tests/setup_install_test.sh`.
+* `.github/hooks/validate-k9.sh` — skips the two YAML session bindings
+  (`coordination.k9`, `session/custom-checks.k9`) by file identity and
+  section markers rather than reporting them as malformed K9-SVC
+  components; `container/deploy.k9.ncl` and
+  `.machine_readable/svc/k9/methodology-guard.k9.ncl` gain the `K9!` magic
+  line and a pedigree block. The lasting fix is to migrate those bindings to
+  the k9-coordination grammar in `standards`.

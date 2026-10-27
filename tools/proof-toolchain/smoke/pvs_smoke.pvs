@@ -1,0 +1,11 @@
+% SPDX-License-Identifier: MPL-2.0
+% One reflexivity lemma; its ProofLite script below is installed by proveit.
+pvs_smoke: THEORY
+BEGIN
+  x: VAR int
+  smoke_refl: LEMMA x = x
+
+  %|- smoke_refl : PROOF
+  %|- (grind)
+  %|- QED
+END pvs_smoke

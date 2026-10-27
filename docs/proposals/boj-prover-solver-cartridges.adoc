@@ -1,0 +1,409 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= BoJ cartridges for proving, solving and code verification
+:toc:
+:toclevels: 3
+:sectnums:
+
+Format note: where this document names an `.a2ml` file it is locating
+today's content. A2ML is retired in favour of the deed format (grammar:
+standards `1-formats/deed/spec/abnf/deed.abnf`) and `coordination.k9` by
+k9-coordination (`2-protocols/k9-coordination/spec/abnf/coordination-k9-grammar_v1.2.abnf`);
+ruling D313 makes the `.a2ml` to `.deed` conversion a tooling front end
+rather than a hand sweep. Every new field proposed here (the registry's
+`binary`, `family` and `owner` fields, the capability record's home)
+targets the deed, not A2ML.
+
+Status: proposal, 2026-10-27. Companion to
+`environment-of-environments.adoc` (the capability record these cartridges
+advertise from) and `awesome-estate-maths-proving.adoc` (the roster they
+expose). The store state below was read from `hyperpolymath/boj-server-cartridges`
+and the BoJ stdio bridge on that date.
+
+== The gap, confirmed
+
+Nothing public gives an agent MCP access to a *roster* of provers and
+solvers. What exists upstream is per-tool: a Lean language-server MCP, a
+handful of single-solver wrappers. The estate is the only place with a
+141-variant dispatcher (echidna), a declared toolchain (this kit), and a
+cartridge store with a formal-verification domain. The pieces exist; they
+are not joined.
+
+[cols="2,3,2",options="header"]
+|===
+|Surface |What it does today |Why it is not the answer
+
+|`proof-mcp` (store, `domains/formal-verification`)
+|Eight session-lifecycle tools over a state machine (idle, loading,
+verifying, verified, failed) for seven backends: Lean, Coq, Agda, Isabelle,
+Idris2, Z3, CVC5. Idris2 ABI with proofs; Zig FFI and adapter.
+|Its adapter answers every tool with `"<tool> forwarded"` and its `mod.js`
+posts to a REST backend on port 7707 that nothing serves. The store lists
+it as `available: true`, which is a catalogue claim, not a running prover.
+Seven backends is a hand-typed list.
+
+|`echidna-llm-mcp` (store)
+|Routes `consult` and `suggest_tactics` to an LLM.
+|Advice, not proof. Opt-in by API key; must stay separate from anything
+that returns a verdict.
+
+|`proof-lsp` (store)
+|IDE integration: diagnostics, hover, completion for four assistants.
+|Editor protocol, not dispatch.
+
+|`toolchain-mcp` (store, `domains/languages`)
+|Mints and provisions LSP, DAP, BSP and language servers per workspace.
+|Language toolchains, not provers; but its mint/provision/status shape is
+the right model for provisioning a prover set from the kit's bundle.
+
+|`crates/echidna-mcp` (echidna repository)
+|A standalone `rmcp` server with three tools: `prove` (file, prover,
+timeout), `check_prover`, `list_provers`. Shells out to the `echidna`
+binary.
+|It is the right backend and the wrong front door: BoJ ADR-0002 rules out
+standalone MCP servers in the estate, so this surface must enter BoJ as a
+cartridge. Its tool descriptions also hard-code "105 provers", the
+drift `PROVER_COUNT.adoc` warns against.
+
+|BoJ bridge (live)
+|`boj_health` reports `rest-unavailable`, stdio-only, pending the Elixir
+rewrite. Catalogue tools answer from a static manifest.
+|Any cartridge built now must work through the stdio bridge and the
+ADR-0006 `boj_cartridge_invoke` ABI, not through REST.
+|===
+
+== The proposal: three cartridges on one seam
+
+Three cartridges, cut by *what the input is and what the answer means*,
+not by which binary runs. They share one seam: the capability record from
+`environment-of-environments.adoc` (E2), which says what the host can
+actually dispatch, so no cartridge ever advertises a tool it cannot run.
+
+=== `provers-mcp`: proving
+
+Input is a proof artefact (a `.agda`, `.v`, `.lean`, `.thy`, `.idr`, `.p`,
+`.mm` file or a goal string); the answer is a verdict with a trust level
+and, where the backend produces one, a certificate.
+
+[cols="1,3",options="header"]
+|===
+|Tool |Contract
+
+|`provers_list`
+|The provers this host can dispatch, read from the capability record
+(`PRESENT` entries only), each with its echidna `ProverKind` slug, role
+under PROOF-POLICY, version and lock hash. `DRIFT` entries are not
+dispatchable and are excluded, as are `UNAVAILABLE` entries. Never a
+hard-coded count.
+
+|`provers_check`
+|One prover: `PRESENT` with version and lock hash; `DRIFT` with observed
+version/hash, expected lock version/hash and the mismatch (not
+dispatchable); or `UNAVAILABLE` with the reason it could not run.
+
+|`provers_prove`
+|`{file \| goal, prover?, timeout}` → `{verdict, trust_level, prover,
+certificate?, axioms, raw}`. Dispatches through `echidna prove --format
+json`; the five-level trust hierarchy and the axiom scan are echidna's.
+
+|`provers_portfolio`
+|Same input, two or more provers; returns each verdict and the combined
+trust level (level 5 only when two independent small-kernel systems agree
+with certificates, per echidna's `confidence.rs`).
+
+|`provers_recheck`
+|The PROOF-POLICY §2 route: an Agda proof transported through Dedukti to
+Rocq and Lean, with `transported` or `re-proved` recorded per leg and the
+statement comparison named. Needs the kit's `transport` entries present.
+
+|`provers_exchange`
+|Translate between Dedukti, Lambdapi, TPTP, SMT-LIB, OpenTheory, SMTCoq
+through echidna's exchange layer. No verdict; a translation and its hash.
+
+|`provers_certificate`
+|Check a certificate (Alethe, DRAT, LRAT, TSTP, Lean or Rocq kernel
+export) independently of the prover that produced it.
+|===
+
+=== `solvers-mcp`: solving
+
+Input is a problem (SMT-LIB, DIMACS, MiniZinc, LP, a TLA+ or Promela
+model); the answer is a model, a proof of unsatisfiability, an optimum, or
+a bounded model-checking result with its bounds. Solver results are
+`TESTED` with bounds or `PROVEN` with a checked certificate, never
+silently the latter.
+
+Every `solvers_sat` and `solvers_optimise` response carries `status:
+TESTED or PROVEN`, solver id, version and lock hash. `TESTED` carries the
+bounds and limits used. `PROVEN` requires a certificate reference and
+hash, the input hash, the independent checker's id and version, its
+successful check result, and any axioms used. An emitted certificate or
+unsat core alone does not establish `PROVEN`.
+
+[cols="1,3",options="header"]
+|===
+|Tool |Contract
+
+|`solvers_list`, `solvers_check`
+|As for provers, over echidna tiers 8, 9 and 10 and the kit's `backend`
+entries (Z3, CVC5, Yices, Alt-Ergo, E, Vampire).
+
+|`solvers_sat`
+|`{problem, format, solver?, want: model \| unsat_core \| certificate}` →
+the requested artefact plus timing, explicit status and the metadata
+defined above. Portfolio across Z3, CVC5 and Alt-Ergo
+with disagreement flagged, as echidna's `portfolio.rs` does.
+
+|`solvers_optimise`
+|MiniZinc, Chuffed, OR-Tools, GLPK, SCIP: objective, bound, solution,
+proof of optimality where the solver emits one, plus timing, explicit
+status and the metadata defined above. `PROVEN` requires the certificate
+check to establish optimality for the reported objective and bound.
+
+|`solvers_model_check`
+|TLC, SPIN, NuSMV, Alloy, PRISM, Storm, UPPAAL, ProB: the property, the
+bounds, the counter-example if any. Reported as `TESTED` with bounds, per
+PROOF-POLICY §4.
+
+|`solvers_certificate`
+|Alethe, DRAT, LRAT, LFSC checking, shared with `provers_certificate`
+through one implementation.
+|===
+
+=== `code-verifiers-mcp`: verifying code in its own language
+
+Input is a source tree with contracts; the answer is a proof ledger in
+the PROOF-POLICY §5 vocabulary (`PROVEN`, `PROVEN-WITH-AXIOMS`, `TESTED`,
+`ASSUMED`, `OPEN`) with a receipt. This is the cartridge for the tools that
+sit *on* code rather than on proof files: Creusot and Kani for Rust, SPARK
+for Ada, Aeneas for Rust-to-model, Dafny, Why3 and Cameleer, F*, and the
+estate's own verifiers as they arrive: Quintessence (Elixir/OTP, three
+layers, already producing TrustLevel 4 certificates), Apodeixis.jl (Julia;
+today a fail-closed policy audit, verifier planned), atoma and bactarin
+(no initialised repository yet; atoma is still the untouched template and
+bactarin has no repository in the estate listing).
+
+[cols="1,3",options="header"]
+|===
+|Tool |Contract
+
+|`verifiers_list`
+|The language-to-verifier mapping this host can serve, from PROOF-POLICY
+§1 and the capability record: Rust → Creusot (+ Kani, Aeneas), Ada → SPARK,
+Elixir → Quintessence, Julia → Apodeixis.jl, and the §4 exceptions.
+
+|`verifiers_verify`
+|`{path, language?, tool?, obligations?}` → the ledger: one row per
+obligation with status, tool, version, provers used, axioms, and the
+`ASSUMED` boundary rows for third-party code (§1.1).
+
+|`verifiers_obligations`
+|List the verification conditions a tool generates for a path, without
+discharging them. Lets an agent see the proof surface before paying for it.
+
+|`verifiers_receipt`
+|The hashed receipt for a ledger: inputs, tool and prover versions by lock
+hash, bounds for `TESTED` rows. Quintessence's SHA-256 binary receipt and
+Apodeixis's planned warrant-to-receipt pipeline are the two estate
+instances of this shape; the cartridge defines the common one.
+
+|`verifiers_mutate`
+|Run echidna's mutation engine (or Quintessence's six-kind one) over a
+specification and report the mutation score against the 95% default.
+|===
+
+Why a third cartridge rather than a section of `provers-mcp`: the input
+is code, the mapping is by language, the output is a ledger rather than a
+verdict, and the future estate tools all land here. Keeping it separate
+means Quintessence, Apodeixis.jl, atoma and bactarin each add one
+`verifiers_list` row and one dispatch arm, with no change to the proving
+or solving surfaces.
+
+=== What `proof-mcp` becomes
+
+Keep it, and make it honest: `proof-mcp` is the *lifecycle* layer (slots,
+state machine, the Idris2 proofs it already has); its `proof_verify`
+composes `provers_prove` under ADR-0014's composition contract instead of
+posting to a port nothing serves. Its backend list is replaced by a read of
+`provers_list`. The alternative, deleting it, throws away a proved state
+machine for no gain.
+
+== Options compared
+
+[cols="1,3,1,1,1",options="header"]
+|===
+|Option |Shape |Elegance / correctness |Dependability |Security / privacy
+
+|*A. Three cartridges on one seam* (recommended)
+|`provers-mcp`, `solvers-mcp`, `code-verifiers-mcp`; `proof-mcp` as
+lifecycle over them; all advertise from the capability record.
+|High. Each surface has one input kind and one answer kind; the roster is
+never typed by hand.
+|Depends on the kit's `doctor` producing `EnvCapability`; echidna's
+`check-prover` is not a substitute. Only experiment Z3 (scaffolding and
+static validation) may precede `doctor`.
+|High. Shield tier; sandboxed execution (echidna's Podman or bwrap
+executor, ADR-0009's local provider); no LLM in the verdict path.
+
+|*B. One `echidna-mcp` cartridge*
+|Port the three tools of `crates/echidna-mcp` into the store as they are.
+|Low. Satisfies ADR-0002 in an afternoon, but "prove this file with this
+prover" is the whole surface: no portfolio, no ledger, no solving, and the
+hard-coded "105".
+|Medium. Nothing to maintain beyond echidna.
+|Shield tier required. Every cartridge invocation must run in the sandbox,
+whether or not `echidna prove` receives a sandbox flag; refuse invocation
+if the required sandbox executor is unavailable.
+
+|*C. One `formal-methods-mcp` mega-cartridge*
+|Every tool of A in one cartridge.
+|Low. One `cartridge.json` with twenty tools across three answer kinds;
+the ledger and verdict vocabularies get mixed.
+|Medium.
+|Medium. One tier for tools with very different blast radius.
+
+|*D. Alternative path: the store is the manifest*
+|Render each cartridge's `cartridge.json` tool catalogue and the `prover`
+enum in its input schemas from echidna's `provers.a2ml` and the kit's
+capability record, with one `invoke(prover, input)` tool per cartridge
+whose schema is generated. Same `render` pattern as `provers.sh render`.
+|Highest for drift (a new `ProverKind` variant appears in the schema on
+the next render) and lowest for readability of the tool list.
+|Medium until `provers.a2ml` carries the `binary` and `family` fields the
+awesome-lists proposal asks for.
+|High. Same as A.
+|===
+
+Recommendation: A, with D's generated `prover` enum adopted inside A's
+input schemas as soon as the registry fields exist. B is the right
+*first step* of A, not an alternative to it: port `crates/echidna-mcp`
+into `provers-mcp` first, then grow.
+
+== Experiments before building
+
+[cols="1,3,2",options="header"]
+|===
+|Id |Experiment |Pass criterion
+
+|Z1
+|Run `crates/echidna-mcp` over stdio against a host with only Z3 present;
+call `list_provers`, `check_prover`, `prove` on a one-line SMT-LIB file.
+|`prove` returns `verified: true` for a satisfiable goal; `check_prover`
+says `Lean` is unavailable rather than failing. This is the backend
+contract the cartridge wraps.
+
+|Z2
+|Replace `proof-mcp`'s `mod.js` POST to port 7707 with a subprocess call
+to `echidna prove --format json`, and call `proof_verify` through the
+stdio bridge.
+|The verdict reaches the caller; the Zig adapter's `"forwarded"` stub is
+retired. Proves the cartridge can be real without the Elixir REST port.
+
+|Z3
+|Scaffold `provers-mcp` from `templates/gossamer-mcp`, write its
+`cartridge.json`, run the store's `just validate` and
+`scripts/typecheck-proofs.sh`.
+|Manifest validates against `cartridge-v1.json` at the pinned SHA; the
+Idris2 ABI type-checks with zero `believe_me`.
+
+|Z4
+|Feed the same theorem to Z3 and CVC5, then to Lean and Rocq, through
+`provers_portfolio`.
+|The SMT pair reports level 3 at most; the kernel pair reports level 5
+only with certificates. The trust mapping is observed, not assumed.
+
+|Z5
+|Compose `proof-mcp.proof_verify` → `provers-mcp.provers_prove` and run
+the ADR-0014 composition check on the typed boundary.
+|The composition is admitted by the typed contract or the ADR names what
+is missing; either outcome is the fact the cartridge needs.
+
+|Z6
+|`verifiers_verify` on Quintessence's own 15-case suite and on a Creusot
+example crate.
+|Both produce a ledger in the §5 vocabulary with a receipt; the Creusot
+rows name Why3 and the provers by lock hash.
+|===
+
+== The formal route
+
+Three things here are interface contracts, so under PROOF-POLICY §1 they
+are Idris2:
+
+* The `prover` argument's type. Derive it from echidna's `ProverKind` (the
+  `.machine_readable/provers.a2ml` slugs) so an unknown prover is rejected
+  at the ABI boundary, not discovered as a runtime string mismatch. The
+  cartridge template already puts the ABI in Idris2.
+* The capability record, shared with `environment-of-environments.adoc`:
+  one `EnvCapability` type consumed by `provers_list`, `solvers_list` and
+  `verifiers_list`, so the three cartridges cannot disagree about what the
+  host holds.
+* The ledger row. The §5 vocabulary is a closed sum type; a `TESTED` row
+  carries bounds and a `PROVEN` row carries a certificate reference by
+  construction.
+
+One theory statement is worth an Agda file: echidna's five trust levels
+form a chain, and a portfolio's level is the meet of its members' levels
+except for the one case (two independent small-kernel systems, both with
+certificates) that lifts to level 5. Stating that as a lattice property and
+rechecking it in Rocq and Lean per §2 is small, and it is the property an
+agent relies on when it reads `trust_level: 5`.
+
+== Aspects
+
+Security:: The cartridges execute untrusted proof and problem files.
+Shield tier; every cartridge invocation runs under echidna's sandbox (Podman
+`--network=none`, read-only, limits; bwrap fallback; the unsandboxed mode
+refused regardless of any `echidna prove` sandbox flag). If the required
+sandbox executor is unavailable, refuse to run. ADR-0009's `sandbox-mcp`
+local provider is the same mechanism once it exists.
+Privacy:: Proof content can be proprietary. The verdict path has no
+network egress and no LLM; `echidna-llm-mcp` stays a separate, opt-in
+cartridge. Receipts carry hashes, not content.
+Honesty:: Every list is read from the capability record. A prover the
+host lacks is `UNAVAILABLE` with a reason, never a stub answer. The
+store's `available: true` must mean a process answered, which today it
+does not for `proof-mcp`.
+Licensing:: Imandra, SRI's Allegro build of PVS and other non-free
+backends are dispatchable only where installed; the cartridge reports them
+unavailable elsewhere and never bundles them.
+Observability:: Receipts hashed with BLAKE3 as echidna's certificates
+are; the kit lock's SHA-256 named per tool so a receipt pins the exact
+binary.
+Composition:: ADR-0014 applies: `proof-mcp` composing `provers-mcp` is the
+first real cross-cartridge call in the store and the right test case for
+that ADR.
+
+== Beyond this repository
+
+* `hyperpolymath/boj-server-cartridges`: three new cartridges under
+  `domains/formal-verification/`; `proof-mcp` rewired to compose rather
+  than POST to port 7707; its backend list replaced by a capability read.
+* `hyperpolymath/echidna`: `crates/echidna-mcp` either becomes the
+  `provers-mcp` backend contract or is retired under ADR-0002; `list-provers
+  --format json` should emit slug, family, binary and tier so the cartridge
+  schemas can be rendered; the hard-coded "105" in its tool descriptions
+  is the drift `PROVER_COUNT.adoc` names.
+* `hyperpolymath/boj-server`: ADR-0014's composition contract gets its
+  first instance; the catalogue's `available` flag needs a liveness
+  meaning.
+* `hyperpolymath/quintessence` and `hyperpolymath/Apodeixis.jl`: a
+  `verify --format json` command whose output is the §5 ledger row shape,
+  so `code-verifiers-mcp` dispatches to both without adapters.
+* `hyperpolymath/atoma`: still the uninitialised RSR template (README
+  tokens unfilled); it needs an identity before it can be a verifier row.
+* `bactarin`: no repository exists in the estate listing yet.
+* `hyperpolymath/standards`: the cartridge spec's domain list may want
+  `proving`, `solving` and `code-verification` as named domains rather
+  than one `formal-verification`.
+
+== Decisions needed
+
+. Three cartridges (A) or the one-cartridge first step (B) now, growing
+  into A.
+. Whether `proof-mcp` is kept as the lifecycle layer or retired.
+. Whether `crates/echidna-mcp` is retired once `provers-mcp` exists, per
+  ADR-0002.
+. Whether to open the cartridge scaffolds in `boj-server-cartridges` now
+  (experiment Z3) or after the kit's `doctor` ships, since the cartridges'
+  honesty depends on the capability record.

@@ -4,12 +4,16 @@
 #
 # validate-k9.sh — K9 configuration file validation script
 #
-# Scans for .k9 and .k9.ncl files and validates:
+# Scans for K9-SVC .k9 and .k9.ncl components and validates:
 #   1. K9! magic number on line 1
 #   2. Pedigree block presence with required fields (name, version)
 #   3. Security level is one of: kennel, yard, hunt (case-insensitive)
 #   4. Hunt-level files must have a signature or signature_required field
 #   5. SPDX-License-Identifier header presence
+#
+# The two YAML session-management bindings (coordination.k9 and
+# session/custom-checks.k9) use a separate format. Keep their paths and
+# contents intact; they are not K9-SVC components (see EXPLAINME.adoc).
 #
 # Environment variables:
 #   INPUT_PATH   — Directory to scan (default: .)
@@ -26,6 +30,9 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 
 SCAN_PATH="${INPUT_PATH:-.}"
+SCAN_PATH="${SCAN_PATH%/}"
+SCAN_PATH="${SCAN_PATH:-/}"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 STRICT="${INPUT_STRICT:-false}"
 PATHS_IGNORE_RAW="${INPUT_PATHS_IGNORE:-}"
 GITHUB_OUTPUT_FILE="${GITHUB_OUTPUT:-/dev/null}"
@@ -51,6 +58,23 @@ path_ignored() {
         [[ "$p" == *"$frag"* ]] && return 0
     done
     return 1
+}
+
+# Recognise the two documented legacy YAML bindings by repository file
+# identity AND section markers. A K9! marker always opts into SVC validation.
+# Copies elsewhere and malformed bindings must still receive the SVC checks.
+legacy_session_binding() {
+    local file="$1"
+    if grep -q '^K9!$' "$file"; then
+        return 1
+    fi
+    if [[ "$file" -ef "$REPO_ROOT/coordination.k9" ]]; then
+        grep -q '^session_management:' "$file" && grep -q '^signals:' "$file"
+    elif [[ "$file" -ef "$REPO_ROOT/session/custom-checks.k9" ]]; then
+        grep -q '^version:' "$file" && grep -q '^checks:' "$file"
+    else
+        return 1
+    fi
 }
 
 # Counters
@@ -301,9 +325,16 @@ mapfile -t k9_candidates < <(find "$SCAN_PATH" \( -name '*.k9' -o -name '*.k9.nc
 # Apply paths-ignore filter
 k9_files=()
 SKIPPED=0
+SESSION_BINDINGS=0
 for _f in "${k9_candidates[@]}"; do
     if path_ignored "$_f"; then
         SKIPPED=$((SKIPPED + 1))
+        continue
+    fi
+    # Match the actual repository files, not substrings or basenames: a
+    # component named coordination.k9 elsewhere must still be validated.
+    if legacy_session_binding "$_f"; then
+        SESSION_BINDINGS=$((SESSION_BINDINGS + 1))
         continue
     fi
     k9_files+=("$_f")
@@ -311,6 +342,10 @@ done
 
 if [[ $SKIPPED -gt 0 ]]; then
     echo "::notice::Skipped ${SKIPPED} file(s) matching paths-ignore"
+fi
+
+if [[ $SESSION_BINDINGS -gt 0 ]]; then
+    echo "::notice::Excluded ${SESSION_BINDINGS} session-management binding(s); these use YAML, not K9-SVC"
 fi
 
 if [[ ${#k9_files[@]} -eq 0 ]]; then

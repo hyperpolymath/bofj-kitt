@@ -16,6 +16,8 @@ README.adoc
 README.md                  # GitHub landing page (.md renders on GitHub/Glama; see PR #35)
 AUDIT.adoc
 EXPLAINME.adoc
+ARCHITECTURE.adoc          # Repository layout required by the Central Estate Required Files gate.
+MAINTAINERS                # Conventional owner record required by the Central Estate audit.
 0-AI-MANIFEST.a2ml         # thin pointer to .machine_readable/0.1-AI-MANIFEST.a2ml
 LICENSE
 LICENSES/                  # REUSE-convention license texts (MPL-2.0, CC-BY-SA-4.0)

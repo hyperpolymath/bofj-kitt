@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: MPL-2.0
+# Environment manifest: the classes of environment the kit provisions and
+# makes report their capabilities (docs/proposals/environment-of-environments.adoc,
+# enhancement E1). Hand-edited, except each entry's `measured` block, which
+# tools/environments/probe-reachability.sh fills in and dates.
+#
+# Fields:
+#   id                  stable name used in the capability record
+#   kind                host | cloud-session | ci-runner | container | guix-shell | remote
+#   installs            how tools get in, in order of preference:
+#                       guix | mise | bundle (provers.sh install) | image | none
+#   prefix              where the toolchain bundle unpacks ($PREFIX in toolchain.kyaml)
+#   execute-downloaded  may this environment run a binary it fetched? true | false |
+#                       policy (decided per instance; the probe records what it found)
+#   container-runtime   podman | docker | none
+#   report              who reads this environment's capability record
+#   measured            dated probe facts; manual measurements labelled separately
+{
+  schema: 1,
+  policy: "standards 3-practice/PROOF-POLICY.adoc §6; 3-practice/provisioning/PROVISIONING-STANDARD.adoc",
+  toolchain: "../proof-toolchain/toolchain.kyaml",
+  record: {format: "JCS I-JSON", producer: "provers.sh doctor --json (planned)", schema: "verification/proofs/idris2/EnvCapability.idr (planned)"},
+  environments: [
+    {id: "workstation", kind: "host", installs: ["guix", "mise", "bundle"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: true, container-runtime: "podman", report: ["echidna", "echidnabot", "proof-burrower", "boj-server"], notes: "tools/workstation/env.sh is the live PATH; versions are unrecorded until doctor runs here", measured: {}},
+    {id: "agent-session", kind: "cloud-session", installs: ["bundle", "mise"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: "policy", container-runtime: "none", report: ["session .session/ capture", "boj-server"], notes: "network and execution policy differ per session class; measure, never assume", measured: {date: "2026-10-27", platform: "Ubuntu 24.04.5 x86_64 glibc 2.39", hosts-file: "hosts.txt (22 URLs, every one probed twice: HEAD, then --get with a one-byte ranged GET)", reachable: ["github.com release asset (HEAD 302 to release-assets.githubusercontent.com then 200; GET bytes 0-0 206)", "codeload.github.com", "raw.githubusercontent.com", "opam.ocaml.org", "alire.ada.dev", "hackage.haskell.org", "static.rust-lang.org", "releases.lean-lang.org", "isabelle.in.tum.de", "mizar.uwb.edu.pl", "pvs.csl.sri.com", "cvc5.github.io", "downloads.sourceforge.net (SBCL binary)", "ftp.gnu.org", "smt-lib.org", "www.tptp.org"], refused: ["github.com release landing page (/releases/latest; HEAD and GET 403)", "api.github.com (HEAD and GET 403)", "crates.io (HEAD and GET 403)"], registry-answered: ["ghcr.io (HEAD 405, GET 401)", "cgr.dev (HEAD 405, GET 401)"], tls-failed: ["www.cs.utexas.edu (HEAD and GET)"], execute-downloaded: "denied-before-download", execute-downloaded-note: "the Z3 install experiment was refused by session policy before any bytes moved; whether a fetched binary would run was therefore not observed. The later one-byte GET shows asset bytes can flow, not that a full download or a run is permitted"}},
+    {id: "ci-runner", kind: "ci-runner", installs: ["bundle", "guix", "image"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: true, container-runtime: "podman", report: ["workflow summary", "echidnabot"], notes: "full network, limited minutes: a cold opam build is not acceptable here", measured: {}},
+    {id: "devcontainer", kind: "container", installs: ["image", "bundle"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: true, container-runtime: "none", report: ["doctor on attach"], notes: ".devcontainer/Containerfile (Wolfi) names no prover today", measured: {}},
+    {id: "guix-shell", kind: "guix-shell", installs: ["guix"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: false, container-runtime: "none", report: ["doctor"], notes: "primary packager (ruling 2026-05-18); the bundle covers only the tail Guix does not carry", measured: {}},
+    {id: "sealed-container", kind: "container", installs: ["image"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: false, container-runtime: "podman", report: ["echidna dispatcher"], notes: "echidna .containerization/Containerfile.wave3 pattern; licensed or not-in-Guix provers live here", measured: {}},
+    {id: "boj-registered", kind: "remote", installs: ["none"], prefix: "", execute-downloaded: false, container-runtime: "none", report: ["boj-server"], notes: "not an environment the kit provisions: the view a BoJ server holds of any of the above after registration (groove.a2ml capabilities)", measured: {}},
+  ],
+}

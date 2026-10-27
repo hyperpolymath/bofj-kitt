@@ -6,9 +6,8 @@
 # Then hands off to `just setup` for project-specific configuration.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/hyperpolymath/bofj-kitt/main/setup.sh | sh
-#   # or after cloning:
-#   ./setup.sh
+#   # After cloning and reviewing this script:
+#   sh build/setup.sh
 #
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath)
 
@@ -129,6 +128,18 @@ detect_platform() {
 }
 
 # ── Install just ──
+# Use the repository's documented Cargo route when a system package is absent.
+# Cargo checks registry package checksums; --locked uses the release lockfile.
+# 1.56.0 matches the estate mise.lock pin and meets the estate floor (just >= 1.42,
+# standards 3-practice/provisioning/PROVISIONING-STANDARD.adoc).
+install_just_with_cargo() {
+    if ! command -v cargo >/dev/null 2>&1; then
+        fail "Install Cargo or just with your platform's package manager, then rerun setup."
+        return 1
+    fi
+    cargo install just --version 1.56.0 --locked
+}
+
 install_just() {
     if command -v just >/dev/null 2>&1; then
         ok "just already installed: $(just --version 2>/dev/null | head -1)"
@@ -140,8 +151,8 @@ install_just() {
     case "$PKG_MGR" in
         dnf)        sudo dnf install -y just ;;
         apt)        sudo apt-get install -y just 2>/dev/null || {
-                        # just not in older apt repos — use installer
-                        curl -fsSL https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+                        # just is absent from some older apt repositories.
+                        install_just_with_cargo
                     } ;;
         pacman)     sudo pacman -S --noconfirm just ;;
         apk)        sudo apk add just ;;
@@ -152,8 +163,8 @@ install_just() {
         guix)       guix install just ;;
         nix)        nix-env -iA nixpkgs.just ;;
         *)
-            info "Using just installer script..."
-            curl -fsSL https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+            info "Installing just with Cargo..."
+            install_just_with_cargo
             ;;
     esac
 

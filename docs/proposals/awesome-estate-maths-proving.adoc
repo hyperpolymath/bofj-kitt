@@ -1,0 +1,448 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Awesome lists for maths, proving and solving in the stuff-of-awe estate
+:toc:
+:toclevels: 3
+:sectnums:
+
+Status: proposal, 2026-10-27. The roster below was read from echidna's
+`crates/echidna-core/src/prover_kind.rs` (141 variants), its
+`docs/PROVER_COUNT.adoc` (12 core, 105 implementation files, 46
+type-discipline variants with no binary) and `src/rust/provers/` (the binary
+each backend spawns). The existing lists were read from the `stuff-of-awe`
+organisation on the same date.
+
+Format note: echidna's prover registry is cited as `provers.a2ml`
+because that is the file today. A2ML is retired in favour of the deed
+format (standards `1-formats/deed/spec/abnf/deed.abnf`); the `binary`,
+`family` and `owner` fields proposed below target echidna's deed once
+the `.a2ml` to `.deed` conversion (ruling D313) lands there.
+
+This proposal lives in bofj-kitt because the kit is where the estate decides
+which provers an environment carries; the lists are the human index of the
+same roster. Nothing here creates a repository; see <<decisions>>.
+
+== What the awe estate holds today
+
+Eleven repositories, all in `stuff-of-awe`:
+
+[cols="2,1,3",options="header"]
+|===
+|Repository |Lines |Maths or proving coverage
+
+|`awesome-provable` |338 |General index, 2018-era content: Coq, Isabelle,
+"HOL", Lean (as a Microsoft Research project), Idris, Agda, Viper, seL4,
+CompCert. No Lean 4, no Rocq, no solver of any kind.
+|`awesome-coq` |598 |Strong; carries coq-community content and already
+names Rocq tooling.
+|`awesome-agda` |73 |Thin; one mention of Cubical Agda, nothing on the
+standard library versions, 1lab, UniMath or agda2dedukti.
+|`awesome-idris2` |large |Strong; the estate's own.
+|`awesome-haskell`, `awesome-ocaml`, `awesome-fsharp`, `awesome-gleam`
+(fork), `awesome-zig` (fork), `awesome-nickel`, `awesome-ipfs` |— |Language
+and infrastructure lists; not proving.
+|===
+
+Of echidna's 12 core backends, the estate's lists name 5 (Agda, Coq,
+Isabelle, Lean, the HOL family) and none of the solvers (Z3, CVC5). Of the
+remaining 129 variants, the lists name Idris2, Viper and nothing else.
+
+The upstream `sindresorhus/awesome` index, read on the same date, has
+entries for Coq, Idris, Math, Theoretical Computer Science, Computational
+Geometry, Julia, Scientific Computing, JAX and R, and *no* entry for Lean,
+Agda, Isabelle, TLA+, SAT or SMT, constraint programming, model checking,
+logic or formal verification in general. The gap is real upstream, not only
+in the estate.
+
+== The rule for cutting lists
+
+One list per *family of reasoning tool*, not per tool and not per echidna
+tier. echidna's tiers are CI cadence (every PR, nightly, smoke), which is
+no help to a reader. Families are what a reader searches for: "an SMT
+solver", "a model checker", "a logical framework". The exceptions are the
+anchor systems of echidna's core, where a per-system list is what the
+upstream community expects and where the estate already has three (Coq,
+Agda, Idris2).
+
+Where a maintained upstream list exists, fork it, as the estate did for
+`awesome-zig` and `awesome-gleam`, and specialise. Where none exists,
+create. Each new repository takes the shape `awesome-nickel` has (README,
+EXPLAINME, governance, the estate CI set, the Idris2 link-validation tests).
+
+== Proposed lists
+
+Priority: *1* covers echidna's core or a PROOF-POLICY route; *2* covers
+the extended roster; *3* is the maths side the estate has no list for.
+
+[cols="2,3,2,1,1",options="header"]
+|===
+|List |Scope and echidna members |Upstream |Fork or create |Priority
+
+|`awesome-smt`
+|SMT solvers and formats: Z3, CVC5, Alt-Ergo, OpenSMT, SMT-RAT, dReal,
+Yices, Boolector, Bitwuzla, MathSAT, SMTInterpol; SMT-LIB, Alethe, LFSC,
+SMTCoq; SMT-COMP.
+|None dedicated (`awesome-sat-solvers` is SAT only).
+|Create
+|1
+
+|`awesome-atp`
+|Automated theorem provers: Vampire, E, SPASS, iProver, Zipperposition,
+Leo-III, Satallax, Lash, AgsyHOL, Twee, Prover9/Mace4, leanCoP, ileanCoP,
+nanoCoP, Princess, MetiTarski, MizAR; TPTP/TSTP; CASC; Sledgehammer as the
+bridge to ITPs.
+|None.
+|Create
+|1
+
+|`awesome-sat`
+|SAT solvers and proof formats: CaDiCaL, Kissat, MiniSat, Varisat, CreuSAT;
+DRAT, LRAT, FRAT; SAT competition; encodings.
+|`awesome-sat-solvers` exists (owner to confirm before forking).
+|Fork if licence allows, else create
+|2
+
+|`awesome-model-checking`
+|SPIN, NuSMV and nuXmv, TLC, TLAPS, Apalache, Alloy, PRISM, Storm, UPPAAL
+and Stratego, ProB, CBMC, ESBMC, JBMC, SeaHorn, Kind 2, Ivy, CPAchecker,
+Ultimate; TLA+ as a section.
+|None (hohieuai and ElNiak `awesome-formal-verification` cover it as one
+section of a general list).
+|Create
+|1
+
+|`awesome-program-verifiers`
+|Auto-active and deductive verifiers: Dafny, Why3, Cameleer, Frama-C,
+Boogie, Viper with Prusti, Gobra and Nagini, KeY, F*, SPARK/GNATprove,
+Stainless, LiquidHaskell, Creusot, Kani, Verus, Aeneas and Charon. This is
+the tool list; `awesome-provable` becomes the umbrella index that points
+at it.
+|`awesome-provable` (ours, stale).
+|Create, and refresh `awesome-provable` as the index
+|1
+
+|`awesome-logical-frameworks`
+|Twelf, Abella, Beluga, Dedukti, Lambdapi, λProlog (Teyjus, Elpi), Minlog,
+Nuprl, agda2dedukti; proof interchange: OpenTheory, Dedukti, TPTP, Alethe,
+Lean export. This is the PROOF-POLICY §2 transport route.
+|None.
+|Create
+|1
+
+|`awesome-type-systems`
+|The disciplines echidna routes through `typed_wasm`: substructural
+(linear, affine, relevant, ordered, uniqueness, bunched), modal, temporal,
+session and choreographic, effect rows and coeffects, gradual, refinement,
+indexed, homotopy and cubical; Arend, Cubical Agda, Cedille, Matita, Lego;
+HoTT libraries (UniMath, HoTT-Agda, 1lab, cubical); the estate's TypeLL,
+Katagoria and tropical-resource-typing.
+|None (`awesome-type-theory` does not exist).
+|Create
+|1
+
+|`awesome-isabelle`
+|Isabelle/HOL and Isabelle/ZF, the AFP, Sledgehammer, Nitpick, Nunchaku,
+Isabelle/jEdit and VSCode, Isabelle Zulip, IsaFoL.
+|None.
+|Create
+|1
+
+|`awesome-hol`
+|HOL4, HOL Light, HOL Zero, ProofPower, Candle, CakeML, OpenTheory, the
+HOL lineage; HOL Light's Flyspeck.
+|None (`awesome-provable` says "HOL" once).
+|Create
+|1
+
+|`awesome-lean`
+|Lean 4, Lean 3 legacy and the mathlib3 to mathlib4 port pairs echidna
+uses, Mathlib, Aesop, Lake, elan, LeanDojo, Lean Copilot, verso, the Lean
+FRO; a section on proving without Mathlib, which PROOF-POLICY §2 requires.
+|`saviorand/awesome-lean`, `pdehaye/awesome-lean`.
+|Fork saviorand (check licence), then specialise
+|1
+
+|`awesome-acl2`
+|ACL2, ACL2s, the community books, Milawa, the ACL2 workshop series.
+|None.
+|Create (small)
+|2
+
+|`awesome-formalised-mathematics`
+|Libraries and corpora: Mathlib, the AFP, the Mizar Mathematical Library,
+set.mm and Metamath Zero, math-comp, UniMath, ACL2 books; Mizar, Naproche
+and ForTheL; benchmarks: miniF2F, ProofNet, PutnamBench; Xena, Formal
+Abstracts. Mirrors echidna's 20 corpus adapters.
+|None.
+|Create
+|1
+
+|`awesome-neurosymbolic-proving`
+|LeanDojo and ReProver, Lean Copilot, AlphaProof and AlphaGeometry, HTPS,
+GPT-f, TacticToe, CoqGym and ASTactic, Proverbot9001, Thor, Magnushammer,
+Baldur, DeepSeek-Prover, Goedel-Prover; premise selection and GNN ranking;
+autoformalization. The field echidna's Julia layer sits in.
+|None.
+|Create
+|1
+
+|`awesome-constraint-solving`
+|MiniZinc, Chuffed, OR-Tools and CP-SAT, GLPK, SCIP, HiGHS, Gecode, Picat,
+Choco, Clingo (ASP), Z3 optimisation; MiniZinc Challenge.
+|None (`awesome-constraint-programming` does not exist).
+|Create
+|2
+
+|`awesome-security-protocol-verification`
+|Tamarin, ProVerif, CryptoVerif, EasyCrypt, Maude-NPA, Scyther, Verifpal,
+Squirrel, Jasmin, hacspec, SSProve.
+|None.
+|Create
+|2
+
+|`awesome-hardware-verification`
+|ABC, GPUVerify, Faial, Yosys and SymbiYosys, Kind 2, Bluespec, Chisel
+formal.
+|`ben-marshall/awesome-open-hardware-verification`.
+|Fork
+|3
+
+|`awesome-ontology-reasoning`
+|Description-logic reasoners: ELK, Konclude, HermiT, Pellet and Openllet,
+FaCT++; OWL API, Protégé. Ties to the template's `docs/theory/ontologies/`.
+|None.
+|Create
+|2
+
+|`awesome-mathematical-logic`
+|Proof theory, model theory, modal and description logic (MetTeL2),
+rewriting and termination (CSI, AProVE, TTT2, Maude), dynamic logic
+(KeYmaera X), real algebra (QEPCAD, Redlog).
+|None.
+|Create
+|3
+
+|`awesome-computer-algebra`
+|SageMath, Maxima, GAP, PARI/GP, Singular, Macaulay2, FriCAS, Reduce
+(Redlog's host), Oscar.jl and Nemo.jl, Symbolica.
+|None in the upstream index.
+|Create
+|3
+
+|`awesome-math`
+|Learning resources for mathematics.
+|`rossant/awesome-math`.
+|Fork
+|3
+
+|`awesome-category-theory`
+|nLab, Catlab.jl, agda-categories, 1lab, applied category theory, string
+diagrams.
+|To check before creating.
+|Check, then create
+|3
+|===
+
+Twenty-one lists; eleven at priority 1, which together name every one of
+echidna's 12 core backends and every PROOF-POLICY route.
+
+=== Where the small families go
+
+Mizar, Metamath, Naproche and Matita fold into
+`awesome-formalised-mathematics`; PVS and the leaner interactive provers
+fold into the refreshed `awesome-provable` index; TLA+ is a section of
+`awesome-model-checking`; the hybrid-systems and real-algebra provers
+(KeYmaera X, dReal, QEPCAD, Redlog) appear in `awesome-mathematical-logic`
+with cross-links from `awesome-smt`. A list with fewer than about twenty
+entries is a section, not a repository.
+
+[[echidna-gaps]]
+== What echidna should cover anyway
+
+Reading the roster against the tools the lists above name shows what
+`ProverKind` lacks. Grouped by why it matters:
+
+[cols="1,3",options="header"]
+|===
+|Group |Missing from `ProverKind`
+
+|*PROOF-POLICY names them* (highest priority: the estate's own mapping
+cannot be dispatched through its own prover platform)
+|Creusot, Kani, Aeneas (with Charon), Lambdapi as a checker (Dedukti has a
+variant, Lambdapi only an exchange format), agda2dedukti as a translator,
+Yices (in the kit manifest as a backend).
+
+|*SMT*
+|Boolector, Bitwuzla, MathSAT, SMTInterpol, Yices.
+
+|*Model checking*
+|Apalache, Kind 2, Ivy, CPAchecker, Ultimate Automizer, ESBMC, JBMC.
+
+|*Program verification*
+|Verus, Prusti, Gobra, Nagini, VeriFast.
+
+|*Type theory and HOL*
+|Cedille and Lego (named in `PROVER_COUNT.adoc` tier 3 but absent from the
+enum: documentation drift), Beluga, Candle, HOL Zero, ProofPower, Metamath
+Zero.
+
+|*Security protocols*
+|Maude-NPA, Scyther, Verifpal, Squirrel.
+
+|*Rewriting and termination*
+|TTT2, Maude, NaTT.
+
+|*Ontology reasoning*
+|HermiT, Pellet and Openllet, FaCT++.
+
+|*Constraints*
+|Gecode, Picat, Clingo, HiGHS.
+|===
+
+Two further points belong in echidna rather than in a list:
+
+* `PROVER_COUNT.adoc` tier 3 names Cedille, Lego and CVC4; none has a
+  variant. The canonical count file is drifting from the enum it describes.
+* `provers.a2ml` records only a slug per variant. The binary each backend
+  spawns is readable only from the Rust source. A `binary` field per entry
+  would let the kit's capability record and the lists above be rendered
+  from one registry.
+
+== Options compared
+
+[cols="1,3,1,1,1",options="header"]
+|===
+|Option |Shape |Elegance / correctness |Dependability |Security / privacy
+
+|*A. Family lists* (recommended)
+|Twenty-one repositories as above, thirteen first.
+|High. Each list has a reader-facing scope and a single family; coverage
+of the roster is checkable.
+|Medium. Twenty-one repositories to keep from rotting; the estate CI set
+(link checks, governance) does most of that.
+|Neutral. Lists carry no secrets; CC0 content, as `awesome-idris2`.
+
+|*B. One list per echidna tier*
+|Ten repositories mirroring `PROVER_COUNT.adoc`.
+|Low. Tiers are CI cadence; a reader does not search by "nightly".
+|Medium.
+|Neutral.
+
+|*C. One `awesome-provers` mega-list*
+|A single repository with every family as a section.
+|Low. Reproduces `ElNiak/awesome-formal-verification`; sections of a
+thousand lines are not curated, they are dumped.
+|Low. One file, every contributor conflict.
+|Neutral.
+
+|*D. Alternative path: rendered lists*
+|A per-tool registry (echidna `provers.a2ml` with `binary`, `homepage`,
+`family`, `licence`, `formats`, kit manifest id) and one renderer in
+bofj-kitt that emits each list's tool table; curated prose stays
+hand-written around it. The same `render` pattern as `provers.sh render`.
+|Highest. The lists cannot drift from the roster; a new `ProverKind`
+variant appears in the right list on the next render.
+|Medium until the registry is filled; high after. The renderer is one
+shell script over `yq` and `jq`.
+|Neutral; the registry is public data.
+|===
+
+Recommendation: A for the repositories, with D as the way their tool
+tables are produced once the registry fields exist in echidna.
+
+Decided 2026-10-27 (owner): *refresh the existing lists first.*
+`awesome-provable` (2018 content) and `awesome-agda` (73 lines) are brought
+up to date before any repository is created, and experiment Y1's link-rot
+numbers are in hand before the first batch is cut. The eleven priority-1
+lists remain the proposed first batch after that; hand-curate their prose;
+render their tool tables as soon as echidna's registry carries the fields.
+
+== Experiments before the first batch
+
+[cols="1,3,2",options="header"]
+|===
+|Id |Experiment |Pass criterion
+
+|Y1
+|Run `lychee` over the eleven existing READMEs to baseline link rot before
+adding twenty-one more.
+|A dated rot percentage per list; a budget for the CI link gate.
+
+|Y2
+|Render one list's tool table (`awesome-smt`) from a hand-filled registry
+fragment for its eleven tools, and diff against a hand-written table.
+|Identical content; the renderer is adopted for the rest.
+
+|Y3
+|Check the licence of `saviorand/awesome-lean` and `awesome-sat-solvers`
+and whether their maintainers accept upstream pull requests.
+|Fork decisions become facts; a list whose upstream rejects contributions
+is created, not forked.
+
+|Y4
+|Submit one of the created lists to `sindresorhus/awesome` to learn the
+acceptance bar (the index has no formal-methods entry today).
+|Accepted, or the review's objections are folded into the template the
+other lists use.
+|===
+
+== The formal route
+
+The lists are data about tools, and the one property worth stating
+formally is *coverage*. Each tool has one *owning* list, the entry that
+carries its description; any other list may mention it as a
+cross-reference (Z3 in `awesome-constraint-solving` for its optimiser,
+Sledgehammer in `awesome-atp`, TPTP in `awesome-logical-frameworks`). The
+property is then: every variant of `ProverKind` has exactly one owning
+entry across the priority-1 and priority-2 lists, cross-references are
+unlimited but must point at the owner, and every tool the kit manifest
+names has an owner. With the registry of option D (an `owner` field per
+tool) that is a finite relation and the check is a test (`TESTED`), the
+same kind of check `awesome-nickel` already runs in Idris2 over its links.
+It is not worth a theorem; it is worth a gate.
+
+== Aspects
+
+Maintenance:: Twenty-one repositories is the real cost. The estate CI set
+(governance, link check, Idris2 validation tests) is what keeps a list from
+becoming a 2018 snapshot like `awesome-provable`. Do not create a list
+without it.
+Licensing:: Lists are CC0 (as `awesome-idris2`) so they can be forked and
+merged upstream freely; `awesome-coq` carries coq-community content under
+its upstream licence and must keep saying so.
+Attribution:: Forked lists keep upstream history and the original
+maintainers in `MAINTAINERS`.
+Accessibility:: Each list is one AsciiDoc file with a table of contents;
+no images carry information.
+Template fit:: The standards spec-templates put `awesome-idris2` and
+`awesome-nickel` on the `cli-tool` archetype with ABI-1..5 proofs. A list
+has no ABI. The template needs a `list` or `docs` archetype before
+twenty-one more lists inherit the wrong obligations.
+
+== Beyond this repository
+
+* `stuff-of-awe`: twenty-one repositories to create or fork, and two to
+  refresh (`awesome-provable`, `awesome-agda`).
+* `hyperpolymath/echidna`: the <<echidna-gaps,gap list>> as issues; the
+  `PROVER_COUNT.adoc` tier-3 drift; the `binary` and registry fields in
+  `provers.a2ml`.
+* `hyperpolymath/standards`: a `list` archetype in
+  `docs/proofs/spec-templates/`; estate-board rows for the new
+  repositories; a decision on the `stuff-of-awe` organisation's place in
+  the clade index.
+* `hyperpolymath/rsr-template-repo`: an awesome-list mint profile so each
+  new list starts with the `awesome-nickel` shape rather than being
+  hand-copied.
+* `sindresorhus/awesome`: the submissions in Y4.
+
+[[decisions]]
+== Decisions needed
+
+. Decided 2026-10-27: refresh `awesome-provable` and `awesome-agda`
+  first and run Y1; the eleven priority-1 lists are the batch after that,
+  to be confirmed or trimmed with the rot numbers in hand.
+. Confirm `stuff-of-awe` as the organisation for all of them (the estate
+  board still lists the existing lists under `hyperpolymath/`).
+. Whether `awesome-lean` and `awesome-sat` are forks (pending Y3) or fresh.
+. Whether to open the echidna gap issues now, or after the first batch of
+  lists exists to cite.
