@@ -7,6 +7,12 @@
 
 K9 contractiles are self-validating components that combine configuration, validation, and deployment logic in a single file format. They implement the RSR principle of "self-describing artifacts" by embedding contracts and orchestration directly in the component.
 
+The K9-SVC metadata gate (`bash .github/hooks/validate-k9.sh`) checks the
+`K9!` header, pedigree and security metadata. The legacy YAML session bindings
+`coordination.k9` and `session/custom-checks.k9`, documented in
+`session/README.adoc`, use a separate format. The gate reports these separately;
+it does not validate their YAML syntax or migrate their session protocol.
+
 == The Three Security Levels
 
 K9 components declare their trust requirements using "The Leash" security model:
