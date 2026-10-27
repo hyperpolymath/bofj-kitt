@@ -9,7 +9,7 @@ K9!
 # It requires explicit authorisation via the Leash system.
 #
 # Usage:
-#   nickel typecheck container/deploy.k9.ncl
+#   tail -n +2 container/deploy.k9.ncl | nickel typecheck
 #   k9-svc validate container/deploy.k9.ncl
 #   k9-svc deploy container/deploy.k9.ncl --env production
 
@@ -118,6 +118,7 @@ echo "K9: Rollback complete."
     security = {
       leash = 'Hunt,
       trust_level = 'Hunt,
+      signature_required = true,
       allow_network = true,
       allow_filesystem_write = true,
       allow_subprocess = true,

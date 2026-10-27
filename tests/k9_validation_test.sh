@@ -6,14 +6,15 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fixture_root="$(mktemp -d)"
 trap 'rm -rf "$fixture_root"' EXIT
-mkdir -p "$fixture_root/session"
+mkdir -p "$fixture_root/session" "$fixture_root/.github/hooks"
+cp "$repo_root/.github/hooks/validate-k9.sh" "$fixture_root/.github/hooks/"
 cp "$repo_root/coordination.k9" "$fixture_root/coordination.k9"
 cp "$repo_root/session/custom-checks.k9" "$fixture_root/session/custom-checks.k9"
 cp "$repo_root/.machine_readable/svc/k9/template-kennel.k9.ncl" "$fixture_root/component.k9"
 
 validate() {
     INPUT_PATH="$fixture_root/" INPUT_STRICT=true \
-        bash "$repo_root/.github/hooks/validate-k9.sh" > "$fixture_root/result.log"
+        bash "$fixture_root/.github/hooks/validate-k9.sh" > "$fixture_root/result.log"
 }
 
 expect_failure() {

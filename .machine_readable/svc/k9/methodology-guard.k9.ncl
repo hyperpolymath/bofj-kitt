@@ -16,12 +16,13 @@ let methodology_guard = {
       version = "1.0.0",
     },
     security = {
-      leash = 'Yard,
+      leash = 'Kennel,
       allow_network = false,
       allow_filesystem_write = false,
       allow_subprocess = false,
     },
   },
+
   name = "methodology-guard",
   version = "1.0.0",
   description = "Validates that agent work respects declared methodology constraints",
