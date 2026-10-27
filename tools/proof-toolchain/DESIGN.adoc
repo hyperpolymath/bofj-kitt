@@ -9,17 +9,19 @@ obligation is decided by `3-practice/PROOF-POLICY.adoc` in `standards`; this
 kit decides how those tools get onto a machine and how a machine reports
 which of them it has.
 
-Status: design, not built. Nothing here installs anything yet; the build
-steps are in <<plan>>.
+Status: design, not built. The core smoke-fixture installer exists; tool
+installation and the bundle build remain planned in <<plan>>.
 
 See also `../environments/` and
 `docs/proposals/environment-of-environments.adoc`: the environment classes
 this toolchain is projected onto, with measured reachability. Those
 measurements (2026-10-27) refine the assumptions below: the agent session
-probed there *could* reach `opam.ocaml.org` and `alire.ada.dev`; it
-*could* fetch a concrete GitHub release asset, as assumed; and it *could
-not* reach release landing pages or `api.github.com`, so a `pin:
-resolve` entry cannot be resolved from a session and `install` must read
+probed there *could* reach `opam.ocaml.org`, `alire.ada.dev` and the tested
+GitHub source archive URL. A redirected HEAD request to a concrete GitHub
+release asset succeeded; downloading its body and running it were not
+observed. That session *could not* reach the tested release landing page
+or `api.github.com`, so a `pin: resolve` entry cannot be resolved through
+those paths in that session and `install` must read
 the concrete asset URL from the lock. Reachability is measured per
 environment and per path, not assumed per class.
 
@@ -32,10 +34,12 @@ differently:
   through rustup, cargo, elan, pack, Alire and opam, with full network. It
   works, but nothing records which versions it holds.
 * *Online agent sessions* (Claude Code cloud sessions, claude.ai skills)
-  cannot reach `opam.ocaml.org`, `alire.ada.dev`, or GitHub source
-  archives. They can reach GitHub *release assets*. So Creusot's Why3 back
-  ends, Lambdapi, Dedukti, agda2dedukti and Idris2 cannot be built there at
-  all, and every session that needs them fails or reports a leg it never ran.
+  were initially assumed unable to reach `opam.ocaml.org`, `alire.ada.dev`
+  or GitHub source archives, with only GitHub release assets reachable.
+  The 2026-10-27 probes above contradict the first three assumptions for
+  that session. Whether Creusot's Why3 back ends, Lambdapi, Dedukti,
+  agda2dedukti or Idris2 can be built depends on each session's measured
+  paths, dependencies and execution policy; no build was tested there.
 * *CI runners* have the network but not the time: a cold opam build of
   Creusot's back ends or of agda2dedukti costs tens of minutes per job.
 * *Dispatchers* (echidna, echidnabot, proof-burrower) need binaries at known
@@ -68,12 +72,17 @@ SHA-256 of the produced bundle and image digest. Never hand-edited.
 `/opt/hyperpolymath/provers`, then publishes
 `provers-<date>-x86_64-linux.tar.zst` as a GitHub release asset of this repo
 and an OCI image (Wolfi base) containing the same tree, both pinned in the
-lock.
+lock. Before any verification, the build must run
+`sh tools/proof-toolchain/install-smoke.sh /opt/hyperpolymath/provers`
+from the checkout root to install the four core-backend fixtures under
+`$PREFIX/share/smoke/`; an installation failure stops the build.
 
 |`provers.sh install`
 |Fetches the bundle named in the lock, checks its SHA-256, and unpacks it at
 the prefix. The same command serves the workstation, a session's setup
-script, and a CI job. A release asset is reachable from all three.
+script, and a CI job, where network and execution policy permit. The
+2026-10-27 session measured HEAD reachability only; bundle download and
+execution must be checked separately on each supported target.
 
 |`provers.sh doctor`
 |Reports each manifest entry as `PRESENT <version>`, `DRIFT <have> != <lock>`,
@@ -114,10 +123,11 @@ The lock records the builder image digest and the glibc minimum.
 
 === Why a release asset first, image second
 
-Agent sessions can download a release asset but usually cannot run a
-container engine. CI and the dispatchers can run containers. So the tarball
-is the primary artefact and the image wraps the same tree, rather than the
-other way round.
+The 2026-10-27 agent session reached a release asset with HEAD, while its
+download-and-run experiment was denied before download. The tarball targets
+sessions whose network and execution policies allow it; a successful HEAD
+alone does not establish that. CI and the dispatchers can run containers.
+The tarball is the primary artefact and the image wraps the same tree.
 
 == The closure rule
 
@@ -190,7 +200,8 @@ that shares the name; the manifest names it `echidna-solidity` if it stays.
 . `provers.sh doctor`, text and JSON. Useful at once on the workstation,
   before any bundle exists.
 . The bundle build workflow and `provers.sh install`. It produces the first
-  release asset and image and writes the lock.
+  release asset and image and writes the lock. Run `install-smoke.sh` as
+  specified above before the manifest's `verify` commands.
 . Consumers: the session setup-script snippet, the CI usage pattern, the
   echidna capability read, and proof-craft's switch to `provers.sh`.
 

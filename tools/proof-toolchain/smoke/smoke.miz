@@ -1,0 +1,11 @@
+:: SPDX-License-Identifier: MPL-2.0
+environ
+
+begin
+
+theorem
+  for x being object holds x = x
+proof
+  let x be object;
+  thus thesis;
+end;

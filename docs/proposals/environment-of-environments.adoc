@@ -51,8 +51,8 @@ backends; covers 7 of echidna's 12 core backends (see <<coverage>>).
 |One relocatable bundle at `/opt/hyperpolymath/provers`, `provers.sh
 install\|doctor\|render`
 |Design only. Its statements about what agent sessions can reach were not
-measured; <<measured>> confirms the asset transport and contradicts the
-opam and Alire claim.
+measured; <<measured>> confirms HEAD reachability of the asset path and
+contradicts the opam and Alire claim for that session.
 
 |`tools/workstation/env.sh`
 |Toolchain homes and `PATH` for one workstation
@@ -80,8 +80,10 @@ so, not pass silently.
 
 Taken 2026-10-27 in a Claude Code cloud session for this repository
 (Ubuntu 24.04.5, glibc 2.39, x86_64, outbound HTTPS through the session's
-agent proxy). HEAD or GET to the root of each host; the code is what the
-proxy returned.
+agent proxy). The probe sends redirected HEAD requests to the URLs in
+`tools/environments/hosts.txt`; the code is the final response the proxy
+returned. The registry GET codes below are separate manual measurements,
+not output from `probe-reachability.sh`.
 
 [cols="3,1,3",options="header"]
 |===
@@ -95,12 +97,12 @@ proxy returned.
 |`isabelle.in.tum.de`, `mizar.uwb.edu.pl`, `pvs.csl.sri.com` |200 |Reachable.
 |`ftp.gnu.org/gnu/guix` |200 |Reachable.
 |`smt-lib.org`, `www.tptp.org` |200 |Reachable.
-|`github.com/Z3Prover/z3/releases/download/…/z3-4.13.4-x64-glibc-2.35.zip` |302 then 200 |*Reachable.* The asset download path redirects to `release-assets.githubusercontent.com` and the bytes are served. DESIGN.adoc's "release asset first" transport holds here.
+|`github.com/Z3Prover/z3/releases/download/…/z3-4.13.4-x64-glibc-2.35.zip` |302 then 200 (HEAD) |*Reachable.* The HEAD request redirects to `release-assets.githubusercontent.com` and succeeds. No asset body was downloaded or executable run; bundle transport remains unverified.
 |`codeload.github.com`, `raw.githubusercontent.com` |200 |Reachable (source archives and raw files).
 |`github.com/Z3Prover/z3/releases/latest` |403 |*Refused by the proxy.* The release landing page is not available, so "latest" cannot be discovered by scraping.
 |`api.github.com/repos/cvc5/cvc5/releases/latest` |403 |Refused. Release discovery through the API is not available either.
 |`crates.io/api/v1/crates/just` |403 |Refused (cargo installs from the registry would fail).
-|`ghcr.io/v2/`, `cgr.dev/v2/` |401 (GET), 405 (HEAD) |Registry answered; anonymous token flow not tested.
+|`ghcr.io/v2/`, `cgr.dev/v2/` |401 (manual GET), 405 (probe HEAD) |Registry answered; anonymous token flow not tested.
 |`cvc5.github.io` |200 |Reachable.
 |`www.cs.utexas.edu/~moore/acl2/` |TLS failure |Host certificate not in the session CA bundle.
 |===
@@ -116,14 +118,14 @@ Two conclusions follow, and both change the design:
 
 . *Reachability is a property of an environment instance, not of its
   class, and of a path, not of a host.* The same "agent session" class
-  reached opam here, which the design assumed it could not; it fetched a
-  concrete release asset, which the design assumed and which holds; and it
-  could not reach the release landing page or the API, so a `pin:
-  resolve` entry (which discovers "latest" through the API) cannot be
-  resolved from a session. The lock must carry the concrete asset URL,
-  and `install` must read the lock, never the API. The kit must measure,
-  not assume: `doctor` grows a `probe` that records which paths answered,
-  and the capability report carries it.
+  reached opam here, which the design assumed it could not; a redirected
+  HEAD request to a concrete release asset succeeded, without measuring a
+  download; and it could not reach the release landing page or the API,
+  so a `pin: resolve` entry (which discovers "latest" through the API)
+  cannot be resolved through those paths in this session. The lock must
+  carry the concrete asset URL, and `install` must read the lock, never
+  the API. The kit must measure, not assume: `doctor` grows a `probe` that
+  records which paths answered, and the capability report carries it.
 . *Execution policy is a second axis beside network policy.* An
   environment may be able to fetch a bundle and still be forbidden to run
   it. The environment declaration needs an `execute-downloaded` field, and
@@ -217,8 +219,9 @@ sealed-container concern, per the 2026-05-18 packaging ruling.
 |===
 
 E6 was decided on 2026-10-27: the four entries above are in the manifest
-with `resolve` or `resolve-stable` pins and smoke fixtures that land with
-the bundle build, so the kit now declares eleven of echidna's twelve core
+with `resolve` or `resolve-stable` pins and smoke fixtures under
+`tools/proof-toolchain/smoke/`, installed before verification by the bundle
+build, so the kit now declares eleven of echidna's twelve core
 backends and names the twelfth's home.
 
 == Options compared
