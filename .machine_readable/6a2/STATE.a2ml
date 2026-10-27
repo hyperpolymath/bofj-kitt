@@ -39,7 +39,7 @@ actions = [
   "M1 — fill the remaining ~75 placeholder-token files (container/, .devcontainer/, .github/*)",
   "M1 — restore a full SECURITY policy once PGP material exists",
   "M2 — specify the kit's first capability and its BoJ integration contract",
-  "M2 — decide the proposals in docs/proposals/environment-of-environments.adoc (E1–E6, X1–X5) and docs/proposals/awesome-estate-maths-proving.adoc",
+  "M2 — decide the proposals in docs/proposals/environment-of-environments.adoc (E1–E6, X1–X5), docs/proposals/awesome-estate-maths-proving.adoc and docs/proposals/boj-prover-solver-cartridges.adoc (Z1–Z6)",
 ]
 
 [maintenance-status]

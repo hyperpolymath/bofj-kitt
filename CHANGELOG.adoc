@@ -19,6 +19,10 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 * `docs/proposals/awesome-estate-maths-proving.adoc` — the awesome lists to
   create in `stuff-of-awe` for maths, proving and solving, derived from
   echidna's prover roster, and the tools echidna itself lacks.
+* `docs/proposals/boj-prover-solver-cartridges.adoc` — three BoJ cartridges
+  (`provers-mcp`, `solvers-mcp`, `code-verifiers-mcp`) on the capability
+  record seam, what the store's `proof-mcp` becomes, and where
+  Quintessence, Apodeixis.jl, atoma and bactarin land.
 * `tools/environments/` — `environments.kyaml` (environment classes with a
   `measured` block), `probe-reachability.sh` and `hosts.txt` (experiment
   X1: HEAD-only reachability probe).
