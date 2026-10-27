@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-License-Identifier: MPL-2.0
 // Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 = bofj-kitt as the environment of environments
 :toc:
@@ -43,15 +43,16 @@ report its real capabilities in one machine-readable form.
 |Surface |What it declares |Gap
 
 |`tools/proof-toolchain/toolchain.kyaml`
-|29 tools with roles under PROOF-POLICY, pins and smoke commands
+|36 tools with roles under PROOF-POLICY, pins and smoke commands
 |Declares tools, not environments. Covers the policy provers and their
-backends; covers 7 of echidna's 12 core backends (see <<coverage>>).
+backends. Before E6 it covered 7 of echidna's 12 core backends; it now
+covers all 12 (see <<coverage>>).
 
 |`tools/proof-toolchain/DESIGN.adoc`
 |One relocatable bundle at `/opt/hyperpolymath/provers`, `provers.sh
 install\|doctor\|render`
 |Design only. Its statements about what agent sessions can reach were not
-measured; <<measured>> confirms HEAD reachability of the asset path and
+measured; <<measured>> confirms HEAD and one-byte GET reachability of the asset path and
 contradicts the opam and Alire claim for that session.
 
 |`tools/workstation/env.sh`
@@ -80,10 +81,11 @@ so, not pass silently.
 
 Taken 2026-10-27 in a Claude Code cloud session for this repository
 (Ubuntu 24.04.5, glibc 2.39, x86_64, outbound HTTPS through the session's
-agent proxy). The probe sends redirected HEAD requests to the URLs in
-`tools/environments/hosts.txt`; the code is the final response the proxy
-returned. The registry GET codes below are separate manual measurements,
-not output from `probe-reachability.sh`.
+agent proxy). The probe ran twice over the 22 URLs in
+`tools/environments/hosts.txt`: once with redirected HEAD requests, once
+with `--get`, a redirected GET for the first byte only. The code is the
+final response the proxy returned. Where the two methods differ, both are
+shown; elsewhere they agreed (200 to HEAD, 200 or 206 to GET).
 
 [cols="3,1,3",options="header"]
 |===
@@ -97,14 +99,15 @@ not output from `probe-reachability.sh`.
 |`isabelle.in.tum.de`, `mizar.uwb.edu.pl`, `pvs.csl.sri.com` |200 |Reachable.
 |`ftp.gnu.org/gnu/guix` |200 |Reachable.
 |`smt-lib.org`, `www.tptp.org` |200 |Reachable.
-|`github.com/Z3Prover/z3/releases/download/…/z3-4.13.4-x64-glibc-2.35.zip` |302 then 200 (HEAD) |*Reachable.* The HEAD request redirects to `release-assets.githubusercontent.com` and succeeds. No asset body was downloaded or executable run; bundle transport remains unverified.
+|`github.com/Z3Prover/z3/releases/download/…/z3-4.13.4-x64-glibc-2.35.zip` |302 then 200 (HEAD), 206 (GET, one byte) |*Reachable.* The request redirects to `release-assets.githubusercontent.com` and succeeds, and the first byte of the asset arrives. A full download was not attempted and no executable was run, so bundle transport is only partly verified.
 |`codeload.github.com`, `raw.githubusercontent.com` |200 |Reachable (source archives and raw files).
-|`github.com/Z3Prover/z3/releases/latest` |403 |*Refused by the proxy.* The release landing page is not available, so "latest" cannot be discovered by scraping.
-|`api.github.com/repos/cvc5/cvc5/releases/latest` |403 |Refused. Release discovery through the API is not available either.
-|`crates.io/api/v1/crates/just` |403 |Refused (cargo installs from the registry would fail).
-|`ghcr.io/v2/`, `cgr.dev/v2/` |401 (manual GET), 405 (probe HEAD) |Registry answered; anonymous token flow not tested.
+|`github.com/Z3Prover/z3/releases/latest` |403 (HEAD and GET) |*Refused by the proxy.* The release landing page is not available, so "latest" cannot be discovered by scraping.
+|`api.github.com/repos/cvc5/cvc5/releases/latest` |403 (HEAD and GET) |Refused. Release discovery through the API is not available either.
+|`crates.io/api/v1/crates/just` |403 (HEAD and GET) |Refused. The API path cargo resolves through answers 403 to GET as well, so a cargo install from the registry is expected to fail here; one was not attempted.
+|`ghcr.io/v2/`, `cgr.dev/v2/` |405 (HEAD), 401 (GET) |Registry answered; anonymous token flow not tested. The one case where the methods differ.
 |`cvc5.github.io` |200 |Reachable.
-|`www.cs.utexas.edu/~moore/acl2/` |TLS failure |Host certificate not in the session CA bundle.
+|`downloads.sourceforge.net` (SBCL x86-64 Linux binary) |200 (HEAD), 206 (GET, one byte) |Reachable: the source the `sbcl` entry fetches.
+|`www.cs.utexas.edu/~moore/acl2/` |TLS failure (HEAD and GET) |Host certificate not in the session CA bundle. The `acl2` entry fetches from GitHub instead, so this does not block it.
 |===
 
 A second experiment, installing Z3 from that release asset into a scratch
@@ -119,8 +122,8 @@ Two conclusions follow, and both change the design:
 . *Reachability is a property of an environment instance, not of its
   class, and of a path, not of a host.* The same "agent session" class
   reached opam here, which the design assumed it could not; a redirected
-  HEAD request to a concrete release asset succeeded, without measuring a
-  download; and it could not reach the release landing page or the API,
+  request to a concrete release asset succeeded and returned its first
+  byte, without measuring a full download; and it could not reach the release landing page or the API,
   so a `pin: resolve` entry (which discovers "latest" through the API)
   cannot be resolved through those paths in this session. The lock must
   carry the concrete asset URL, and `install` must read the lock, never
@@ -190,10 +193,11 @@ promises and the first concrete BoJ integration surface (roadmap M2).
 === E6. Close the gap to echidna's core roster
 
 The kit covers the PROOF-POLICY provers. echidna's default API exposes a
-core of 12 backends; the kit's manifest lacks 5 of them. Add HOL Light,
-HOL4, ACL2 and Mizar as `exception:recorded` entries (PVS is a licensed
-binary and goes in the sealed-container tail), so an environment the kit
-provisions can serve echidna's whole core. The extended roster (141
+core of 12 backends; the kit's manifest lacked 5 of them. Add HOL Light,
+HOL4, ACL2, Mizar and PVS as `exception:recorded` entries, so an
+environment the kit provisions can serve echidna's whole core. PVS is
+BSD-3-Clause and builds on SBCL; only SRI's Allegro build carries a
+click-through licence, and the bundle does not use it. The extended roster (141
 `ProverKind` variants over 105 implementation files) stays echidna's
 sealed-container concern, per the 2026-05-18 packaging ruling.
 
@@ -213,16 +217,17 @@ sealed-container concern, per the 2026-05-18 packaging ruling.
 |Metamath |none needed |Pure-Rust, in-process in echidna
 |HOL Light |`hol-light` |Covered (added 2026-10-27 on the owner's decision; opam)
 |HOL4 |`hol4` with `polyml` |Covered (added 2026-10-27; source build on bundled Poly/ML)
-|ACL2 |`acl2` with `sbcl` |Covered (added 2026-10-27; the bundle build fetches it, since its host failed TLS from a session)
+|ACL2 |`acl2` with `sbcl` |Covered (added 2026-10-27; tagged source from GitHub, built on bundled SBCL)
 |Mizar |`mizar` |Covered (added 2026-10-27; system distribution with its MML)
-|PVS |none |*Missing*, licensed binary: sealed-container tail
+|PVS |`pvs` with `sbcl` |Covered (added 2026-10-27; BSD-3-Clause source build on bundled SBCL)
 |===
 
-E6 was decided on 2026-10-27: the four entries above are in the manifest
+E6 was decided on 2026-10-27: the five entries above are in the manifest
 with `resolve` or `resolve-stable` pins and smoke fixtures under
 `tools/proof-toolchain/smoke/`, installed before verification by the bundle
-build, so the kit now declares eleven of echidna's twelve core
-backends and names the twelfth's home.
+build, so the kit now declares all twelve of echidna's core backends.
+None of the five has been built or run yet; they are declared, with
+smoke checks, until the bundle build exists.
 
 == Options compared
 

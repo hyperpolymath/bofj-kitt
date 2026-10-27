@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-License-Identifier: MPL-2.0
 = Environments: what the kit provisions, and what each can reach
 
 The proof toolchain manifest (`../proof-toolchain/toolchain.kyaml`) says
@@ -17,9 +17,9 @@ get in, whether fetched binaries may run, which container runtime exists,
 who reads its capability record, and a `measured` block.
 
 |`probe-reachability.sh`
-|Sends one HEAD request per URL in `hosts.txt` and prints the HTTP status
-this environment saw, as text or as one JSON object. Downloads nothing,
-executes nothing. Its output is what goes into an entry's `measured` block,
+|Sends one HEAD request per URL in `hosts.txt` (or, with `--get`, one GET
+for the first byte only) and prints the HTTP status this environment saw,
+as text or as one JSON object. Keeps no body, executes nothing. Its output is what goes into an entry's `measured` block,
 with the date.
 
 |`hosts.txt`
@@ -28,7 +28,7 @@ with the date.
 
 == Reading a `measured` block
 
-`reachable` means a HEAD request returned 2xx or 3xx. `refused` is a 403
+`reachable` means the request returned 2xx or 3xx (206 for a ranged GET). `refused` is a 403
 from the environment's proxy. `auth-required` is a 401: the host answered
 and wants a token, which the probe does not supply. `tls-failed` means the
 host's certificate is not in the environment's CA bundle. A container
@@ -36,6 +36,10 @@ registry's `/v2/` endpoint may answer `401` (wants a token) or `405`
 (method not allowed for HEAD); both mean the registry answered, and
 neither says whether an anonymous token flow would succeed. The manifest
 records such hosts under `registry-answered` with the codes seen.
+
+Proxies and hosts can answer HEAD and GET differently, as the registries
+do. Confirm a HEAD `refused` with `--get` before recording it, and say in
+the `measured` block which method produced each code.
 
 `execute-downloaded` under `measured` takes one of three values:
 `true` (a fetched binary was run), `false` (a fetched binary was present
@@ -47,9 +51,10 @@ A probe of a GitHub release *landing page* or of `api.github.com` says
 nothing about release *assets*: the asset download path redirects to
 `release-assets.githubusercontent.com`, which the probe follows
 separately. Record the asset outcome, not the landing page's.
-Successful HEAD reachability does not establish that asset bytes were
-downloaded or an executable ran. Record GET or download results separately
-as manual measurements; the probe does not produce them.
+A successful HEAD, or a one-byte GET, does not establish that a full
+download is permitted or that an executable ran. Record full downloads and
+execution attempts separately as manual measurements; the probe does not
+produce them.
 
 A block is a fact about one environment instance on one date. It is never
 copied from one environment class to another.

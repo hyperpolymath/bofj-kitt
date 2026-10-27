@@ -25,13 +25,13 @@ command() {
 sudo() { return 1; }  # Simulate an apt repository without just.
 curl() { echo 'Unexpected download' >&2; exit 99; }
 cargo() {
-    if [ "$*" != 'install just --version 1.40.0 --locked' ]; then
+    if [ "$*" != 'install just --version 1.56.0 --locked' ]; then
         echo "Unexpected Cargo arguments: $*" >&2
         exit 98
     fi
     installed=true
 }
-just() { printf 'just 1.40.0\n'; }
+just() { printf 'just 1.56.0\n'; }
 install_just
 [ "$installed" = true ]
 SH
@@ -53,7 +53,7 @@ SH
 FIXTURE_ROOT="$fixture_root" sh -eu <<'SH'
 . "$FIXTURE_ROOT/functions.sh"
 command() { [ "$2" = just ]; }
-just() { printf 'just 1.40.0\n'; }
+just() { printf 'just 1.56.0\n'; }
 cargo() { echo 'Unexpected install' >&2; exit 99; }
 sudo() { echo 'Unexpected install' >&2; exit 99; }
 install_just

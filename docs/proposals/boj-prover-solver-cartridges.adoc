@@ -364,9 +364,9 @@ Honesty:: Every list is read from the capability record. A prover the
 host lacks is `UNAVAILABLE` with a reason, never a stub answer. The
 store's `available: true` must mean a process answered, which today it
 does not for `proof-mcp`.
-Licensing:: PVS, Imandra and other non-free backends are dispatchable only
-where installed; the cartridge reports them unavailable elsewhere and
-never bundles them.
+Licensing:: Imandra, SRI's Allegro build of PVS and other non-free
+backends are dispatchable only where installed; the cartridge reports them
+unavailable elsewhere and never bundles them.
 Observability:: Receipts hashed with BLAKE3 as echidna's certificates
 are; the kit lock's SHA-256 named per tool so a receipt pins the exact
 binary.

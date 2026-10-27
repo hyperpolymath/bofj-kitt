@@ -11,6 +11,7 @@ fi
 smoke_dir="$(CDPATH='' cd -- "$(dirname -- "$0")/smoke" && pwd)"
 destination="$1/share/smoke"
 install -d "$destination"
-for fixture in hol-light-refl.sh hol4-smoke.sml acl2-smoke.lisp smoke.miz; do
+for fixture in hol-light-refl.sh hol4-smoke.sml acl2-smoke.lisp smoke.miz \
+    mizar-smoke.sh pvs-smoke.sh pvs_smoke.pvs; do
   install -m 644 "$smoke_dir/$fixture" "$destination/$fixture"
 done

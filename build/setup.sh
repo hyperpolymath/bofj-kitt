@@ -130,12 +130,14 @@ detect_platform() {
 # ── Install just ──
 # Use the repository's documented Cargo route when a system package is absent.
 # Cargo checks registry package checksums; --locked uses the release lockfile.
+# 1.56.0 matches the estate mise.lock pin and meets the estate floor (just >= 1.42,
+# standards 3-practice/provisioning/PROVISIONING-STANDARD.adoc).
 install_just_with_cargo() {
     if ! command -v cargo >/dev/null 2>&1; then
         fail "Install Cargo or just with your platform's package manager, then rerun setup."
         return 1
     fi
-    cargo install just --version 1.40.0 --locked
+    cargo install just --version 1.56.0 --locked
 }
 
 install_just() {

@@ -1,6 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
 # Hosts the proof toolchain is fetched from (tools/proof-toolchain/toolchain.kyaml
 # `method` column), one URL per line. '#' starts a comment.
-# Probed by probe-reachability.sh with HEAD requests only.
+# Probed by probe-reachability.sh with HEAD requests, or with --get using a
+# one-byte ranged GET.
 
 # Release assets and source archives. The asset download URL is the path
 # `provers.sh install` would use; the landing page and the API are discovery
@@ -28,6 +30,8 @@ https://mizar.uwb.edu.pl/
 https://pvs.csl.sri.com/
 https://www.cs.utexas.edu/~moore/acl2/
 https://cvc5.github.io/
+# SBCL's official x86-64 Linux binary, which the sbcl entry fetches
+https://downloads.sourceforge.net/project/sbcl/sbcl/2.6.9/sbcl-2.6.9-x86-64-linux-binary.tar.bz2
 
 # Container registries (401 means the registry answered and wants a token)
 https://ghcr.io/v2/

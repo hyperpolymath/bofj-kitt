@@ -5,8 +5,11 @@
 # probe-reachability.sh — measure which toolchain hosts this environment can
 # reach (experiment X1 in docs/proposals/environment-of-environments.adoc).
 #
-# Sends one HEAD request per host and prints the HTTP status the environment
-# saw. It downloads nothing and executes nothing it fetched. The result is a
+# Sends one HEAD request per host (or, with --get, one GET for the first
+# byte only, discarded) and prints the HTTP status the environment saw. Some
+# hosts and proxies answer HEAD differently from GET, so a refusal seen with
+# HEAD should be confirmed with --get before it is recorded. It executes
+# nothing it fetched. The result is a
 # fact about THIS environment instance on THIS date; copy it into the
 # matching `measured` block of environments.kyaml rather than assuming it
 # holds elsewhere.
@@ -14,10 +17,12 @@
 # Usage:
 #   tools/environments/probe-reachability.sh            # text table
 #   tools/environments/probe-reachability.sh --json     # one JSON object
+#   tools/environments/probe-reachability.sh --get      # GET, first byte only
 #   HOSTS_FILE=my-hosts.txt tools/environments/probe-reachability.sh
 #
 # Exit code is 0 whenever the probe ran; reachability is reported, not
-# judged. Exit 2 when curl is missing or the hosts file cannot be read.
+# judged. Exit 2 when curl is missing, the hosts file cannot be read, or an
+# argument is not recognised.
 
 set -euo pipefail
 
@@ -25,8 +30,19 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOSTS_FILE="${HOSTS_FILE:-$HERE/hosts.txt}"
 TIMEOUT="${PROBE_TIMEOUT:-15}"
 MODE="text"
-if [ "${1:-}" = "--json" ]; then
-    MODE="json"
+METHOD="head"
+for arg in "$@"; do
+    case "$arg" in
+        --json) MODE="json" ;;
+        --get)  METHOD="get" ;;
+        *) echo "probe-reachability: unknown argument $arg" >&2; exit 2 ;;
+    esac
+done
+if [ "$METHOD" = "get" ]; then
+    # -r 0-0 asks for one byte; the body goes to /dev/null either way.
+    request=(-r 0-0)
+else
+    request=(-I)
 fi
 
 if ! command -v curl >/dev/null 2>&1; then
@@ -69,7 +85,7 @@ if command -v ldd >/dev/null 2>&1; then
 fi
 
 if [ "$MODE" = "text" ]; then
-    printf 'probe-reachability %s (%s)\n' "$date_utc" "$platform"
+    printf 'probe-reachability %s %s (%s)\n' "$METHOD" "$date_utc" "$platform"
     printf '%-6s %-14s %s\n' "HTTP" "OUTCOME" "URL"
 fi
 
@@ -83,7 +99,7 @@ while IFS= read -r line || [ -n "$line" ]; do
     rc=0
     # -L follows redirects so a release asset is measured at its final
     # host, not at the 302 GitHub answers with; the code is the last one.
-    code="$(curl -sS -I -L -o /dev/null -w '%{http_code}' --max-time "$TIMEOUT" "$line" 2>/dev/null)" || rc=$?
+    code="$(curl -sS "${request[@]}" -L -o /dev/null -w '%{http_code}' --max-time "$TIMEOUT" "$line" 2>/dev/null)" || rc=$?
     outcome="$(classify "$code" "$rc")"
     if [ "$MODE" = "text" ]; then
         printf '%-6s %-14s %s\n' "$code" "$outcome" "$line"
@@ -97,6 +113,6 @@ if [ "$MODE" = "json" ]; then
     for r in "${rows[@]}"; do
         if [ -z "$joined" ]; then joined="$r"; else joined="$joined,$r"; fi
     done
-    printf '{"probe":"reachability","date":"%s","platform":"%s","hosts":[%s]}\n' \
-        "$date_utc" "$platform" "$joined"
+    printf '{"probe":"reachability","method":"%s","date":"%s","platform":"%s","hosts":[%s]}\n' \
+        "$METHOD" "$date_utc" "$platform" "$joined"
 fi

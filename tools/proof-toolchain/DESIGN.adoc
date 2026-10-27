@@ -18,9 +18,10 @@ this toolchain is projected onto, with measured reachability. Those
 measurements (2026-10-27) refine the assumptions below: the agent session
 probed there *could* reach `opam.ocaml.org`, `alire.ada.dev` and the tested
 GitHub source archive URL. A redirected HEAD request to a concrete GitHub
-release asset succeeded; downloading its body and running it were not
-observed. That session *could not* reach the tested release landing page
-or `api.github.com`, so a `pin: resolve` entry cannot be resolved through
+release asset succeeded, and a one-byte ranged GET of it returned 206;
+a full download and running it were not observed. That session *could not*
+reach the tested release landing page or `api.github.com` (403 to both HEAD
+and GET), so a `pin: resolve` entry cannot be resolved through
 those paths in that session and `install` must read
 the concrete asset URL from the lock. Reachability is measured per
 environment and per path, not assumed per class.
@@ -74,15 +75,16 @@ SHA-256 of the produced bundle and image digest. Never hand-edited.
 and an OCI image (Wolfi base) containing the same tree, both pinned in the
 lock. Before any verification, the build must run
 `sh tools/proof-toolchain/install-smoke.sh /opt/hyperpolymath/provers`
-from the checkout root to install the four core-backend fixtures under
+from the checkout root to install the core-backend smoke fixtures under
 `$PREFIX/share/smoke/`; an installation failure stops the build.
 
 |`provers.sh install`
 |Fetches the bundle named in the lock, checks its SHA-256, and unpacks it at
 the prefix. The same command serves the workstation, a session's setup
 script, and a CI job, where network and execution policy permit. The
-2026-10-27 session measured HEAD reachability only; bundle download and
-execution must be checked separately on each supported target.
+2026-10-27 session measured HEAD reachability and a one-byte GET only; a
+full bundle download and execution must be checked separately on each
+supported target.
 
 |`provers.sh doctor`
 |Reports each manifest entry as `PRESENT <version>`, `DRIFT <have> != <lock>`,
@@ -123,8 +125,9 @@ The lock records the builder image digest and the glibc minimum.
 
 === Why a release asset first, image second
 
-The 2026-10-27 agent session reached a release asset with HEAD, while its
-download-and-run experiment was denied before download. The tarball targets
+The 2026-10-27 agent session reached a release asset with HEAD and with a
+one-byte GET, while its download-and-run experiment was denied before
+download. The tarball targets
 sessions whose network and execution policies allow it; a successful HEAD
 alone does not establish that. CI and the dispatchers can run containers.
 The tarball is the primary artefact and the image wraps the same tree.
@@ -167,8 +170,8 @@ plus the supporting tools the mapped provers need.
 |`policy:recheck` |Rocq (`coqc`), Lean (elan with pinned toolchains; no Mathlib)
 |`transport` |agda2dedukti, Dedukti (`dkcheck`), Lambdapi. agda2dedukti tracks particular Agda versions; the manifest records which Agda it accepts.
 |`exception:rust` |Kani; Aeneas with Charon (PROOF-POLICY §4.1)
-|`exception:recorded` |TLA+ (`tlc`); Isabelle, HOL Light, HOL4, ACL2 and Mizar (supplementary only). The last four were added 2026-10-27 so a kit-provisioned environment can serve every backend in echidna's default core set; PVS, the remaining core backend, is a licensed binary and belongs to the sealed-container tail, not the bundle.
-|`runtime` |Rust toolchains (rustup, the toolchains Creusot and Kani pin), a Java runtime for the `tlc` launcher, Poly/ML for HOL4 and SBCL for ACL2, bundled rather than taken from the host
+|`exception:recorded` |TLA+ (`tlc`); Isabelle, HOL Light, HOL4, ACL2, Mizar and PVS (supplementary only). The last five were added 2026-10-27 so a kit-provisioned environment can serve every backend in echidna's default core set. PVS is built from its BSD-3-Clause sources on the bundled SBCL; SRI's click-through licence covers only its Allegro build, which the bundle does not use.
+|`runtime` |Rust toolchains (rustup, the toolchains Creusot and Kani pin), a Java runtime for the `tlc` launcher, Poly/ML for HOL4 and SBCL for ACL2 and PVS, bundled rather than taken from the host
 |`backend` |Z3, CVC5, Yices, Alt-Ergo, E prover, Vampire
 |===
 
