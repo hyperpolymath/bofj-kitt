@@ -82,10 +82,23 @@ cp .machine_readable/contractiles/k9/examples/setup-repo.k9.ncl scripts/setup.k9
 
 === 2. Validate Components
 
+Each K9-SVC component starts with `K9!`, followed by its Nickel payload.
+The repository gate checks the marker, pedigree and security declaration:
+
 [source,bash]
 ----
-# Validate Nickel syntax and contracts
-nickel typecheck config/metadata.k9.ncl
+bash .github/hooks/validate-k9.sh
+----
+
+`coordination.k9` and `session/custom-checks.k9` are YAML bindings for the
+central session-management standards, as described in `EXPLAINME.adoc`.
+They retain their existing format and are excluded by exact repository file
+identity. Other `.k9` files still receive the K9-SVC checks.
+
+[source,bash]
+----
+# Validate Nickel syntax and contracts after removing the K9! marker
+tail -n +2 config/metadata.k9.ncl | nickel typecheck
 
 # Verify Hunt-level signature (if signed)
 ./must verify scripts/setup.k9.ncl
@@ -96,10 +109,10 @@ nickel typecheck config/metadata.k9.ncl
 [source,bash]
 ----
 # Kennel: Export as JSON
-nickel export config/metadata.k9.ncl > metadata.json
+tail -n +2 config/metadata.k9.ncl | nickel export > metadata.json
 
 # Yard: Evaluate with validation
-nickel eval .github/ci.k9.ncl
+tail -n +2 .github/ci.k9.ncl | nickel eval
 
 # Hunt: Run with Just (dry-run first!)
 ./must --dry-run run scripts/setup.k9.ncl
