@@ -154,8 +154,9 @@ For k9-svc managed deployments:
 
 [source,bash]
 ----
-# Validate the deployment component
-nickel typecheck container/deploy.k9.ncl
+# After container-init has rendered the placeholders, validate the Nickel
+# payload (the first line is the K9! format marker).
+tail -n +2 container/deploy.k9.ncl | nickel typecheck
 
 # Deploy (requires Hunt-level authorisation)
 k9-svc deploy container/deploy.k9.ncl --env production
