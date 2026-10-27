@@ -47,6 +47,9 @@ A probe of a GitHub release *landing page* or of `api.github.com` says
 nothing about release *assets*: the asset download path redirects to
 `release-assets.githubusercontent.com`, which the probe follows
 separately. Record the asset outcome, not the landing page's.
+Successful HEAD reachability does not establish that asset bytes were
+downloaded or an executable ran. Record GET or download results separately
+as manual measurements; the probe does not produce them.
 
 A block is a fact about one environment instance on one date. It is never
 copied from one environment class to another.

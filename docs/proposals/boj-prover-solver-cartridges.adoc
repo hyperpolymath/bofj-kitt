@@ -92,11 +92,14 @@ and, where the backend produces one, a certificate.
 |`provers_list`
 |The provers this host can dispatch, read from the capability record
 (`PRESENT` entries only), each with its echidna `ProverKind` slug, role
-under PROOF-POLICY, version and lock hash. Never a hard-coded count.
+under PROOF-POLICY, version and lock hash. `DRIFT` entries are not
+dispatchable and are excluded, as are `UNAVAILABLE` entries. Never a
+hard-coded count.
 
 |`provers_check`
-|One prover: present, version, drift against the lock, or the reason it
-is unavailable.
+|One prover: `PRESENT` with version and lock hash; `DRIFT` with observed
+version/hash, expected lock version/hash and the mismatch (not
+dispatchable); or `UNAVAILABLE` with the reason it could not run.
 
 |`provers_prove`
 |`{file \| goal, prover?, timeout}` → `{verdict, trust_level, prover,
@@ -130,6 +133,13 @@ a bounded model-checking result with its bounds. Solver results are
 `TESTED` with bounds or `PROVEN` with a checked certificate, never
 silently the latter.
 
+Every `solvers_sat` and `solvers_optimise` response carries `status:
+TESTED or PROVEN`, solver id, version and lock hash. `TESTED` carries the
+bounds and limits used. `PROVEN` requires a certificate reference and
+hash, the input hash, the independent checker's id and version, its
+successful check result, and any axioms used. An emitted certificate or
+unsat core alone does not establish `PROVEN`.
+
 [cols="1,3",options="header"]
 |===
 |Tool |Contract
@@ -140,12 +150,15 @@ entries (Z3, CVC5, Yices, Alt-Ergo, E, Vampire).
 
 |`solvers_sat`
 |`{problem, format, solver?, want: model \| unsat_core \| certificate}` →
-the requested artefact plus timing. Portfolio across Z3, CVC5 and Alt-Ergo
+the requested artefact plus timing, explicit status and the metadata
+defined above. Portfolio across Z3, CVC5 and Alt-Ergo
 with disagreement flagged, as echidna's `portfolio.rs` does.
 
 |`solvers_optimise`
 |MiniZinc, Chuffed, OR-Tools, GLPK, SCIP: objective, bound, solution,
-proof of optimality where the solver emits one.
+proof of optimality where the solver emits one, plus timing, explicit
+status and the metadata defined above. `PROVEN` requires the certificate
+check to establish optimality for the reported objective and bound.
 
 |`solvers_model_check`
 |TLC, SPIN, NuSMV, Alloy, PRISM, Storm, UPPAAL, ProB: the property, the
@@ -226,8 +239,9 @@ machine for no gain.
 lifecycle over them; all advertise from the capability record.
 |High. Each surface has one input kind and one answer kind; the roster is
 never typed by hand.
-|High once the kit's `doctor` exists; until then the cartridges can run
-against echidna's own `check-prover`.
+|Depends on the kit's `doctor` producing `EnvCapability`; echidna's
+`check-prover` is not a substitute. Only experiment Z3 (scaffolding and
+static validation) may precede `doctor`.
 |High. Shield tier; sandboxed execution (echidna's Podman or bwrap
 executor, ADR-0009's local provider); no LLM in the verdict path.
 
@@ -237,8 +251,9 @@ executor, ADR-0009's local provider); no LLM in the verdict path.
 prover" is the whole surface: no portfolio, no ledger, no solving, and the
 hard-coded "105".
 |Medium. Nothing to maintain beyond echidna.
-|Medium. Inherits echidna's sandbox only if `echidna prove` is called with
-it on.
+|Shield tier required. Every cartridge invocation must run in the sandbox,
+whether or not `echidna prove` receives a sandbox flag; refuse invocation
+if the required sandbox executor is unavailable.
 
 |*C. One `formal-methods-mcp` mega-cartridge*
 |Every tool of A in one cartridge.
@@ -337,10 +352,11 @@ agent relies on when it reads `trust_level: 5`.
 == Aspects
 
 Security:: The cartridges execute untrusted proof and problem files.
-Shield tier; every dispatch runs under echidna's sandbox (Podman
+Shield tier; every cartridge invocation runs under echidna's sandbox (Podman
 `--network=none`, read-only, limits; bwrap fallback; the unsandboxed mode
-refused rather than defaulted). ADR-0009's `sandbox-mcp` local provider is
-the same mechanism once it exists.
+refused regardless of any `echidna prove` sandbox flag). If the required
+sandbox executor is unavailable, refuse to run. ADR-0009's `sandbox-mcp`
+local provider is the same mechanism once it exists.
 Privacy:: Proof content can be proprietary. The verdict path has no
 network egress and no LLM; `echidna-llm-mcp` stays a separate, opt-in
 cartridge. Receipts carry hashes, not content.
