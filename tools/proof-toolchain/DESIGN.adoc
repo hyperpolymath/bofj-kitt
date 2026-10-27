@@ -157,8 +157,8 @@ plus the supporting tools the mapped provers need.
 |`policy:recheck` |Rocq (`coqc`), Lean (elan with pinned toolchains; no Mathlib)
 |`transport` |agda2dedukti, Dedukti (`dkcheck`), Lambdapi. agda2dedukti tracks particular Agda versions; the manifest records which Agda it accepts.
 |`exception:rust` |Kani; Aeneas with Charon (PROOF-POLICY §4.1)
-|`exception:recorded` |TLA+ (`tlc`); Isabelle (supplementary only)
-|`runtime` |Rust toolchains (rustup, the toolchains Creusot and Kani pin) and a Java runtime for the `tlc` launcher, bundled rather than taken from the host
+|`exception:recorded` |TLA+ (`tlc`); Isabelle, HOL Light, HOL4, ACL2 and Mizar (supplementary only). The last four were added 2026-10-27 so a kit-provisioned environment can serve every backend in echidna's default core set; PVS, the remaining core backend, is a licensed binary and belongs to the sealed-container tail, not the bundle.
+|`runtime` |Rust toolchains (rustup, the toolchains Creusot and Kani pin), a Java runtime for the `tlc` launcher, Poly/ML for HOL4 and SBCL for ACL2, bundled rather than taken from the host
 |`backend` |Z3, CVC5, Yices, Alt-Ergo, E prover, Vampire
 |===
 

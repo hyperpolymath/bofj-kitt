@@ -12,6 +12,12 @@ type-discipline variants with no binary) and `src/rust/provers/` (the binary
 each backend spawns). The existing lists were read from the `stuff-of-awe`
 organisation on the same date.
 
+Format note: echidna's prover registry is cited as `provers.a2ml`
+because that is the file today. A2ML is retired in favour of the deed
+format (standards `1-formats/deed/spec/abnf/deed.abnf`); the `binary`,
+`family` and `owner` fields proposed below target echidna's deed once
+the `.a2ml` to `.deed` conversion (ruling D313) lands there.
+
 This proposal lives in bofj-kitt because the kit is where the estate decides
 which provers an environment carries; the lists are the human index of the
 same roster. Nothing here creates a repository; see <<decisions>>.
@@ -342,9 +348,14 @@ shell script over `yq` and `jq`.
 |===
 
 Recommendation: A for the repositories, with D as the way their tool
-tables are produced once the registry fields exist in echidna. Start with
-the eleven priority-1 lists; hand-curate their prose; render their tool
-tables as soon as `provers.a2ml` carries the fields.
+tables are produced once the registry fields exist in echidna.
+
+Decided 2026-10-27 (owner): *refresh the existing lists first.*
+`awesome-provable` (2018 content) and `awesome-agda` (73 lines) are brought
+up to date before any repository is created, and experiment Y1's link-rot
+numbers are in hand before the first batch is cut. The eleven priority-1
+lists remain the proposed first batch after that; hand-curate their prose;
+render their tool tables as soon as echidna's registry carries the fields.
 
 == Experiments before the first batch
 
@@ -427,8 +438,9 @@ twenty-one more lists inherit the wrong obligations.
 [[decisions]]
 == Decisions needed
 
-. Confirm option A and the eleven priority-1 lists as the first batch,
-  or trim.
+. Decided 2026-10-27: refresh `awesome-provable` and `awesome-agda`
+  first and run Y1; the eleven priority-1 lists are the batch after that,
+  to be confirmed or trimmed with the rot numbers in hand.
 . Confirm `stuff-of-awe` as the organisation for all of them (the estate
   board still lists the existing lists under `hyperpolymath/`).
 . Whether `awesome-lean` and `awesome-sat` are forks (pending Y3) or fresh.

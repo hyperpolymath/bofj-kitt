@@ -5,6 +5,15 @@
 :toclevels: 3
 :sectnums:
 
+Format note: `.a2ml` files are named here only to locate today's
+content (`groove.a2ml`, `STATE.a2ml`). A2ML is retired in favour of the
+deed format (standards `1-formats/deed/spec/abnf/deed.abnf`) and
+`coordination.k9` by k9-coordination
+(`2-protocols/k9-coordination/spec/abnf/coordination-k9-grammar_v1.2.abnf`).
+The capability record and the Groove `capabilities` field proposed below
+are specified against the deed; the conversion of this repository's own
+files follows ruling D313.
+
 Status: proposal, 2026-10-27. Nothing here is built. The measured facts in
 <<measured>> were taken in one cloud agent session on that date and are
 reproducible with `tools/environments/probe-reachability.sh`.
@@ -200,12 +209,17 @@ sealed-container concern, per the 2026-05-18 packaging ruling.
 |Z3 |`z3` |Covered
 |CVC5 |`cvc5` |Covered
 |Metamath |none needed |Pure-Rust, in-process in echidna
-|HOL Light |none |*Missing* (OCaml; opam reachable here)
-|HOL4 |none |*Missing* (Poly/ML)
-|ACL2 |none |*Missing* (SBCL; upstream host failed TLS here)
-|Mizar |none |*Missing* (binary release)
+|HOL Light |`hol-light` |Covered (added 2026-10-27 on the owner's decision; opam)
+|HOL4 |`hol4` with `polyml` |Covered (added 2026-10-27; source build on bundled Poly/ML)
+|ACL2 |`acl2` with `sbcl` |Covered (added 2026-10-27; the bundle build fetches it, since its host failed TLS from a session)
+|Mizar |`mizar` |Covered (added 2026-10-27; system distribution with its MML)
 |PVS |none |*Missing*, licensed binary: sealed-container tail
 |===
+
+E6 was decided on 2026-10-27: the four entries above are in the manifest
+with `resolve` or `resolve-stable` pins and smoke fixtures that land with
+the bundle build, so the kit now declares eleven of echidna's twelve core
+backends and names the twelfth's home.
 
 == Options compared
 
@@ -360,7 +374,7 @@ rather than lost:
   all, given the policy measured here. If not, the session leg is
   `doctor`-only and the session's provers come from a prebuilt image or
   from a mise/Guix path the platform allows.
-. Whether HOL Light, HOL4, ACL2 and Mizar join the manifest now (E6) or
-  wait for an echidna consumer that needs them.
+. Decided 2026-10-27: HOL Light, HOL4, ACL2 and Mizar join the manifest
+  now (E6); the entries are in `toolchain.kyaml`.
 . Whether X3 runs before the first bundle release, so the transport is
   chosen once.

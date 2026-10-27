@@ -5,6 +5,15 @@
 :toclevels: 3
 :sectnums:
 
+Format note: where this document names an `.a2ml` file it is locating
+today's content. A2ML is retired in favour of the deed format (grammar:
+standards `1-formats/deed/spec/abnf/deed.abnf`) and `coordination.k9` by
+k9-coordination (`2-protocols/k9-coordination/spec/abnf/coordination-k9-grammar_v1.2.abnf`);
+ruling D313 makes the `.a2ml` to `.deed` conversion a tooling front end
+rather than a hand sweep. Every new field proposed here (the registry's
+`binary`, `family` and `owner` fields, the capability record's home)
+targets the deed, not A2ML.
+
 Status: proposal, 2026-10-27. Companion to
 `environment-of-environments.adoc` (the capability record these cartridges
 advertise from) and `awesome-estate-maths-proving.adoc` (the roster they

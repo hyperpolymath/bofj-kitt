@@ -23,6 +23,11 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   (`provers-mcp`, `solvers-mcp`, `code-verifiers-mcp`) on the capability
   record seam, what the store's `proof-mcp` becomes, and where
   Quintessence, Apodeixis.jl, atoma and bactarin land.
+* `tools/proof-toolchain/toolchain.kyaml` — HOL Light, HOL4, ACL2 and
+  Mizar as `exception:recorded` entries, with Poly/ML and SBCL as their
+  bundled runtimes (E6, owner decision 2026-10-27): the kit now declares
+  eleven of echidna's twelve core backends; PVS stays in the
+  sealed-container tail.
 * `tools/environments/` — `environments.kyaml` (environment classes with a
   `measured` block), `probe-reachability.sh` and `hosts.txt` (experiment
   X1: HEAD-only reachability probe).
