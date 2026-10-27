@@ -125,8 +125,10 @@ the host or the network. Three rules keep it so:
   another (a translator feeding a checker), its `verify` runs the pair on a
   bundled smoke input instead of a help probe.
 
-elan is configured never to download, so a toolchain missing from the bundle
-fails loudly instead of being fetched behind the lock's back.
+rustup and elan are configured never to install a toolchain on demand, so a
+toolchain missing from the bundle fails loudly instead of being fetched behind
+the lock's back. An entry that locks several toolchains is verified once per
+toolchain, so `doctor` cannot pass on whichever one happens to be the default.
 
 == Roles
 
@@ -146,7 +148,7 @@ plus the supporting tools the mapped provers need.
 |`exception:rust` |Kani; Aeneas with Charon (PROOF-POLICY §4.1)
 |`exception:recorded` |TLA+ (`tlc`); Isabelle (supplementary only)
 |`runtime` |Rust toolchains (rustup, the toolchains Creusot and Kani pin) and a Java runtime for the `tlc` launcher, bundled rather than taken from the host
-|`backend` |Z3, CVC5, Alt-Ergo, E prover, Vampire
+|`backend` |Z3, CVC5, Yices, Alt-Ergo, E prover, Vampire
 |===
 
 The estate's own `echidna` (the prover dispatcher) is a *consumer* of this
