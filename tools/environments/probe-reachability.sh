@@ -38,7 +38,12 @@ if [ ! -r "$HOSTS_FILE" ]; then
     exit 2
 fi
 
-# classify <http-code> <curl-exit> — one word per outcome.
+# classify <http-code> <curl-exit> — print one outcome label to stdout.
+# Takes the final HTTP status after redirects and curl's exit code. Exit 60
+# yields tls-failed; any other non-zero exit or HTTP 000 yields unreachable,
+# regardless of the HTTP status. With a zero exit, 401 yields auth-required,
+# 403 yields refused, 2xx/3xx yields reachable, and all other codes yield
+# http-<http-code>. A failed probe is reported as a label, not an error status.
 classify() {
     local code="$1" rc="$2"
     if [ "$rc" -eq 60 ]; then
