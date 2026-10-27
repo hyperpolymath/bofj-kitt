@@ -69,13 +69,16 @@ if [ "$MODE" = "text" ]; then
 fi
 
 rows=()
-while IFS= read -r line; do
+# `|| [ -n "$line" ]` keeps a final line that has no trailing newline.
+while IFS= read -r line || [ -n "$line" ]; do
     line="${line%%#*}"
     line="${line#"${line%%[![:space:]]*}"}"
     line="${line%"${line##*[![:space:]]}"}"
     [ -z "$line" ] && continue
     rc=0
-    code="$(curl -sS -I -o /dev/null -w '%{http_code}' --max-time "$TIMEOUT" "$line" 2>/dev/null)" || rc=$?
+    # -L follows redirects so a release asset is measured at its final
+    # host, not at the 302 GitHub answers with; the code is the last one.
+    code="$(curl -sS -I -L -o /dev/null -w '%{http_code}' --max-time "$TIMEOUT" "$line" 2>/dev/null)" || rc=$?
     outcome="$(classify "$code" "$rc")"
     if [ "$MODE" = "text" ]; then
         printf '%-6s %-14s %s\n' "$code" "$outcome" "$line"

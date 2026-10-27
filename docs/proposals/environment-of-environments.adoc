@@ -42,7 +42,8 @@ backends; covers 7 of echidna's 12 core backends (see <<coverage>>).
 |One relocatable bundle at `/opt/hyperpolymath/provers`, `provers.sh
 install\|doctor\|render`
 |Design only. Its statements about what agent sessions can reach were not
-measured and are partly contradicted by <<measured>>.
+measured; <<measured>> confirms the asset transport and contradicts the
+opam and Alire claim.
 
 |`tools/workstation/env.sh`
 |Toolchain homes and `PATH` for one workstation
@@ -85,25 +86,35 @@ proxy returned.
 |`isabelle.in.tum.de`, `mizar.uwb.edu.pl`, `pvs.csl.sri.com` |200 |Reachable.
 |`ftp.gnu.org/gnu/guix` |200 |Reachable.
 |`smt-lib.org`, `www.tptp.org` |200 |Reachable.
-|`github.com/Z3Prover/z3/releases/latest` |403 |*Refused by the proxy.* DESIGN.adoc assumes release assets are the one thing every session can fetch.
-|`api.github.com/repos/cvc5/cvc5/releases/latest` |403 |Refused. Release discovery through the API is not available here.
+|`github.com/Z3Prover/z3/releases/download/…/z3-4.13.4-x64-glibc-2.35.zip` |302 then 200 |*Reachable.* The asset download path redirects to `release-assets.githubusercontent.com` and the bytes are served. DESIGN.adoc's "release asset first" transport holds here.
+|`codeload.github.com`, `raw.githubusercontent.com` |200 |Reachable (source archives and raw files).
+|`github.com/Z3Prover/z3/releases/latest` |403 |*Refused by the proxy.* The release landing page is not available, so "latest" cannot be discovered by scraping.
+|`api.github.com/repos/cvc5/cvc5/releases/latest` |403 |Refused. Release discovery through the API is not available either.
 |`crates.io/api/v1/crates/just` |403 |Refused (cargo installs from the registry would fail).
-|`ghcr.io/v2/`, `cgr.dev/v2/` |401 |Registry answered; anonymous token flow not tested.
+|`ghcr.io/v2/`, `cgr.dev/v2/` |401 (GET), 405 (HEAD) |Registry answered; anonymous token flow not tested.
+|`cvc5.github.io` |200 |Reachable.
 |`www.cs.utexas.edu/~moore/acl2/` |TLS failure |Host certificate not in the session CA bundle.
 |===
 
-A second experiment, installing Z3 from a GitHub release asset into a
-scratch prefix and running `z3 --version`, was *refused by the session's
-execution policy* before any bytes moved: downloading and executing an
-external binary is denied in this session class.
+A second experiment, installing Z3 from that release asset into a scratch
+prefix and running `z3 --version`, was *refused by the session's execution
+policy* before any bytes moved: a step that downloads and executes an
+external binary is denied in this session class. Whether a fetched binary
+would run was therefore not observed; the manifest records
+`denied-before-download`, not `false`.
 
 Two conclusions follow, and both change the design:
 
 . *Reachability is a property of an environment instance, not of its
-  class.* The same "agent session" class reached opam here and could not
-  reach GitHub releases. The kit must measure, not assume: `doctor` grows a
-  `probe` that records which hosts answered, and the capability report
-  carries it.
+  class, and of a path, not of a host.* The same "agent session" class
+  reached opam here, which the design assumed it could not; it fetched a
+  concrete release asset, which the design assumed and which holds; and it
+  could not reach the release landing page or the API, so a `pin:
+  resolve` entry (which discovers "latest" through the API) cannot be
+  resolved from a session. The lock must carry the concrete asset URL,
+  and `install` must read the lock, never the API. The kit must measure,
+  not assume: `doctor` grows a `probe` that records which paths answered,
+  and the capability report carries it.
 . *Execution policy is a second axis beside network policy.* An
   environment may be able to fetch a bundle and still be forbidden to run
   it. The environment declaration needs an `execute-downloaded` field, and

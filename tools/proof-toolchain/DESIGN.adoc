@@ -15,10 +15,13 @@ steps are in <<plan>>.
 See also `../environments/` and
 `docs/proposals/environment-of-environments.adoc`: the environment classes
 this toolchain is projected onto, with measured reachability. Those
-measurements (2026-10-27) contradict two assumptions below: the agent
-session probed there *could* reach `opam.ocaml.org` and `alire.ada.dev`,
-and *could not* fetch GitHub release assets. Reachability is measured per
-environment, not assumed per class.
+measurements (2026-10-27) refine the assumptions below: the agent session
+probed there *could* reach `opam.ocaml.org` and `alire.ada.dev`; it
+*could* fetch a concrete GitHub release asset, as assumed; and it *could
+not* reach release landing pages or `api.github.com`, so a `pin:
+resolve` entry cannot be resolved from a session and `install` must read
+the concrete asset URL from the lock. Reachability is measured per
+environment and per path, not assumed per class.
 
 == The problem it solves
 

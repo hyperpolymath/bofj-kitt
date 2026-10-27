@@ -2,9 +2,14 @@
 # `method` column), one URL per line. '#' starts a comment.
 # Probed by probe-reachability.sh with HEAD requests only.
 
-# Release assets and source archives
+# Release assets and source archives. The asset download URL is the path
+# `provers.sh install` would use; the landing page and the API are discovery
+# only, so a result on them says nothing about assets.
 https://github.com/Z3Prover/z3/releases/latest
 https://api.github.com/repos/cvc5/cvc5/releases/latest
+https://github.com/Z3Prover/z3/releases/download/z3-4.13.4/z3-4.13.4-x64-glibc-2.35.zip
+# The asset above redirects to release-assets.githubusercontent.com; the
+# probe follows redirects, so one line measures the whole download path.
 https://codeload.github.com/hyperpolymath/bofj-kitt/tar.gz/main
 https://raw.githubusercontent.com/hyperpolymath/bofj-kitt/main/README.adoc
 

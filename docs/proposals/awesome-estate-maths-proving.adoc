@@ -237,7 +237,7 @@ diagrams.
 |3
 |===
 
-Twenty-one lists; thirteen at priority 1, which together name every one of
+Twenty-one lists; eleven at priority 1, which together name every one of
 echidna's 12 core backends and every PROOF-POLICY route.
 
 === Where the small families go
@@ -343,7 +343,7 @@ shell script over `yq` and `jq`.
 
 Recommendation: A for the repositories, with D as the way their tool
 tables are produced once the registry fields exist in echidna. Start with
-the thirteen priority-1 lists; hand-curate their prose; render their tool
+the eleven priority-1 lists; hand-curate their prose; render their tool
 tables as soon as `provers.a2ml` carries the fields.
 
 == Experiments before the first batch
@@ -378,12 +378,17 @@ other lists use.
 == The formal route
 
 The lists are data about tools, and the one property worth stating
-formally is *coverage*: every variant of `ProverKind` is named by exactly
-one priority-1 or priority-2 list, and every tool the kit manifest names
-is in a list. With the registry of option D that is a finite relation and
-the check is a test (`TESTED`), the same kind of check `awesome-nickel`
-already runs in Idris2 over its links. It is not worth a theorem; it is
-worth a gate.
+formally is *coverage*. Each tool has one *owning* list, the entry that
+carries its description; any other list may mention it as a
+cross-reference (Z3 in `awesome-constraint-solving` for its optimiser,
+Sledgehammer in `awesome-atp`, TPTP in `awesome-logical-frameworks`). The
+property is then: every variant of `ProverKind` has exactly one owning
+entry across the priority-1 and priority-2 lists, cross-references are
+unlimited but must point at the owner, and every tool the kit manifest
+names has an owner. With the registry of option D (an `owner` field per
+tool) that is a finite relation and the check is a test (`TESTED`), the
+same kind of check `awesome-nickel` already runs in Idris2 over its links.
+It is not worth a theorem; it is worth a gate.
 
 == Aspects
 
@@ -422,7 +427,7 @@ twenty-one more lists inherit the wrong obligations.
 [[decisions]]
 == Decisions needed
 
-. Confirm option A and the thirteen priority-1 lists as the first batch,
+. Confirm option A and the eleven priority-1 lists as the first batch,
   or trim.
 . Confirm `stuff-of-awe` as the organisation for all of them (the estate
   board still lists the existing lists under `hyperpolymath/`).
