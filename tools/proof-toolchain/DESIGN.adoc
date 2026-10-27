@@ -12,6 +12,14 @@ which of them it has.
 Status: design, not built. Nothing here installs anything yet; the build
 steps are in <<plan>>.
 
+See also `../environments/` and
+`docs/proposals/environment-of-environments.adoc`: the environment classes
+this toolchain is projected onto, with measured reachability. Those
+measurements (2026-10-27) contradict two assumptions below: the agent
+session probed there *could* reach `opam.ocaml.org` and `alire.ada.dev`,
+and *could not* fetch GitHub release assets. Reachability is measured per
+environment, not assumed per class.
+
 == The problem it solves
 
 The same tools are installed four different ways today, and each way fails

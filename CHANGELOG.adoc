@@ -7,3 +7,18 @@ Changelog], and this project adheres to
 https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 === [Unreleased]
+
+==== Added
+
+* `docs/proposals/environment-of-environments.adoc` — how the kit becomes
+  the environment of environments: an environment manifest beside the
+  toolchain manifest, one capability record, rendered projections, the
+  agent-session leg, BoJ registration, and coverage of echidna's core
+  backends; with measured reachability from one agent session and the
+  experiments to run before building.
+* `docs/proposals/awesome-estate-maths-proving.adoc` — the awesome lists to
+  create in `stuff-of-awe` for maths, proving and solving, derived from
+  echidna's prover roster, and the tools echidna itself lacks.
+* `tools/environments/` — `environments.kyaml` (environment classes with a
+  `measured` block), `probe-reachability.sh` and `hosts.txt` (experiment
+  X1: HEAD-only reachability probe).

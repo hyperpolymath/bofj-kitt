@@ -1,0 +1,33 @@
+# Hosts the proof toolchain is fetched from (tools/proof-toolchain/toolchain.kyaml
+# `method` column), one URL per line. '#' starts a comment.
+# Probed by probe-reachability.sh with HEAD requests only.
+
+# Release assets and source archives
+https://github.com/Z3Prover/z3/releases/latest
+https://api.github.com/repos/cvc5/cvc5/releases/latest
+https://codeload.github.com/hyperpolymath/bofj-kitt/tar.gz/main
+https://raw.githubusercontent.com/hyperpolymath/bofj-kitt/main/README.adoc
+
+# Package registries the manifest's methods use
+https://opam.ocaml.org/
+https://alire.ada.dev/
+https://hackage.haskell.org/
+https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init
+https://crates.io/api/v1/crates/just
+https://releases.lean-lang.org/
+https://ftp.gnu.org/gnu/guix/
+
+# Prover homes with their own downloads
+https://isabelle.in.tum.de/
+https://mizar.uwb.edu.pl/
+https://pvs.csl.sri.com/
+https://www.cs.utexas.edu/~moore/acl2/
+https://cvc5.github.io/
+
+# Container registries (401 means the registry answered and wants a token)
+https://ghcr.io/v2/
+https://cgr.dev/v2/
+
+# Standards bodies for the exchange formats
+https://smt-lib.org/
+https://www.tptp.org/

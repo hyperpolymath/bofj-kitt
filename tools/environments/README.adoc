@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Environments: what the kit provisions, and what each can reach
+
+The proof toolchain manifest (`../proof-toolchain/toolchain.kyaml`) says
+*which tools* the estate uses. This directory says *which environments*
+those tools are projected onto, and records what each environment was
+measured to reach. Design: `docs/proposals/environment-of-environments.adoc`.
+
+[cols="1,3",options="header"]
+|===
+|File |What it is
+
+|`environments.kyaml`
+|One entry per environment class (workstation, agent session, CI runner,
+devcontainer, Guix shell, sealed container, BoJ-registered view): how tools
+get in, whether fetched binaries may run, which container runtime exists,
+who reads its capability record, and a `measured` block.
+
+|`probe-reachability.sh`
+|Sends one HEAD request per URL in `hosts.txt` and prints the HTTP status
+this environment saw, as text or as one JSON object. Downloads nothing,
+executes nothing. Its output is what goes into an entry's `measured` block,
+with the date.
+
+|`hosts.txt`
+|The hosts the toolchain manifest's `method` column fetches from.
+|===
+
+== Reading a `measured` block
+
+`reachable` means a HEAD request returned 2xx or 3xx. `refused` is a 403
+from the environment's proxy. `auth-required` is a 401: the host answered
+and wants a token, which the probe does not supply. `tls-failed` means the
+host's certificate is not in the environment's CA bundle. Container
+registries answer `405` to a HEAD on `/v2/` and `401` to a GET; the probe
+reports the HEAD result as `http-405`, which means "the registry answered".
+`execute-downloaded: false` under `measured` means the environment's policy
+refused to run a fetched binary when that was tried; it is recorded only
+when it was actually tried.
+
+A block is a fact about one environment instance on one date. It is never
+copied from one environment class to another.

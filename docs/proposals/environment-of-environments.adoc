@@ -1,0 +1,355 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= bofj-kitt as the environment of environments
+:toc:
+:toclevels: 3
+:sectnums:
+
+Status: proposal, 2026-10-27. Nothing here is built. The measured facts in
+<<measured>> were taken in one cloud agent session on that date and are
+reproducible with `tools/environments/probe-reachability.sh`.
+
+== The claim
+
+The estate runs proofs and builds in several *kinds* of environment: the
+workstation, cloud agent sessions, CI runners, dev containers, Guix shells,
+sealed containers, and the hosts that echidna, echidnabot and proof-burrower
+dispatch to. Each kind installs tools its own way, reaches a different set
+of hosts, and reports what it holds in a different way, or not at all.
+
+bofj-kitt already owns one half of the answer: the proof-toolchain manifest
+(`tools/proof-toolchain/toolchain.kyaml`) declares *which tools* exist. The
+other half is missing: nothing declares *which environments* exist, what
+each one can reach and run, and how it reports back. Adding that second
+declaration, and making both the only inputs from which every
+environment-specific file is rendered, is what makes bofj-kitt the
+environment of environments: one place that describes every environment
+class, projects the same declared toolchain onto each, and makes each
+report its real capabilities in one machine-readable form.
+
+== What exists today
+
+[cols="1,2,2",options="header"]
+|===
+|Surface |What it declares |Gap
+
+|`tools/proof-toolchain/toolchain.kyaml`
+|29 tools with roles under PROOF-POLICY, pins and smoke commands
+|Declares tools, not environments. Covers the policy provers and their
+backends; covers 7 of echidna's 12 core backends (see <<coverage>>).
+
+|`tools/proof-toolchain/DESIGN.adoc`
+|One relocatable bundle at `/opt/hyperpolymath/provers`, `provers.sh
+install\|doctor\|render`
+|Design only. Its statements about what agent sessions can reach were not
+measured and are partly contradicted by <<measured>>.
+
+|`tools/workstation/env.sh`
+|Toolchain homes and `PATH` for one workstation
+|Hand-maintained; nothing records versions; not rendered from a manifest.
+
+|`.devcontainer/`, `container/`, `build/guix.scm`
+|Template scaffolding with 30 unfilled tokens
+|None of them name a single prover. They are three more hand-written
+projections of an environment that is declared nowhere.
+
+|`.machine_readable/integrations/groove.a2ml`
+|BoJ/Groove service manifest
+|`capabilities` is empty, so a BoJ server cannot learn which provers an
+environment offers.
+
+|`build/just/proofs.just`
+|`proof-check-*` recipes
+|Each recipe probes a binary with `command -v`; a missing prover is a SKIP
+that reads like a pass. PROOF-POLICY §6 says a leg that cannot run must say
+so, not pass silently.
+|===
+
+[[measured]]
+== Measured facts from one agent session
+
+Taken 2026-10-27 in a Claude Code cloud session for this repository
+(Ubuntu 24.04.5, glibc 2.39, x86_64, outbound HTTPS through the session's
+agent proxy). HEAD or GET to the root of each host; the code is what the
+proxy returned.
+
+[cols="3,1,3",options="header"]
+|===
+|Host |HTTP |Reading
+
+|`opam.ocaml.org` |200 |Reachable. DESIGN.adoc assumes sessions cannot reach it.
+|`alire.ada.dev` |200 |Reachable. Same assumption contradicted.
+|`hackage.haskell.org` |200 |Reachable (Agda via cabal is possible in principle).
+|`static.rust-lang.org` (rustup-init) |200 |Reachable.
+|`releases.lean-lang.org` |200 |Reachable (elan toolchains).
+|`isabelle.in.tum.de`, `mizar.uwb.edu.pl`, `pvs.csl.sri.com` |200 |Reachable.
+|`ftp.gnu.org/gnu/guix` |200 |Reachable.
+|`smt-lib.org`, `www.tptp.org` |200 |Reachable.
+|`github.com/Z3Prover/z3/releases/latest` |403 |*Refused by the proxy.* DESIGN.adoc assumes release assets are the one thing every session can fetch.
+|`api.github.com/repos/cvc5/cvc5/releases/latest` |403 |Refused. Release discovery through the API is not available here.
+|`crates.io/api/v1/crates/just` |403 |Refused (cargo installs from the registry would fail).
+|`ghcr.io/v2/`, `cgr.dev/v2/` |401 |Registry answered; anonymous token flow not tested.
+|`www.cs.utexas.edu/~moore/acl2/` |TLS failure |Host certificate not in the session CA bundle.
+|===
+
+A second experiment, installing Z3 from a GitHub release asset into a
+scratch prefix and running `z3 --version`, was *refused by the session's
+execution policy* before any bytes moved: downloading and executing an
+external binary is denied in this session class.
+
+Two conclusions follow, and both change the design:
+
+. *Reachability is a property of an environment instance, not of its
+  class.* The same "agent session" class reached opam here and could not
+  reach GitHub releases. The kit must measure, not assume: `doctor` grows a
+  `probe` that records which hosts answered, and the capability report
+  carries it.
+. *Execution policy is a second axis beside network policy.* An
+  environment may be able to fetch a bundle and still be forbidden to run
+  it. The environment declaration needs an `execute-downloaded` field, and
+  the install step needs a fallback that does not execute fetched binaries
+  (a Guix profile, a prebuilt image, or declining the leg honestly).
+
+== The proposal
+
+Six enhancements, in build order. Each stands on its own; later ones consume
+earlier ones.
+
+=== E1. Declare the environments
+
+Add `tools/environments/environments.kyaml`, one entry per environment
+class, in the same KYAML style as the toolchain manifest: identity, how
+tools get in (bundle, Guix, mise, image), the prefix, whether fetched
+binaries may run, which container runtime exists, who consumes the
+capability report, and a `measured` block that `probe` fills in. A first
+cut is committed with this proposal.
+
+=== E2. One capability report, one producer, one consumer contract
+
+`provers.sh doctor --json` becomes the single producer of an
+*environment capability record*: the environment id, the toolchain lock
+hash, each tool as `PRESENT <version>`, `DRIFT`, or `UNAVAILABLE <reason>`,
+and the probe results. One JCS-canonical I-JSON object, as DESIGN.adoc
+already specifies, with the environment fields added.
+
+Its consumers are already named across the estate: echidna and echidnabot
+(which `ProverKind` backends a host can serve), proof-burrower (whether
+`echidna prove` has a prover to talk to), the BoJ server (Groove
+`capabilities`), and `proof-check-*` (a leg that is `UNAVAILABLE` is
+reported, never skipped). Each consumer reads the same record, so the
+answer to "which provers does this environment have" is computed once.
+
+=== E3. Render every projection from the two manifests
+
+`provers.sh render` already regenerates the workstation index from the
+toolchain manifest. Extend it to render, per environment class, the files
+that are hand-written today: the `env.sh` `PATH` entries, the Guix
+`manifest.scm` subset, the devcontainer feature list, a CI job-matrix
+fragment, and the session setup-script snippet. The rule is the one the
+design already states: what a machine *has* is `doctor`'s job; what a
+machine *should have* is rendered, never hand-edited.
+
+=== E4. The agent-session leg
+
+Cloud sessions are the environment class the estate controls least and uses
+most. Add a session-start hook under `.claude/` that runs `provers.sh
+install` where policy allows and `provers.sh doctor --json` always, writing
+the capability record to `.session/`. A session that cannot install says so
+in the record, which PROOF-POLICY §6 requires, instead of a `SKIP` in a
+recipe. The install step honours `execute-downloaded` from E1.
+
+=== E5. Register capabilities with the BoJ server
+
+Fill `capabilities` in `groove.a2ml` from the capability record at
+registration time, so a remote caller sees which provers an environment
+offers before dispatching to it. This is the "register" verb the README
+promises and the first concrete BoJ integration surface (roadmap M2).
+
+=== E6. Close the gap to echidna's core roster
+
+The kit covers the PROOF-POLICY provers. echidna's default API exposes a
+core of 12 backends; the kit's manifest lacks 5 of them. Add HOL Light,
+HOL4, ACL2 and Mizar as `exception:recorded` entries (PVS is a licensed
+binary and goes in the sealed-container tail), so an environment the kit
+provisions can serve echidna's whole core. The extended roster (141
+`ProverKind` variants over 105 implementation files) stays echidna's
+sealed-container concern, per the 2026-05-18 packaging ruling.
+
+[[coverage]]
+=== Coverage of echidna's core 12 by the toolchain manifest
+
+[cols="1,1,2",options="header"]
+|===
+|echidna core backend |Manifest entry |Status
+
+|Agda |`agda-2.6.3`, `agda-2.6.4.3` |Covered
+|Coq (Rocq) |`rocq` |Covered
+|Lean 4 |`lean` |Covered (no Mathlib, per policy)
+|Isabelle/HOL |`isabelle` |Covered (supplementary role)
+|Z3 |`z3` |Covered
+|CVC5 |`cvc5` |Covered
+|Metamath |none needed |Pure-Rust, in-process in echidna
+|HOL Light |none |*Missing* (OCaml; opam reachable here)
+|HOL4 |none |*Missing* (Poly/ML)
+|ACL2 |none |*Missing* (SBCL; upstream host failed TLS here)
+|Mizar |none |*Missing* (binary release)
+|PVS |none |*Missing*, licensed binary: sealed-container tail
+|===
+
+== Options compared
+
+[cols="1,3,1,1,1",options="header"]
+|===
+|Option |Shape |Elegance / correctness |Dependability |Security / privacy
+
+|*A. Two manifests, one record* (recommended; E1–E6)
+|Environments and tools declared once; every projection rendered; one
+capability record consumed everywhere.
+|High. One source of truth; drift becomes impossible by construction rather
+than by review.
+|High once built. Measured, not assumed; degrades to an honest
+`UNAVAILABLE`.
+|High. Lock hashes every input; no telemetry; registration is opt-in by
+`BOJ_SERVER_URL`.
+
+|*B. Guix everywhere*
+|Each environment is a Guix profile from `manifest.scm`.
+|High where it applies; Guix is already the primary packager.
+|Low for the tail: Guix does not carry Idris2, Creusot, agda2dedukti or the
+licensed provers, and no agent session here can run `guix`.
+|High (reproducible by hash).
+
+|*C. Containers everywhere*
+|Every environment is a Wolfi image; sessions and CI pull it.
+|Medium. Clean, but a container is an opaque projection; drift hides inside
+it.
+|Medium. Agent sessions cannot run a container engine; CI can.
+|High (sealed, signed with cerro-torre).
+
+|*D. Alternative path: one OCI artifact as the transport*
+|Publish the bundle tree as an OCI artifact (ORAS) and let every target
+unpack it without a runtime: tarball and image stop being two artefacts.
+|High. Removes the "asset first, image second" split in DESIGN.adoc.
+|Unknown here: `ghcr.io` and `cgr.dev` answered 401 and the anonymous token
+flow was not tested. Worth one experiment (X3).
+|High (content-addressed, signable with cosign).
+|===
+
+Recommendation: build A, and run X3 before deciding whether D replaces A's
+two-artefact transport. B remains the preferred *installer* inside A on
+hosts that have Guix; C remains A's escape hatch for the tail.
+
+== Experiments before building
+
+Each experiment has a pass criterion so the result is a fact, not an
+impression.
+
+[cols="1,3,2",options="header"]
+|===
+|Id |Experiment |Pass criterion
+
+|X1
+|Run `tools/environments/probe-reachability.sh` in each environment class:
+workstation, this session class, a GitHub-hosted runner, the devcontainer.
+|A reachability row per class in `environments.kyaml` `measured`, dated.
+The design's host assumptions are replaced by measurements.
+
+|X2
+|Install Z3 and CVC5 from release assets into the fixed prefix on a
+GitHub-hosted runner and on the workstation; run the manifest `verify`
+command for each.
+|Both report `PRESENT` at the locked version from the same bytes; the
+bundle's SHA-256 matches on both hosts.
+
+|X3
+|Push the same tree as an OCI artifact with ORAS to `ghcr.io`; pull it
+anonymously from a session and from a runner without a container engine.
+|Anonymous pull succeeds in both, or the 401 is shown to need a token, in
+which case D is rejected for sessions.
+
+|X4
+|Build the bundle in a builder image with glibc 2.35 and run `doctor` on
+Ubuntu 22.04, Ubuntu 24.04 (glibc 2.39, measured here) and Wolfi.
+|`doctor` passes on all three. If it does not, the lock's glibc floor is
+raised and the unsupported target is named.
+
+|X5
+|Give `proof-check-*` a planted missing prover and a planted broken proof.
+|The missing prover yields `UNAVAILABLE` in the record and a non-zero exit
+where PROOF-POLICY §6 requires it; the broken proof fails. Both directions
+verified, as LANGUAGE-POLICY §3 asks of any gate.
+|===
+
+== The formal route
+
+PROOF-POLICY §1 maps interface contracts to Idris2. The capability record
+*is* an interface: several languages produce or consume it (shell here, Rust
+in echidna and proof-burrower, the BoJ cartridge). So the record gets an
+Idris2 type under `verification/proofs/idris2/` with the properties that
+matter to its consumers: the status vocabulary is closed (`PRESENT`,
+`DRIFT`, `UNAVAILABLE`), encoding to I-JSON and back is a round trip, and
+the record is total over the manifest (every manifest entry appears exactly
+once). That replaces the template's ABI-1..5 placeholders with proofs about
+something this repository actually ships, which is what roadmap M4 asks for.
+
+The closure rule in DESIGN.adoc ("the bundle is complete only if nothing a
+tool needs at run time comes from the host") is a statement about the
+`needs` graph in the manifest: every edge's target is itself an entry, and
+the graph is acyclic. That is a small, implementation-independent theorem
+and belongs in Agda under the policy; until it exists, a test that walks the
+graph is the `TESTED` stand-in and is recorded as such.
+
+== Aspects
+
+Security:: The lock records SHA-256 of every input. echidna's solver
+integrity manifest (`config/solver-manifest.toml`) wants SHAKE3-512 and
+currently ships `PLACEHOLDER_COMPUTE_ON_FIRST_RUN` for every solver, which
+is trust-on-first-use and defeats the check. The lock should carry both
+digests so echidna can verify kit-installed binaries against a value that
+was computed where the bytes were built, not where they were first run.
+Observability:: One record, one schema, one producer; consumers add nothing
+of their own. BoJ registration is the only place the record leaves the
+host.
+Privacy:: No telemetry. Registration happens only when `BOJ_SERVER_URL`
+is set, and the record contains tool versions and probe results, never
+paths under `$HOME` or user identity.
+Reproducibility:: Guix stays primary; the bundle is pinned in the lock;
+`rustup` and `elan` are set never to fetch on demand.
+Portability:: The measured glibc here is 2.39. Picking the builder floor
+at 2.35 covers Ubuntu 22.04 runners as well; X4 decides.
+Honesty:: Every leg that cannot run is reported, with the reason. This is
+the one behaviour that must hold in every environment class.
+
+== Beyond this repository
+
+Things this proposal touches that live elsewhere, so they can be tracked
+rather than lost:
+
+* `hyperpolymath/standards` PROOF-POLICY §6 names the Guix manifest, the
+  container and the setup script as the three toolchain routes. Once E2
+  exists it should name the capability record as the thing each route must
+  produce.
+* `hyperpolymath/echidna`: read the capability record instead of probing
+  binaries; add the SHA-256 column to `solver-manifest.toml` and drop the
+  first-run placeholders; `provers.a2ml` carries only a slug per backend,
+  so the binary each backend needs is not machine-readable anywhere.
+* `hyperpolymath/echidnabot` README still says "12 provers" against
+  echidna's 141 variants; the capability record would let it say what the
+  host has instead of a number.
+* `hyperpolymath/proof-burrower` `docs/ECHIDNA-INTEGRATION.adoc` can cite
+  the record for "is Isabelle here".
+* `hyperpolymath/rsr-template-repo`: the `proof-check-*` recipes that `SKIP`
+  on a missing prover are inherited by every repo; the fix belongs in the
+  template.
+* The BoJ server's `ssg-mcp` cartridge needs a field for the record.
+
+== Decisions needed
+
+. Whether the agent-session install step may execute fetched binaries at
+  all, given the policy measured here. If not, the session leg is
+  `doctor`-only and the session's provers come from a prebuilt image or
+  from a mise/Guix path the platform allows.
+. Whether HOL Light, HOL4, ACL2 and Mizar join the manifest now (E6) or
+  wait for an echidna consumer that needs them.
+. Whether X3 runs before the first bundle release, so the transport is
+  chosen once.
