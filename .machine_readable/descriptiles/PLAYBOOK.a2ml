@@ -123,6 +123,9 @@ enforcement-workflow = ".github/workflows/estate-rules.yml"
 #                             vlang.sh + .github/workflows/estate-rules.yml.
 # 5. chore/<repo>-hygiene     Repo-specific drift cleanup (case collisions,
 #                             template-derivation drift in titles, etc.).
+#                             Move a legacy .machine_readable/6a2/ to
+#                             .machine_readable/descriptiles/ and update every
+#                             reference to the old path (Hypatia SD004, SD024).
 
 # === Reference scripts ===
 # scripts/check-root-shape.sh      Root allowlist validator
