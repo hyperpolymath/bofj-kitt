@@ -69,7 +69,7 @@ echo ""
 # ─── Preflight ───────────────────────────────────────────────────────
 bold "Preflight checks"
 
-# TODO: Check that your binary/server is built
+# TODO(#101): Check that your binary/server is built
 # Example:
 # BINARY="$PROJECT_DIR/target/release/my-tool"
 # if [ ! -f "$BINARY" ]; then
@@ -78,14 +78,14 @@ bold "Preflight checks"
 # fi
 # green "  Binary found: $BINARY"
 
-# TODO: Check dependencies
+# TODO(#101): Check dependencies
 # command -v curl >/dev/null 2>&1 || { red "curl not found"; exit 1; }
 # command -v jq >/dev/null 2>&1   || { red "jq not found"; exit 1; }
 
 echo ""
 
 # ═══════════════════════════════════════════════════════════════════════
-# TODO: Add your E2E test sections below. Examples:
+# TODO(#101): Add your E2E test sections below. Examples:
 # ═══════════════════════════════════════════════════════════════════════
 
 # ─── Example: CLI tool E2E ───────────────────────────────────────────

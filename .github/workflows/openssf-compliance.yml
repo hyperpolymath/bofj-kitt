@@ -74,11 +74,11 @@ jobs:
             exit 1
           fi
 
-          if [ ! -f ".machine_readable/STATE.a2ml" ]; then
-            echo "::error::.machine_readable/STATE.a2ml is required"
+          if [ ! -f ".machine_readable/descriptiles/STATE.a2ml" ]; then
+            echo "::error::.machine_readable/descriptiles/STATE.a2ml is required"
             exit 1
           fi
-          echo ".machine_readable/STATE.a2ml: OK"
+          echo ".machine_readable/descriptiles/STATE.a2ml: OK"
 
       - name: Check CHANGELOG exists
         run: |
@@ -96,8 +96,8 @@ jobs:
           # Collect all required files that exist
           for f in SECURITY.md SECURITY.adoc .github/SECURITY.md LICENSE LICENSE.txt \
                    CONTRIBUTING.md CONTRIBUTING.adoc README.md README.adoc \
-                   .machine_readable/STATE.a2ml .machine_readable/META.a2ml \
-                   .machine_readable/ECOSYSTEM.a2ml CHANGELOG.md CHANGELOG.adoc; do
+                   .machine_readable/descriptiles/STATE.a2ml .machine_readable/descriptiles/META.a2ml \
+                   .machine_readable/descriptiles/ECOSYSTEM.a2ml CHANGELOG.md CHANGELOG.adoc; do
             [ -f "$f" ] && REQUIRED_FILES="$REQUIRED_FILES $f"
           done
 

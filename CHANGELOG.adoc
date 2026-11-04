@@ -47,3 +47,18 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   `.machine_readable/svc/k9/methodology-guard.k9.ncl` gain the `K9!` magic
   line and a pedigree block. The lasting fix is to migrate those bindings to
   the k9-coordination grammar in `standards`.
+* Descriptiles moved to `.machine_readable/descriptiles/`, the canonical
+  location, from the retired `.machine_readable/6a2/`. The stale July copies
+  of `STATE`, `META` and `ECOSYSTEM` at `.machine_readable/` are removed: the
+  `6a2/` versions superseded them. Every workflow, recipe and document that
+  named the old paths now names the new ones (Hypatia SD004 and SD024).
+* `.github/workflows/actions.lock` — `hyperpolymath/cicd-suite@main` now
+  locks a current commit. The old lock held a copy from 2026-09-21, one day
+  before cicd-suite fixed the Required Files gate that died on a
+  comment-only CODEOWNERS, so `estate-audit` never got past its first step.
+* `Justfile` — the duplicate `guix-shell` recipe (a nix-to-guix rename
+  artefact) is removed, so the Justfile parses again; `tests/e2e.sh` debt
+  markers link #101.
+* Workflow permissions — `main-estate-audit.yml` declares read-only
+  contents; the Dependabot auto-merge job gets the `contents: write` that
+  `gh pr merge --auto` needs.

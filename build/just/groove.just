@@ -82,7 +82,7 @@ verify-template:
     fi
 
     # Check for empty SCM files
-    for f in .machine_readable/6a2/STATE.a2ml .machine_readable/6a2/META.a2ml .machine_readable/6a2/ECOSYSTEM.a2ml; do
+    for f in .machine_readable/descriptiles/STATE.a2ml .machine_readable/descriptiles/META.a2ml .machine_readable/descriptiles/ECOSYSTEM.a2ml; do
         if [ -f "$f" ] && grep -q '{{'{{'}}' "$f" 2>/dev/null; then
             echo "⚠ $f still has template placeholders"
             FOUND=1
