@@ -88,7 +88,9 @@ supported target.
 
 |`provers.sh doctor`
 |Reports each manifest entry as `PRESENT <version>`, `DRIFT <have> != <lock>`,
-or `UNAVAILABLE <reason>`, as text and as one JCS object. It never reports a
+or `UNAVAILABLE <reason>`, as text and as one JCS object. In the object a
+`DRIFT` entry carries `observed_version`, `observed_sha256`,
+`locked_version`, `locked_sha256` and `mismatch`. It never reports a
 tool it could not run as present (PROOF-POLICY §6).
 
 |`provers.sh render`
@@ -171,7 +173,7 @@ plus the supporting tools the mapped provers need.
 |`transport` |agda2dedukti, Dedukti (`dkcheck`), Lambdapi. agda2dedukti tracks particular Agda versions; the manifest records which Agda it accepts.
 |`exception:rust` |Kani; Aeneas with Charon (PROOF-POLICY §4.1)
 |`exception:recorded` |TLA+ (`tlc`); Isabelle, HOL Light, HOL4, ACL2, Mizar and PVS (supplementary only). The last five were added 2026-10-27 so a kit-provisioned environment can serve every backend in echidna's default core set. PVS is built from its BSD-3-Clause sources on the bundled SBCL; SRI's click-through licence covers only its Allegro build, which the bundle does not use.
-|`runtime` |Rust toolchains (rustup, the toolchains Creusot and Kani pin), a Java runtime for the `tlc` launcher, Poly/ML for HOL4 and SBCL for ACL2 and PVS, bundled rather than taken from the host
+|`runtime` |Rust toolchains (rustup, the toolchains Creusot and Kani pin), a Java runtime for the `tlc` launcher, the OCaml switch HOL Light runs in, Poly/ML for HOL4 and SBCL for ACL2 and PVS, bundled rather than taken from the host
 |`backend` |Z3, CVC5, Yices, Alt-Ergo, E prover, Vampire
 |===
 
