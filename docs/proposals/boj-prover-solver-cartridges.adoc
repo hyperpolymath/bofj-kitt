@@ -140,8 +140,9 @@ silently the latter.
 Every `solvers_sat` and `solvers_optimise` response carries `status:
 TESTED or PROVEN`, solver id, version and lock hash. `TESTED` carries the
 bounds and limits used. `PROVEN` requires a certificate reference and
-hash, the input hash, the independent checker's id, version and lock hash
-(so the exact checker binary is pinned), its
+hash, the input hash, the independent checker's id, version and
+`locked_sha256` (the lock's digest of its installed executable, so the
+exact checker binary is pinned), its
 successful check result, and any axioms used. An emitted certificate or
 unsat core alone does not establish `PROVEN`.
 

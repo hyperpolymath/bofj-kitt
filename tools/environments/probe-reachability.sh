@@ -42,7 +42,9 @@ if [ "$METHOD" = "get" ]; then
     # -r 0-0 asks for one byte. A server may ignore the range and send the
     # whole body, so --max-filesize caps the transfer: curl aborts (exit 63)
     # before reading a body whose length is declared above the cap, or once a
-    # chunked body passes it. The body goes to /dev/null either way.
+    # chunked body passes it (measured with curl 8.5.0; an older curl may
+    # enforce the cap only on a declared length, and --max-time still bounds
+    # the transfer). The body goes to /dev/null either way.
     request=(-r 0-0 --max-filesize 65536)
 else
     request=(-I)

@@ -387,6 +387,12 @@ container-init:
 
     read -rp "Service version (the K9 pedigree version) [0.1.0]: " _VERSION
     VERSION="${_VERSION:-0.1.0}"
+    # The value lands inside quoted TOML and Nickel strings and a sed
+    # replacement, so allow only characters that are safe in all three.
+    if [[ ! "$VERSION" =~ ^[0-9A-Za-z._+-]+$ ]]; then
+        echo "Error: invalid version '$VERSION'. Use letters, digits, '.', '_', '+' or '-'." >&2
+        exit 1
+    fi
 
     echo ""
     echo "  Service: $SERVICE_NAME"

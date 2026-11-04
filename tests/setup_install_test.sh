@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MPL-2.0
 # Test installer fallback paths without networking or installing dependencies.
 set -euo pipefail
+# install_just_with_cargo prefers CARGO_INSTALL_ROOT; the stub expects CARGO_HOME.
+unset CARGO_INSTALL_ROOT
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fixture_root="$(mktemp -d)"
@@ -28,10 +30,18 @@ SH
 printf '#!/bin/sh\nexit 1\n' > "$fixture_root/bin/sudo"  # an apt repository without just
 chmod +x "$fixture_root/bin/cargo" "$fixture_root/bin/sudo"
 
+# The fallback run gets only the utilities it needs, linked into one
+# directory, so a just installed on this machine cannot satisfy the lookup
+# before the Cargo stub runs.
+mkdir -p "$fixture_root/sysbin"
+for tool in sh mkdir chmod head; do
+    ln -s "$(command -v "$tool")" "$fixture_root/sysbin/$tool"
+done
+
 for manager in apt unknown; do
     rm -rf "$fixture_root/cargo-home"
     FIXTURE_ROOT="$fixture_root" MANAGER="$manager" CARGO_HOME="$fixture_root/cargo-home" \
-        PATH="$fixture_root/bin:/usr/bin:/bin" sh -eu <<'SH'
+        PATH="$fixture_root/bin:$fixture_root/sysbin" "$fixture_root/sysbin/sh" -eu <<'SH'
 . "$FIXTURE_ROOT/functions.sh"
 PKG_MGR="$MANAGER"
 curl() { echo 'Unexpected download' >&2; exit 99; }

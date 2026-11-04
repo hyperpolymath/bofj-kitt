@@ -33,8 +33,11 @@ into an entry's `measured` block, with the date.
 
 `reachable` means the request returned 2xx or 3xx (206 for a ranged GET).
 `range-ignored` means a `--get` request was answered with the whole body,
-so curl stopped at the 64 KiB cap: the host answered and serves the file,
-but cannot resume a download. A host that answers some tries and resets
+so curl stopped at the 64 KiB cap: the host answered and ignored the
+range. The probe does not inspect the body, so this does not show the
+file is served (an error page over 64 KiB looks the same).
+The probe asks only for the first byte, so it does not show whether the
+host can resume a download. A host that answers some tries and resets
 others is recorded under `intermittent` with the counts seen. `refused` is a 403
 from the environment's proxy. `auth-required` is a 401: the host answered
 and wants a token, which the probe does not supply. `tls-failed` means the

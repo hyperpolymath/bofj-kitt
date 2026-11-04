@@ -15,8 +15,8 @@ are specified against the deed; the conversion of this repository's own
 files follows ruling D313.
 
 Status: proposal, 2026-10-27. Nothing here is built. The measured facts in
-<<measured>> were taken in one cloud agent session on that date and are
-reproducible with `tools/environments/probe-reachability.sh`.
+<<measured>> were taken in cloud agent sessions on 2026-10-27 and
+2026-11-04 and are reproducible with `tools/environments/probe-reachability.sh`.
 
 == The claim
 
@@ -77,7 +77,7 @@ so, not pass silently.
 |===
 
 [[measured]]
-== Measured facts from one agent session
+== Measured facts from agent sessions
 
 First taken 2026-10-27 and re-taken 2026-11-04 in Claude Code cloud
 sessions for this repository (Ubuntu 24.04.5, glibc 2.39, x86_64, outbound
@@ -107,7 +107,7 @@ to HEAD, 200 or 206 to GET).
 |`github.com/Z3Prover/z3/releases/latest` |403 (HEAD and GET) |*Refused by the proxy.* The release landing page is not available, so "latest" cannot be discovered by scraping.
 |`api.github.com/repos/cvc5/cvc5/releases/latest` |403 (HEAD and GET) |Refused. Release discovery through the API is not available either.
 |`crates.io/api/v1/crates/just` |403 (HEAD and GET) |Refused. Cargo does not install through this API, so the refusal does not block `cargo install`.
-|`index.crates.io/ju/st/just`, `static.crates.io/…/just-1.56.0.crate` |200 (HEAD); 206 and 200 (GET) |*Reachable.* These are the sparse index and crate download `cargo install` uses, so a Cargo install is expected to work here. One was not attempted. The download host ignores the byte range.
+|`index.crates.io/ju/st/just`, `static.crates.io/crates/just/1.56.0/download` |200 (HEAD); 206 and 200 (GET) |*Reachable.* These are the sparse index and the download route `cargo install` requests (the index's `dl` plus `/{crate}/{version}/download`), so a Cargo install is expected to work here. One was not attempted. The download host ignores the byte range.
 |`ghcr.io/v2/`, `cgr.dev/v2/` |405 (HEAD), 401 (GET) |Registry answered; anonymous token flow not tested. The one case where the methods differ.
 |`cvc5.github.io` |200 |Reachable.
 |`downloads.sourceforge.net` (SBCL x86-64 Linux binary) |200 (HEAD), 206 (GET, one byte) |Reachable: the source the `sbcl` entry fetches.

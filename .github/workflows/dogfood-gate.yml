@@ -71,7 +71,7 @@ jobs:
       - name: Check for K9 files
         id: detect
         run: |
-          COUNT=$(find . \( -name '*.k9' -o -name '*.k9.ncl' \) -not -path './.git/*' | wc -l)
+          COUNT=$(find . \( -name '*.k9' -o -name '*.k9.ncl' \) -not -path './.git/*' -type f | wc -l)
           CONFIG_COUNT=$(find . \( -name '*.toml' -o -name '*.yaml' -o -name '*.yml' -o -name '*.json' \) \
             -not -path './.git/*' -not -path './node_modules/*' -not -path './.deno/*' \
             -not -name 'package-lock.json' -not -name 'Cargo.lock' -not -name 'deno.lock' | wc -l)
@@ -103,7 +103,7 @@ jobs:
           else
             echo "## K9 Contract Validation" >> "$GITHUB_STEP_SUMMARY"
             echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "Validated **${VALIDATED:-0}** of **${K9_COUNT}** K9 file(s) found, against **${CFG_COUNT}** config file(s)." >> "$GITHUB_STEP_SUMMARY"
+            echo "Validated **${VALIDATED:-0}** of **${K9_COUNT}** K9 file(s) found. Counted **${CFG_COUNT}** config file(s), which K9 validation does not read." >> "$GITHUB_STEP_SUMMARY"
           fi
 
   # ---------------------------------------------------------------------------

@@ -65,8 +65,10 @@ proves it runs. Roles are listed below.
 
 |`toolchain.lock.json`
 |Tool-owned lock, written only by the bundle build (I-JSON, JCS). Records the
-resolved version, the source URL and the SHA-256 of every input, and the
-SHA-256 of the produced bundle and image digest. Never hand-edited.
+resolved version, the source URL and the SHA-256 of every input, the
+SHA-256 of each tool's installed entry-point executable (the value
+`doctor` compares as `locked_sha256`), and the SHA-256 of the produced
+bundle and image digest. Never hand-edited.
 
 |Bundle build (CI)
 |A workflow on a full-network runner builds every tool into the fixed prefix
