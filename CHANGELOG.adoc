@@ -52,10 +52,17 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   of `STATE`, `META` and `ECOSYSTEM` at `.machine_readable/` are removed: the
   `6a2/` versions superseded them. Every workflow, recipe and document that
   named the old paths now names the new ones (Hypatia SD004 and SD024).
-* `.github/workflows/actions.lock` — `hyperpolymath/cicd-suite@main` now
-  locks a current commit. The old lock held a copy from 2026-09-21, one day
-  before cicd-suite fixed the Required Files gate that died on a
-  comment-only CODEOWNERS, so `estate-audit` never got past its first step.
+* `.github/workflows/main-estate-audit.yml` — now a thin caller of
+  cicd-suite's reusable estate audit, pinned at a full SHA and recorded in
+  `actions.lock` with the gate commits it reaches. The old file was a copy of
+  the retired 26-step audit, frozen by its lock at a 2026-09-21 cicd-suite
+  commit: one day before the Required Files gate stopped dying on a
+  comment-only CODEOWNERS, and before upstream dropped the gates that cannot
+  run on a GitHub runner (custom-tools needs pons and panic-attack). The
+  audit now reports five checks: governance, hygiene, manifests, languages,
+  advisory.
+* `docs/wikis/` removed: an empty template scaffold whose AsciiDoc
+  invariant contradicted the estate formatting gate (wiki content is `.md`).
 * `Justfile` — the duplicate `guix-shell` recipe (a nix-to-guix rename
   artefact) is removed, so the Justfile parses again; `tests/e2e.sh` debt
   markers link #101.

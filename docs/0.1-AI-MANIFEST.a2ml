@@ -26,7 +26,6 @@ canonical_locations:
   whitepapers: "whitepapers/"
   standards: "standards/"
   legal: "legal/"
-  wikis: "wikis/"
 
 invariants:
   - "Primary documentation format MUST be AsciiDoc (.adoc)"
