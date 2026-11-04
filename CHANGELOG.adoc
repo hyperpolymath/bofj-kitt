@@ -56,7 +56,7 @@ addressed:
 * Proposals — PVS has a priority-1 owner (`awesome-hol`); X1 covers every
   probeable environment class; `DRIFT` fields and the checker's lock hash
   are named in the cartridge contracts.
-* `Justfile` `container-init` renders `{{VERSION}}`; the dogfood gate's
+* `Justfile` `container-init` renders the `VERSION` placeholder; the dogfood gate's
   summary counts the K9 files the hook validated, not every `*.k9` path.
 
 ==== Changed
