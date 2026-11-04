@@ -132,6 +132,10 @@ detect_platform() {
 # Cargo checks registry package checksums; --locked uses the release lockfile.
 # 1.56.0 matches the estate mise.lock pin and meets the estate floor (just >= 1.42,
 # standards 3-practice/provisioning/PROVISIONING-STANDARD.adoc).
+# The install root is CARGO_INSTALL_ROOT, then CARGO_HOME, then $HOME/.cargo
+# (using the first non-empty value). After a successful install, its bin
+# directory is added to PATH for this process if absent. Returns 1 if Cargo
+# is unavailable or installation fails.
 install_just_with_cargo() {
     if ! command -v cargo >/dev/null 2>&1; then
         fail "Install Cargo or just with your platform's package manager, then rerun setup."

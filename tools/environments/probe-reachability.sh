@@ -61,10 +61,9 @@ fi
 
 # classify <http-code> <curl-exit> — print one outcome label to stdout.
 # Takes the final HTTP status after redirects and curl's exit code. Exit 60
-# yields tls-failed; exit 63 with a status (the --get size cap tripped
-# because the host ignored the range) yields range-ignored, a host that
-# answered; any other non-zero exit or HTTP 000 yields unreachable,
-# regardless of the HTTP status. With a zero exit, 401 yields auth-required,
+# yields tls-failed; exit 63 with a code other than 000 yields range-ignored.
+# Any remaining non-zero exit or HTTP 000 yields unreachable. With a zero
+# exit, 401 yields auth-required,
 # 403 yields refused, 2xx/3xx yields reachable, and all other codes yield
 # http-<http-code>. A failed probe is reported as a label, not an error status.
 classify() {
