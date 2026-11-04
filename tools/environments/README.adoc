@@ -20,9 +20,10 @@ who reads its capability record, and a `measured` block.
 |Sends one HEAD request per URL in `hosts.txt` (or, with `--get`, one GET
 for the first byte only, capped at 64 KiB when the server ignores the
 range) and prints the HTTP status this environment saw, as text or as one
-JSON object. Keeps no body, executes nothing. `tests/probe_reachability_test.sh`
-checks it against a local server. Its output is what goes into an entry's `measured` block,
-with the date.
+JSON object. Keeps no body, executes nothing. Its output is what goes
+into an entry's `measured` block, with the date.
+`tests/probe_reachability_test.sh` checks it offline with stub `curl` and
+`ldd` executables.
 
 |`hosts.txt`
 |The hosts the toolchain manifest's `method` column fetches from.
