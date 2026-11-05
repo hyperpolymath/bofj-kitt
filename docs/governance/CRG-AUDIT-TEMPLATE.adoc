@@ -25,7 +25,7 @@ Evaluates the `bofj-kitt` repository against
 - Standard: `standards/component-readiness-grades/COMPONENT-READINESS-GRADES.md`
 - Template (criteria boilerplate): `rsr-template-repo/docs/governance/CRG-CRITERIA.adoc`
 - Self-declared grade (prior art):
-  * `.machine_readable/6a2/STATE.a2ml` → `grade = "<declared>"`
+  * `.machine_readable/descriptiles/STATE.a2ml` → `grade = "<declared>"`
   * `docs/READINESS.md` (if present) → per-component grades
   * Third-party badges (Glama, OpenSSF, etc.) if any — note date and scope
 - Audit date: 2026-08-05
@@ -65,7 +65,7 @@ Do *not* mark PRESENT without citing the path.
 | PRESENT / PARTIAL (count) / ABSENT
 | `.github/workflows/`
 
-| `.machine_readable/6a2/` canonical A2ML
+| `.machine_readable/descriptiles/` canonical A2ML
 | PRESENT (STATE, META, ECOSYSTEM, AGENTIC, NEUROSYM, PLAYBOOK) / ABSENT
 | Layout matches CLAUDE.md invariant
 
@@ -141,7 +141,7 @@ RSR compliance verdict: *met* / *partial* / *not met* — Grade D floor satisfie
 Cite *from authoritative source* (STATE.a2ml or CI log). Do not re-count by
 filesystem grep — grade the evidence that already exists.
 
-- `total-tests = N` (from `.machine_readable/6a2/STATE.a2ml` or CI).
+- `total-tests = N` (from `.machine_readable/descriptiles/STATE.a2ml` or CI).
 - Breakdown by suite: list each named suite and its count.
 - CI: `.github/workflows/<test-workflow>.yml` runs on push / tag / schedule.
 - Last green run: date + commit SHA.
@@ -278,7 +278,7 @@ them. Examples:
 == Related Files
 
 - `docs/READINESS.md` — per-component table. Note v1.0-vs-v2.0 schema alignment.
-- `.machine_readable/6a2/STATE.a2ml` — authoritative self-declared state.
+- `.machine_readable/descriptiles/STATE.a2ml` — authoritative self-declared state.
 - `docs/governance/CRG-LIFT-PLAN-2026-08-05.adoc` — companion plan for
   D→C (and medium-term C→B) lifts.
 - `docs/governance/CRG-CRITERIA.adoc` — boilerplate criteria doc.

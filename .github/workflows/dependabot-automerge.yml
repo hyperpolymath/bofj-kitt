@@ -42,8 +42,7 @@ on:
     types: [opened, reopened, synchronize]
 
 permissions:
-  contents: read        # needed to enable auto-merge
-  pull-requests: write   # needed to approve
+  contents: read
   # NB: keep narrow — do NOT add secrets: read or id-token: write here.
 
 jobs:
@@ -51,6 +50,12 @@ jobs:
     # Only run for PRs actually authored by Dependabot.
     if: github.actor == 'dependabot[bot]' && github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
+    # Only this job writes: `gh pr review --approve` needs pull-requests: write,
+    # and `gh pr merge --auto` needs contents: write (with contents: read the
+    # merge request is refused).
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Fetch Dependabot metadata
