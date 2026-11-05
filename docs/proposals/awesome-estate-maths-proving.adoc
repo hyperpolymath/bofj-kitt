@@ -149,7 +149,8 @@ Isabelle/jEdit and VSCode, Isabelle Zulip, IsaFoL.
 
 |`awesome-hol`
 |HOL4, HOL Light, HOL Zero, ProofPower, Candle, CakeML, OpenTheory, the
-HOL lineage; HOL Light's Flyspeck.
+HOL lineage; HOL Light's Flyspeck. A section on classical higher-order
+logic outside that lineage owns PVS and NASALib.
 |None (`awesome-provable` says "HOL" once).
 |Create
 |1
@@ -249,7 +250,8 @@ echidna's 12 core backends and every PROOF-POLICY route.
 === Where the small families go
 
 Mizar, Metamath, Naproche and Matita fold into
-`awesome-formalised-mathematics`; PVS and the leaner interactive provers
+`awesome-formalised-mathematics`; PVS is owned by `awesome-hol`, so a
+priority-1 list carries every core backend; the leaner interactive provers
 fold into the refreshed `awesome-provable` index; TLA+ is a section of
 `awesome-model-checking`; the hybrid-systems and real-algebra provers
 (KeYmaera X, dReal, QEPCAD, Redlog) appear in `awesome-mathematical-logic`

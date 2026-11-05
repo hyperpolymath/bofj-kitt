@@ -39,8 +39,13 @@ for arg in "$@"; do
     esac
 done
 if [ "$METHOD" = "get" ]; then
-    # -r 0-0 asks for one byte; the body goes to /dev/null either way.
-    request=(-r 0-0)
+    # -r 0-0 asks for one byte. A server may ignore the range and send the
+    # whole body, so --max-filesize caps the transfer: curl aborts (exit 63)
+    # before reading a body whose length is declared above the cap, or once a
+    # chunked body passes it (measured with curl 8.5.0; an older curl may
+    # enforce the cap only on a declared length, and --max-time still bounds
+    # the transfer). The body goes to /dev/null either way.
+    request=(-r 0-0 --max-filesize 65536)
 else
     request=(-I)
 fi
@@ -56,14 +61,17 @@ fi
 
 # classify <http-code> <curl-exit> — print one outcome label to stdout.
 # Takes the final HTTP status after redirects and curl's exit code. Exit 60
-# yields tls-failed; any other non-zero exit or HTTP 000 yields unreachable,
-# regardless of the HTTP status. With a zero exit, 401 yields auth-required,
+# yields tls-failed; exit 63 with a code other than 000 yields range-ignored.
+# Any remaining non-zero exit or HTTP 000 yields unreachable. With a zero
+# exit, 401 yields auth-required,
 # 403 yields refused, 2xx/3xx yields reachable, and all other codes yield
 # http-<http-code>. A failed probe is reported as a label, not an error status.
 classify() {
     local code="$1" rc="$2"
     if [ "$rc" -eq 60 ]; then
         echo "tls-failed"
+    elif [ "$rc" -eq 63 ] && [ "$code" != "000" ]; then
+        echo "range-ignored"
     elif [ "$rc" -ne 0 ] || [ "$code" = "000" ]; then
         echo "unreachable"
     elif [ "$code" = "401" ]; then
@@ -81,7 +89,12 @@ date_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 platform="$(uname -s)/$(uname -m)"
 if command -v ldd >/dev/null 2>&1; then
     # awk reads all of ldd's output, so no SIGPIPE under pipefail.
-    platform="$platform glibc $(ldd --version 2>/dev/null | awk 'NR==1{print $NF}')"
+    # Only GNU ldd knows --version (FreeBSD's does not), so the C library
+    # version is optional and its failure must not stop the probe.
+    libc="$(ldd --version 2>/dev/null | awk 'NR==1 && /GNU|GLIBC/{print $NF}')" || libc=""
+    if [ -n "$libc" ]; then
+        platform="$platform glibc $libc"
+    fi
 fi
 
 if [ "$MODE" = "text" ]; then

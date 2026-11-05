@@ -132,12 +132,28 @@ detect_platform() {
 # Cargo checks registry package checksums; --locked uses the release lockfile.
 # 1.56.0 matches the estate mise.lock pin and meets the estate floor (just >= 1.42,
 # standards 3-practice/provisioning/PROVISIONING-STANDARD.adoc).
+# The install root is CARGO_INSTALL_ROOT, then CARGO_HOME, then $HOME/.cargo
+# (using the first non-empty value). After a successful install, its bin
+# directory is added to PATH for this process if absent. Returns 1 if Cargo
+# is unavailable or installation fails.
 install_just_with_cargo() {
     if ! command -v cargo >/dev/null 2>&1; then
         fail "Install Cargo or just with your platform's package manager, then rerun setup."
         return 1
     fi
-    cargo install just --version 1.56.0 --locked
+    # Name the install root explicitly, so its bin directory is known: Cargo
+    # installs there but does not add it to this shell's PATH, and a distro
+    # Cargo often runs without ~/.cargo/bin on PATH.
+    cargo_root="${CARGO_INSTALL_ROOT:-${CARGO_HOME:-$HOME/.cargo}}"
+    cargo install just --version 1.56.0 --locked --root "$cargo_root" || return 1
+    case ":$PATH:" in
+        *":$cargo_root/bin:"*) ;;
+        *)
+            PATH="$cargo_root/bin:$PATH"
+            export PATH
+            warn "Added $cargo_root/bin to PATH for this run; add it to your shell profile too."
+            ;;
+    esac
 }
 
 install_just() {

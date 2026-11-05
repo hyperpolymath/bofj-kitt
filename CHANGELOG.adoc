@@ -34,6 +34,31 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   `measured` block), `probe-reachability.sh` and `hosts.txt` (experiment
   X1: reachability probe, HEAD by default, one-byte GET with `--get`).
 
+==== Fixed
+
+Findings from the last review of #98, which merged before they were
+addressed:
+
+* `build/setup.sh` — the Cargo fallback installs `just` into a named root
+  and puts that root's `bin` on `PATH`, so a distro Cargo without
+  `~/.cargo/bin` on `PATH` no longer fails setup after a successful install.
+* `tools/environments/probe-reachability.sh` — `--get` caps a body the
+  server sends despite the byte range (`range-ignored`); a non-GNU `ldd`
+  (FreeBSD) no longer stops the probe. `tests/probe_reachability_test.sh`
+  covers both.
+* `tools/proof-toolchain/toolchain.kyaml` — HOL Light's OCaml switch is a
+  locked runtime entry; Poly/ML takes the newest stable tag, since HOL4
+  names no version; Mizar names the i386 distribution it actually ships
+  (static binaries, needing IA32 emulation on the host).
+* `tools/environments/` and the environment proposal — the measurement adds
+  Cargo's real index and download hosts, which answer, so `cargo install`
+  is no longer reported as blocked by the refused crates.io API.
+* Proposals — PVS has a priority-1 owner (`awesome-hol`); X1 covers every
+  probeable environment class; `DRIFT` fields and the checker's lock hash
+  are named in the cartridge contracts.
+* `Justfile` `container-init` renders the `VERSION` placeholder; the dogfood gate's
+  summary counts the K9 files the hook validated, not every `*.k9` path.
+
 ==== Changed
 
 * `build/setup.sh` — when no system package provides `just`, setup runs

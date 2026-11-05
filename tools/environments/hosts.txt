@@ -21,6 +21,12 @@ https://alire.ada.dev/
 https://hackage.haskell.org/
 https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init
 https://crates.io/api/v1/crates/just
+# What `cargo install` actually uses: the sparse index and the crate download.
+# A refusal of the API above says nothing about these.
+https://index.crates.io/ju/st/just
+# The download is the index's "dl" (https://static.crates.io/crates) plus
+# /{crate}/{version}/download, which is the route Cargo requests.
+https://static.crates.io/crates/just/1.56.0/download
 https://releases.lean-lang.org/
 https://ftp.gnu.org/gnu/guix/
 
