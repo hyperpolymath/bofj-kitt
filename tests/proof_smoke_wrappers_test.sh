@@ -17,7 +17,11 @@ for fixture in hol-light-refl.sh hol4-smoke.sml acl2-smoke.lisp smoke.miz \
     mizar-smoke.sh pvs-smoke.sh pvs_smoke.pvs; do
     [ -f "$prefix/share/smoke/$fixture" ] || { echo "FAIL: $fixture not installed" >&2; exit 1; }
 done
-chmod -R a-w "$prefix/share/smoke"  # a wrapper that writes here now fails
+# Record the whole prefix (smoke fixtures and the MML at share/mizar alike), so
+# a write anywhere under it is caught even when running as root, where
+# read-only permissions do not stop writes.
+snapshot() { (cd "$prefix" && find . -print0 | sort -z | xargs -0 stat -c '%n %s %y' 2>/dev/null); }
+before="$(snapshot)"
 
 expect() {  # expect pass|fail <description> <command...>
     local want="$1" what="$2"; shift 2
@@ -73,7 +77,5 @@ expect fail "pvs unproved" pvs unproved
 expect fail "pvs no summary" pvs silent
 expect fail "pvs non-zero exit" pvs crash
 
-[ -z "$(find "$prefix/share/smoke" -newer "$prefix/share/smoke/pvs_smoke.pvs" ! -path "$prefix/share/smoke")" ] ||
-    { echo "FAIL: a wrapper wrote into the prefix" >&2; exit 1; }
-chmod -R u+w "$prefix"
+[ "$(snapshot)" = "$before" ] || { echo "FAIL: a wrapper wrote into the prefix" >&2; exit 1; }
 echo 'PASS: smoke installer and Mizar/PVS wrappers'

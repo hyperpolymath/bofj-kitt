@@ -15,8 +15,8 @@ are specified against the deed; the conversion of this repository's own
 files follows ruling D313.
 
 Status: proposal, 2026-10-27. Nothing here is built. The measured facts in
-<<measured>> were taken in one cloud agent session on that date and are
-reproducible with `tools/environments/probe-reachability.sh`.
+<<measured>> were taken in cloud agent sessions on 2026-10-27 and
+2026-11-04 and are reproducible with `tools/environments/probe-reachability.sh`.
 
 == The claim
 
@@ -43,7 +43,7 @@ report its real capabilities in one machine-readable form.
 |Surface |What it declares |Gap
 
 |`tools/proof-toolchain/toolchain.kyaml`
-|36 tools with roles under PROOF-POLICY, pins and smoke commands
+|37 tools with roles under PROOF-POLICY, pins and smoke commands
 |Declares tools, not environments. Covers the policy provers and their
 backends. Before E6 it covered 7 of echidna's 12 core backends; it now
 covers all 12 (see <<coverage>>).
@@ -77,15 +77,17 @@ so, not pass silently.
 |===
 
 [[measured]]
-== Measured facts from one agent session
+== Measured facts from agent sessions
 
-Taken 2026-10-27 in a Claude Code cloud session for this repository
-(Ubuntu 24.04.5, glibc 2.39, x86_64, outbound HTTPS through the session's
-agent proxy). The probe ran twice over the 22 URLs in
-`tools/environments/hosts.txt`: once with redirected HEAD requests, once
-with `--get`, a redirected GET for the first byte only. The code is the
-final response the proxy returned. Where the two methods differ, both are
-shown; elsewhere they agreed (200 to HEAD, 200 or 206 to GET).
+First taken 2026-10-27 and re-taken 2026-11-04 in Claude Code cloud
+sessions for this repository (Ubuntu 24.04.5, glibc 2.39, x86_64, outbound
+HTTPS through the session's agent proxy). The table is the 2026-11-04 run.
+The probe ran twice over the 24 URLs in `tools/environments/hosts.txt`:
+once with redirected HEAD requests, once with `--get`, a redirected GET for
+the first byte only, capped at 64 KiB for servers that ignore the range
+(`range-ignored`). The code is the final response the proxy returned.
+Where the two methods differ, both are shown; elsewhere they agreed (200
+to HEAD, 200 or 206 to GET).
 
 [cols="3,1,3",options="header"]
 |===
@@ -96,14 +98,16 @@ shown; elsewhere they agreed (200 to HEAD, 200 or 206 to GET).
 |`hackage.haskell.org` |200 |Reachable (Agda via cabal is possible in principle).
 |`static.rust-lang.org` (rustup-init) |200 |Reachable.
 |`releases.lean-lang.org` |200 |Reachable (elan toolchains).
-|`isabelle.in.tum.de`, `mizar.uwb.edu.pl`, `pvs.csl.sri.com` |200 |Reachable.
+|`mizar.uwb.edu.pl`, `pvs.csl.sri.com` |200 |Reachable.
+|`isabelle.in.tum.de` |200 (HEAD); 206 or reset (GET) |*Intermittent.* One GET of four succeeded; the others were reset during the TLS handshake. An install from it needs retries.
 |`ftp.gnu.org/gnu/guix` |200 |Reachable.
-|`smt-lib.org`, `www.tptp.org` |200 |Reachable.
+|`smt-lib.org`, `www.tptp.org` |200 |Reachable (TPTP ignores the byte range).
 |`github.com/Z3Prover/z3/releases/download/…/z3-4.13.4-x64-glibc-2.35.zip` |302 then 200 (HEAD), 206 (GET, one byte) |*Reachable.* The request redirects to `release-assets.githubusercontent.com` and succeeds, and the first byte of the asset arrives. A full download was not attempted and no executable was run, so bundle transport is only partly verified.
-|`codeload.github.com`, `raw.githubusercontent.com` |200 |Reachable (source archives and raw files).
+|`codeload.github.com`, `raw.githubusercontent.com` |200 |Reachable (source archives and raw files; codeload ignores the byte range).
 |`github.com/Z3Prover/z3/releases/latest` |403 (HEAD and GET) |*Refused by the proxy.* The release landing page is not available, so "latest" cannot be discovered by scraping.
 |`api.github.com/repos/cvc5/cvc5/releases/latest` |403 (HEAD and GET) |Refused. Release discovery through the API is not available either.
-|`crates.io/api/v1/crates/just` |403 (HEAD and GET) |Refused. The API path cargo resolves through answers 403 to GET as well, so a cargo install from the registry is expected to fail here; one was not attempted.
+|`crates.io/api/v1/crates/just` |403 (HEAD and GET) |Refused. Cargo does not install through this API, so the refusal does not block `cargo install`.
+|`index.crates.io/ju/st/just`, `static.crates.io/crates/just/1.56.0/download` |200 (HEAD); 206 and 200 (GET) |*Reachable.* These are the sparse index and the download route `cargo install` requests (the index's `dl` plus `/{crate}/{version}/download`), so a Cargo install is expected to work here. One was not attempted. The download host ignores the byte range.
 |`ghcr.io/v2/`, `cgr.dev/v2/` |405 (HEAD), 401 (GET) |Registry answered; anonymous token flow not tested. The one case where the methods differ.
 |`cvc5.github.io` |200 |Reachable.
 |`downloads.sourceforge.net` (SBCL x86-64 Linux binary) |200 (HEAD), 206 (GET, one byte) |Reachable: the source the `sbcl` entry fetches.
@@ -215,10 +219,10 @@ sealed-container concern, per the 2026-05-18 packaging ruling.
 |Z3 |`z3` |Covered
 |CVC5 |`cvc5` |Covered
 |Metamath |none needed |Pure-Rust, in-process in echidna
-|HOL Light |`hol-light` |Covered (added 2026-10-27 on the owner's decision; opam)
+|HOL Light |`hol-light` with `hol-light-ocaml` |Covered (added 2026-10-27 on the owner's decision; opam, in a locked OCaml switch)
 |HOL4 |`hol4` with `polyml` |Covered (added 2026-10-27; source build on bundled Poly/ML)
 |ACL2 |`acl2` with `sbcl` |Covered (added 2026-10-27; tagged source from GitHub, built on bundled SBCL)
-|Mizar |`mizar` |Covered (added 2026-10-27; system distribution with its MML)
+|Mizar |`mizar` |Covered (added 2026-10-27; the static i386 distribution with its MML, so the host kernel needs IA32 emulation)
 |PVS |`pvs` with `sbcl` |Covered (added 2026-10-27; BSD-3-Clause source build on bundled SBCL)
 |===
 
@@ -282,9 +286,14 @@ impression.
 |Id |Experiment |Pass criterion
 
 |X1
-|Run `tools/environments/probe-reachability.sh` in each environment class:
-workstation, this session class, a GitHub-hosted runner, the devcontainer.
-|A reachability row per class in `environments.kyaml` `measured`, dated.
+|Run `tools/environments/probe-reachability.sh`, with and without `--get`,
+in each environment class that runs a shell: workstation, this session
+class, a GitHub-hosted runner, the devcontainer, a Guix shell and the
+sealed container (whose `--network=none` run must record every host
+unreachable). `boj-registered` is excluded: it is a server's view of the
+others, not a place a probe runs.
+|A dated `measured` block for each of the six probeable classes in
+`environments.kyaml`; `boj-registered` keeps an empty one.
 The design's host assumptions are replaced by measurements.
 
 |X2

@@ -385,10 +385,20 @@ container-init:
     read -rp "Container registry [ghcr.io/${OWNER:-hyperpolymath}]: " _REGISTRY
     REGISTRY="${_REGISTRY:-ghcr.io/${OWNER:-hyperpolymath}}"
 
+    read -rp "Service version (the K9 pedigree version) [0.1.0]: " _VERSION
+    VERSION="${_VERSION:-0.1.0}"
+    # The value lands inside quoted TOML and Nickel strings and a sed
+    # replacement, so allow only characters that are safe in all three.
+    if [[ ! "$VERSION" =~ ^[0-9A-Za-z._+-]+$ ]]; then
+        echo "Error: invalid version '$VERSION'. Use letters, digits, '.', '_', '+' or '-'." >&2
+        exit 1
+    fi
+
     echo ""
     echo "  Service: $SERVICE_NAME"
     echo "  Port:    $PORT"
     echo "  Registry: $REGISTRY"
+    echo "  Version: $VERSION"
     echo ""
     read -rp "Proceed? [Y/n] " CONFIRM
     [[ "${CONFIRM:-Y}" =~ ^[Nn] ]] && echo "Aborted." && exit 0
@@ -404,6 +414,7 @@ container-init:
         -e "s|${LB}SERVICE_NAME${RB}|${SERVICE_NAME}|g"
         -e "s|${LB}PORT${RB}|${PORT}|g"
         -e "s|${LB}REGISTRY${RB}|${REGISTRY}|g"
+        -e "s|${LB}VERSION${RB}|${VERSION}|g"
     )
 
     find container/ -type f | while read -r file; do

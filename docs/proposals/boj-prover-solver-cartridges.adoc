@@ -99,7 +99,11 @@ hard-coded count.
 |`provers_check`
 |One prover: `PRESENT` with version and lock hash; `DRIFT` with observed
 version/hash, expected lock version/hash and the mismatch (not
-dispatchable); or `UNAVAILABLE` with the reason it could not run.
+dispatchable); or `UNAVAILABLE` with the reason it could not run. All of it
+comes from `provers.sh doctor --json`, which compares what it ran against
+`toolchain.lock.json`; `provers_check` adds nothing of its own. A `DRIFT`
+result carries `observed_version`, `observed_sha256`, `locked_version` and
+`locked_sha256`, and `mismatch` names which of the two differs.
 
 |`provers_prove`
 |`{file \| goal, prover?, timeout}` → `{verdict, trust_level, prover,
@@ -136,7 +140,9 @@ silently the latter.
 Every `solvers_sat` and `solvers_optimise` response carries `status:
 TESTED or PROVEN`, solver id, version and lock hash. `TESTED` carries the
 bounds and limits used. `PROVEN` requires a certificate reference and
-hash, the input hash, the independent checker's id and version, its
+hash, the input hash, the independent checker's id, version and
+`locked_sha256` (the lock's digest of its installed executable, so the
+exact checker binary is pinned), its
 successful check result, and any axioms used. An emitted certificate or
 unsat core alone does not establish `PROVEN`.
 
