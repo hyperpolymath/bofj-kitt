@@ -14,9 +14,10 @@ name: Central Estate CI/CD Audit
 # ⚠ ONBOARDED in actions.lock at the full SHA, with the cicd-suite gate
 # commits it reaches recorded as dependencies, the same form this
 # repository's other cross-repository callers use (hypatia-scan.yml,
-# secret-scanner.yml, scorecard.yml call hyperpolymath/standards at a full
-# SHA and start normally). cicd-suite's own header records that an
-# onboarded @main or tag ref startup-fails; a full SHA is not that case.
+# secret-scanner.yml, governance.yml and scorecard.yml call
+# metadatastician/standards at a full SHA). This caller starts and passes.
+# cicd-suite's own header records that an onboarded @main or tag ref
+# startup-fails; a full SHA is not that case.
 # If this run ever startup-fails with zero jobs, de-onboard it with
 # cicd-suite/scripts/deonboard-estate-audit.sh and drop its entry from
 # scripts/check-lock-sync.sh's expectations.
