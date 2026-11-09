@@ -97,10 +97,12 @@ run_files() {
 
 # Remove comments, keeping line numbers and Agda pragmas ({-# ... #-}), so the
 # scan sees only code. Nested block comments, string literals and character
-# literals ('"', '\'') are honoured. In Agda, `--` opens a comment only at the
-# start of a token, since an identifier such as `a--b` may contain it.
+# literals ('"', '\'') are honoured. A quote after an identifier character is a
+# prime (`f'`), not a literal, and Coq has no character literals at all. In
+# Agda, `--` opens a comment only at the start of a token, since an identifier
+# such as `a--b` may contain it.
 strip_comments() {  # strip_comments <file>
-    local file="$1" line_tok open close doc='' agda=0
+    local file="$1" line_tok open close doc='' agda=0 charlit=1
     case "$file" in
         *.idr) doc='|||' ;;  # Idris2 documentation comment, also a line comment
         *.agda) agda=1 ;;
@@ -108,10 +110,10 @@ strip_comments() {  # strip_comments <file>
     case "$file" in
         *.agda|*.idr) line_tok='--'; open='{-'; close='-}' ;;
         *.lean)       line_tok='--'; open='/-'; close='-/' ;;
-        *.v)          line_tok='';   open='(*'; close='*)' ;;
+        *.v)          line_tok='';   open='(*'; close='*)'; charlit=0 ;;
         *) cat "$file"; return ;;
     esac
-    awk -v lt="$line_tok" -v op="$open" -v cl="$close" -v doc="$doc" -v agda="$agda" -v q="'" '
+    LC_ALL=C awk -v lt="$line_tok" -v op="$open" -v cl="$close" -v doc="$doc" -v agda="$agda" -v charlit="$charlit" -v q="'" '
         BEGIN { depth = 0 }
         {
             out = ""; i = 1; n = length($0); instr = 0
@@ -127,7 +129,11 @@ strip_comments() {  # strip_comments <file>
                     if (c == "\"") { instr = 0; out = out c }
                     i++; continue
                 }
-                if (c == q) {  # character literal: drop it, so a quote inside is not a string
+                pc = (i == 1) ? " " : substr($0, i - 1, 1)
+                # A quote after an identifier character (a byte >= 0x80 counts, for
+                # Unicode names) is a prime; otherwise it opens a character literal,
+                # dropped so a quote inside it is not taken for a string.
+                if (c == q && charlit && pc != q && pc !~ /[A-Za-z0-9_!?\200-\377]/) {
                     if (substr($0, i + 1, 1) == "\\") {
                         j = index(substr($0, i + 2), q)
                         if (j > 0 && j <= 8) { i += j + 2; continue }
@@ -137,7 +143,7 @@ strip_comments() {  # strip_comments <file>
                 if (two == op && substr($0, i, 3) != "{-#") { depth = 1; i += 2; continue }
                 if (lt != "" && two == lt) {
                     p = (i == 1) ? " " : substr($0, i - 1, 1)
-                    if (!agda || p ~ /[ \t(){};@"]/) break
+                    if (!agda || p ~ /[ \t(){};@".]/) break  # `.`: `...--` is a comment
                 }
                 if (doc != "" && substr($0, i, 3) == doc) break
                 out = out c; i++

@@ -102,6 +102,16 @@ grep -q '^scan    PASS' "$work/out" || fail "comment and string not ignored"
 # A character literal holding a quote does not open a string that hides code.
 scan_expect 1 lean4/D.lean "example : False := by { let c : Char := '\"'; sorry }"
 scan_expect 1 lean4/D.lean "def c := '\\\\'  theorem t : True := by sorry"
+scan_expect 1 lean4/D.lean "example : False := by { let c : Char := '\\\"'; sorry }"
+# An escaped quote does not end a string.
+scan_expect 1 lean4/D.lean "def s := \"a\\\"b\" theorem t : True := by sorry"
+# A prime is not a character literal, so the string after it stays a string.
+# Coq has no character literals at all.
+scan_expect 1 coq/C.v "Check (f'\"'\"). Lemma bad : False. Admitted."
+scan_expect 1 lean4/D.lean "def f' := \"'\" theorem t : True := by sorry"
+scan_expect 1 agda/A.agda "f α' = \"'\" ; postulate p : Set"
+# In Agda, `--` straight after an ellipsis opens a comment.
+scan_expect 0 agda/A.agda 'f x ...-- postulate is only a word here'
 # In Agda, `--` inside an identifier does not start a comment.
 scan_expect 1 agda/A.agda 'f--g = x ; postulate p : Set'
 # Escape hatches are per language: `admit` is an ordinary Agda identifier.

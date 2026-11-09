@@ -218,13 +218,16 @@ records:
   serves, the tool, the version it asserts, the digest of what was built,
   why Guix or the container could not be used, and its state (`open`, or
   `closed` with the change that closed it).
-* `provers.sh install` unpacks the lock with the bundle at
-  `$PREFIX/toolchain.lock.json`, so the records travel with what was
-  installed. A read-only checkout with a writable prefix is enough; the
-  installer writes nothing back into a repository.
+* `provers.sh install` copies the lock it checked the bundle against to
+  `$PREFIX/toolchain.lock.json`, beside the unpacked bundle, so the records
+  travel with what was installed. The lock is never inside the bundle: it
+  holds the bundle's own SHA-256. A read-only checkout with a writable prefix
+  is enough; the installer writes nothing back into a repository.
 * A workflow that installs the bundle cites those records, and every
   consuming repository copies the entries it uses into its own proof-status
-  file.
+  file. Where it uses an entry for an obligation the record does not name, it
+  adds that obligation and its own reason; the tool, version and digest still
+  come from the lock.
 * The run asserts each tool's version and fails on a mismatch, as `doctor`
   already does against the lock.
 
