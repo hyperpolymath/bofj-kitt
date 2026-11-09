@@ -33,4 +33,4 @@ permissions:
 
 jobs:
   estate:
-    uses: hyperpolymath/cicd-suite/.github/workflows/main-estate-audit.yml@354c425571c1f27b66dd141daeb0e90fa0c26dd9 # cicd-suite main
+    uses: hyperpolymath/proven-cicd-and-workflows/.github/workflows/main-estate-audit.yml@354c425571c1f27b66dd141daeb0e90fa0c26dd9 # proven-cicd-and-workflows (formerly cicd-suite)
