@@ -223,11 +223,11 @@ records:
   travel with what was installed. The lock is never inside the bundle: it
   holds the bundle's own SHA-256. A read-only checkout with a writable prefix
   is enough; the installer writes nothing back into a repository.
-* A workflow that installs the bundle cites those records, and every
-  consuming repository copies the entries it uses into its own proof-status
-  file. Where it uses an entry for an obligation the record does not name, it
-  adds that obligation and its own reason; the tool, version and digest still
-  come from the lock.
+* Every consuming repository copies the records for the entries it uses into
+  both its proof-status file and the workflow that installs the bundle, as
+  PROOF-POLICY §6 requires. Where it uses an entry for an obligation the
+  record does not name, it adds that obligation and its own reason in both
+  places; the tool, version and digest still come from the lock.
 * The run asserts each tool's version and fails on a mismatch, as `doctor`
   already does against the lock.
 
