@@ -40,7 +40,7 @@ run() {  # run <expected-exit> <PATH> <args...>; output goes to $work/out
 }
 
 proofs="$repo_root/verification/proofs"
-before="$(cd "$proofs" && find . -type f | LC_ALL=C sort)"
+before="$(cd "$proofs" && find . -type f -exec sha256sum {} + | LC_ALL=C sort)"  # names and contents
 
 # All checkers present and passing: canonical Agda flags, Idris2 source dir.
 run 0 "$work/stubs:$work/sysbin" --proofs-dir "$proofs" all
@@ -73,7 +73,7 @@ STUB_FAIL=coqc run 1 "$work/stubs:$work/sysbin" --proofs-dir "$proofs" all
 grep -q '^coq     FAIL' "$work/out" || fail "failing coqc not reported"
 
 # The checkers ran on a copy: nothing was written into the tree.
-after="$(cd "$proofs" && find . -type f | LC_ALL=C sort)"
+after="$(cd "$proofs" && find . -type f -exec sha256sum {} + | LC_ALL=C sort)"
 [ "$before" = "$after" ] || fail "a checker wrote into verification/proofs"
 
 # Scan: planted escape hatches in code fail; the same words in comments,
