@@ -71,9 +71,10 @@ environment offers.
 
 |`build/just/proofs.just`
 |`proof-check-*` recipes
-|Each recipe probes a binary with `command -v`; a missing prover is a SKIP
-that reads like a pass. PROOF-POLICY §6 says a leg that cannot run must say
-so, not pass silently.
+|Each recipe probed a binary with `command -v`, and a missing prover was a
+SKIP that read like a pass. PROOF-POLICY §2.1 and §6 say a leg that cannot
+run must say so, not pass silently. Fixed 2026-11-09: the recipes call
+`scripts/proof-check.sh`, which reports `UNAVAILABLE` and exits 3.
 |===
 
 [[measured]]
@@ -319,7 +320,10 @@ raised and the unsupported target is named.
 |Give `proof-check-*` a planted missing prover and a planted broken proof.
 |The missing prover yields `UNAVAILABLE` in the record and a non-zero exit
 where PROOF-POLICY §6 requires it; the broken proof fails. Both directions
-verified, as LANGUAGE-POLICY §3 asks of any gate.
+verified, as LANGUAGE-POLICY §3 asks of any gate. Run 2026-11-09 for the
+script, before the record exists: `tests/proof_check_test.sh` with stub
+checkers, and Agda 2.6.3 and Coq 8.18 on a planted broken proof and a
+planted `Admitted`. The record half waits for E2.
 |===
 
 == The formal route
@@ -382,7 +386,8 @@ rather than lost:
   the record for "is Isabelle here".
 * `hyperpolymath/rsr-template-repo`: the `proof-check-*` recipes that `SKIP`
   on a missing prover are inherited by every repo; the fix belongs in the
-  template.
+  template. This repository's fix (`scripts/proof-check.sh`, 2026-11-09)
+  is the one to port.
 * The BoJ server's `ssg-mcp` cartridge needs a field for the record.
 
 == Decisions needed

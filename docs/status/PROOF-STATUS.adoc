@@ -1,100 +1,168 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // Template: rsr-template-repo/docs/status/PROOF-STATUS.adoc
-// Tracks proof completion. Requirements defined in PROOF-NEEDS.adoc
-= Proof Status — BOFJ_KITT
+// Tracks proof status. Requirements are in PROOF-NEEDS.adoc.
+= Proof Status — bofj-kitt
+
+Normative: the estate
+https://github.com/metadatastician/standards/blob/main/3-practice/PROOF-POLICY.adoc[PROOF-POLICY],
+read at `9bdf864cc7f2c8e24b4df84bf00d04158eee3ad5` (2026-11-08). Statuses
+use its closed §5 vocabulary: `PROVEN`, `PROVEN-WITH-AXIOMS`, `TESTED`,
+`ASSUMED`, `OPEN`. This file assigns no Proof Witness Grade (§8):
+Mathesis derives grades from receipts and never assigns them.
 
 == Summary
 
-[cols="2,1,1,1,1,1", options="header"]
+bofj-kitt has *no first-party proof obligations*. It is shell scripts,
+manifests and configuration, with no ABI, no FFI, no typed API and no
+theory content, so the PROOF-POLICY §1 mapping assigns it nothing to
+prove. The behaviour of its scripts is covered by the tests in `tests/`,
+which are test evidence, not proofs.
+
+Three kinds of proof-shaped files live here, and none of them is an
+obligation of this repository:
+
+. RSR template proof files under `verification/proofs/`.
+. Prover-exercise fixtures under `tools/proof-toolchain/smoke/`.
+  PROOF-POLICY §3 puts corpora that exist to exercise provers outside the
+  policy.
+. Obligations the proposals name for code that will live in other
+  repositories.
+
+== Ledger
+
+[cols="1,4,1,1", options="header"]
 |===
-| Category | Total | Done | In Progress | Blocked | Remaining
+|ID |Obligation |Prover (§1) |Status
 
-| ABI/FFI (ABI) | 5 | 0 | 0 | 0 | 5
-| Typing (TP) | 2 | 0 | 0 | 0 | 2
-| Invariant (INV) | 0 | 0 | 0 | 0 | 0
-| Security (SEC) | 0 | 0 | 0 | 0 | 0
-| Concurrency (CONC) | 0 | 0 | 0 | 0 | 0
-| Algorithm (ALG) | 0 | 0 | 0 | 0 | 0
-| Domain (DOM) | 0 | 0 | 0 | 0 | 0
-| *Total* | *7* | *0* | *0* | *0* | *7*
-|===
-
-*Overall*: 0% proven
-
-== Proofs Done
-
-// Format:
-// | ID | Proof | Prover | File | Date | Verified By |
-// | ABI-1 | Non-null pointer proofs | Idris2 | verification/proofs/idris2/ABI/Pointers.idr | 2026-XX-XX | idris2 --check |
-
-[cols="1,3,1,3,1,2", options="header"]
-|===
-| ID | Proof | Prover | File | Date | Verified By
-
-| — | No proofs completed yet | — | — | — | —
+4+|None. This repository has no first-party proof obligations.
 |===
 
-== Proofs In Progress
+== Template proof files
 
-[cols="1,3,1,2,1,2", options="header"]
+These files come from the RSR template and prove nothing about this
+repository. Mathesis's census sets them aside as template boilerplate. They
+are kept so the template's proof gates have something to check.
+
+The results below were taken in an agent session on 2026-11-09 with
+`scripts/proof-check.sh`. They are not CI receipts: no workflow runs these
+checks, and no source commit is pinned to them.
+
+[cols="2,2,3", options="header"]
 |===
-| ID | Proof | Prover | Assignee | Started | Blocker
+|File |Checker |Result (2026-11-09, session)
 
-| — | — | — | — | — | —
+|`agda/Properties.agda`
+|Agda 2.6.3, standard library 1.7.3, `--safe --without-K --cubical-compatible`
+|Checked.
+
+|`coq/TypeSafety.v`
+|Coq 8.18.0
+|Checked. `Print Assumptions type_soundness`: closed under the global context.
+
+|`lean4/ApiTypes.lean`
+|Lean 4
+|Not run: no Lean toolchain available in the session.
+
+|`idris2/Types.idr`, `idris2/ABI/*.idr`
+|Idris2
+|Not run: no Idris2 toolchain available in the session.
+
+|`tlaplus/StateMachine.tla`
+|TLC
+|Not checked by any recipe. A TLC run would be `TESTED`, with its bounds (§4).
 |===
 
-== Proofs Blocked
+The escape-hatch scan (`just proof-scan-dangerous`) passes on all of them.
+It reads code only, so the template's own "no postulate" comments do not
+trip it.
 
-[cols="1,3,2,3", options="header"]
+== Prover-exercise fixtures (PROOF-POLICY §3)
+
+`tools/proof-toolchain/smoke/` holds one trivial theorem per prover. Each
+one tests that a prover in the toolchain bundle runs and reports failure
+correctly. These files are test material, not obligations.
+
+[cols="2,2,3", options="header"]
 |===
-| ID | Proof | Blocked By | Notes
+|Fixture |Prover |Result (2026-11-09, session)
 
-| — | — | — | —
+|`acl2-smoke.lisp`
+|ACL2 8.5 (Ubuntu package)
+|Passes. A copy with a false theorem fails with exit 1.
+
+|`hol-light-refl.sh`
+|HOL Light 2023-10-21 (Ubuntu package, via a `hol_light` shim)
+|Passes. A copy expecting the wrong conclusion fails with
+"reflexivity smoke failed".
+
+|`hol4-smoke.sml`, `smoke.miz` with `mizar-smoke.sh`, `pvs_smoke.pvs` with `pvs-smoke.sh`
+|HOL4, Mizar, PVS
+|Not run: no package in the session. `tests/proof_smoke_wrappers_test.sh`
+covers the Mizar and PVS wrappers' pass and fail logic with stub provers.
 |===
 
-== Proofs Remaining
+== Obligations owned elsewhere
 
-[cols="1,3,1,1,1,1", options="header"]
+The proposals name these obligations. Under §1 each one belongs to the
+repository that will hold the code, so they are listed here only so they
+are not lost.
+
+[cols="3,1,2,1", options="header"]
 |===
-| ID | Proof | Category | Prover | Priority | Est. Effort
+|Obligation |Prover (§1) |Home |Status
 
-| ABI-1 | Non-null pointer proofs | ABI | Idris2 | P1 | 2h
-| ABI-2 | Memory layout correctness | ABI | Idris2 | P1 | 4h
-| ABI-3 | Platform type size proofs | ABI | Idris2 | P1 | 2h
-| ABI-4 | FFI function return type proofs | ABI | Idris2 | P1 | 2h
-| ABI-5 | C ABI compliance | ABI | Idris2 | P1 | 4h
-| TP-1 | Core data type well-formedness | TP | Idris2 | P1 | 4h
-| TP-2 | Public API type safety | TP | Lean4 | P2 | 4h
+|The cartridge `prover` argument type, derived from echidna's `ProverKind`
+|Idris2
+|`hyperpolymath/boj-server-cartridges`
+|`OPEN`
+
+|One `EnvCapability` record shared by `provers_list`, `solvers_list` and `verifiers_list`
+|Idris2
+|`hyperpolymath/boj-server-cartridges`
+|`OPEN`
+
+|The ledger row as a closed sum type: a `TESTED` row carries bounds, and a `PROVEN` row carries a checked certificate reference
+|Idris2
+|`hyperpolymath/boj-server-cartridges`
+|`OPEN`
+
+|echidna's trust levels form a chain, and a portfolio's level is the meet
+of its members' levels, except that two independent small-kernel systems
+that both have certificates lift the level to 5
+|Agda, rechecked in Rocq and Lean (§2)
+|`hyperpolymath/echidna`
+|`OPEN`
 |===
 
-== Verification Commands
+== Toolchain deviations (PROOF-POLICY §6)
+
+None recorded. No workflow or recipe in this repository installs a proof
+toolchain yet. `tools/proof-toolchain/DESIGN.adoc` says which deviation
+records the installer must write when it lands.
+
+== Verification commands
 
 [source,bash]
 ----
-# Check all Idris2 proofs
-just proof-check-idris2
-
-# Check all Lean4 proofs
-just proof-check-lean4
-
-# Check all Agda proofs
-just proof-check-agda
-
-# Check all Coq proofs
+just proof-check-all       # every leg, then the escape-hatch scan
+just proof-check-agda      # PROOF-POLICY §2.1 invocation
 just proof-check-coq
-
-# Run all proof checks
-just proof-check-all
-
-# Scan for dangerous patterns
-panic-attack assail --proofs-only
+just proof-check-lean4
+just proof-check-idris2
+just proof-scan-dangerous  # code only; comments and strings are ignored
 ----
+
+`scripts/proof-check.sh` exits 0 when every leg passes and 1 when a leg
+fails. It exits 3 when no leg failed but a checker was unavailable: a
+missing prover is reported, never passed. If the Agda standard library is
+not a registered Agda library, set `AGDA_STDLIB` to its source directory.
 
 == Changelog
 
 [cols="1,3,1", options="header"]
 |===
-| Date | Change | By
+|Date |Change |By
 
-| 2026-04-04 | Initial proof status tracking | Template
+|2026-04-04 |Initial proof status tracking |Template
+|2026-11-09 |Rewritten for PROOF-POLICY §5 and §8. Template obligations withdrawn (no ABI, FFI or typed API here). Session results and the fixture and owned-elsewhere tables added. |Claude Code
 |===

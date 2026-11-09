@@ -1,0 +1,3 @@
+name: bofj-kitt-proofs
+depend: standard-library
+include: .

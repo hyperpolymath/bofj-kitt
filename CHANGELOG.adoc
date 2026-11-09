@@ -33,6 +33,18 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 * `tools/environments/` — `environments.kyaml` (environment classes with a
   `measured` block), `probe-reachability.sh` and `hosts.txt` (experiment
   X1: reachability probe, HEAD by default, one-byte GET with `--get`).
+* `scripts/proof-check.sh`, called by every `proof-check-*` recipe, and
+  `tests/proof_check_test.sh`. Agda runs with PROOF-POLICY §2.1's
+  `--safe --without-K --cubical-compatible`. A missing checker is reported
+  `UNAVAILABLE` and the run exits 3, never a pass. The escape-hatch scan
+  reads code only, so comments and strings no longer trip it. Checkers run
+  on a copy, so they write nothing into the tree.
+* `verification/proofs/agda/bofj-kitt-proofs.agda-lib`, so Agda can find
+  the standard library through its registered libraries. `AGDA_STDLIB`
+  overrides this with an explicit path.
+* A `verus` entry in `tools/proof-toolchain/toolchain.kyaml`. The owner
+  ruling of 2026-11-07 made Verus a default Rust verifier beside Creusot
+  (PROOF-POLICY §1.2).
 
 ==== Fixed
 
@@ -58,6 +70,30 @@ addressed:
   are named in the cartridge contracts.
 * `Justfile` `container-init` renders the `VERSION` placeholder; the dogfood gate's
   summary counts the K9 files the hook validated, not every `*.k9` path.
+
+Proof artefacts brought in line with PROOF-POLICY (metadatastician/standards
+at `9bdf864`):
+
+* `just proof-check-all` could never pass. Its escape-hatch scan matched the
+  template's own "no postulate" and "NO Admitted" comments in all 8 proof
+  files. No CI job ran it.
+* The Agda recipe ran `agda --safe` without the §2.1 flags, and every recipe
+  exited 0 when its prover was missing.
+* `docs/status/PROOF-STATUS.adoc` now uses the §5 vocabulary with no
+  percentage. It records the 2026-11-09 session results (Agda 2.6.3 and
+  Coq 8.18 check their template files, ACL2 8.5 and HOL Light pass their
+  smoke fixtures, and the rest are not run). It also lists the obligations
+  the proposals name for other repositories.
+* `docs/status/PROOF-NEEDS.adoc` withdraws the template's ABI and typing
+  obligations, since this repository has no ABI, FFI or typed API. TP-2 had
+  put API typing in Lean, but §1 puts it in Idris2. The prover guide
+  recommended Lean for its Mathlib, which §2 forbids; it now summarises §1.
+* `tools/proof-toolchain/DESIGN.adoc` states the §6 deviation records the
+  installer must write for every entry installed other than through Guix or
+  the container.
+* The cartridge proposal now keeps the §5 status, the §2.2 correspondence
+  state and the §8 grade as three separate fields. The cartridges never
+  write a grade: Mathesis derives grades from their receipts.
 
 ==== Changed
 

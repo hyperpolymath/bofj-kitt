@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# proof-check.sh — check the proof files under verification/proofs/ and scan
+# them for escape hatches, following the estate PROOF-POLICY
+# (metadatastician/standards, 3-practice/PROOF-POLICY.adoc).
+#
+#   proof-check.sh [--proofs-dir DIR] LEG...
+#   LEG: agda | coq | lean4 | idris2 | scan | all
+#
+# Each leg reports one of PASS, FAIL or UNAVAILABLE. A missing checker is
+# UNAVAILABLE and makes the run fail: PROOF-POLICY §2.1 treats a missing tool
+# as an open obligation, so it is never reported as a pass or skipped silently.
+#
+# Agda runs with the canonical invocation of PROOF-POLICY §2.1:
+#   agda --safe --without-K --cubical-compatible <module.agda>
+# The standard library comes from AGDA_STDLIB (a directory holding its source)
+# when set; otherwise Agda resolves `depend: standard-library` in
+# verification/proofs/agda/*.agda-lib through its registered libraries.
+#
+# Checkers run on a temporary copy of the proofs directory, so their build
+# artefacts (.agdai, .vo, .glob, build/) never land in the working tree.
+#
+# Exit codes:
+#   0 — every requested leg passed
+#   1 — a leg failed (a proof did not check, or the scan found an escape hatch)
+#   2 — usage error
+#   3 — no leg failed, but at least one checker was unavailable
+
+set -euo pipefail
+
+usage() {
+    sed -n '/^#   proof-check.sh/,/^#   LEG:/p' "$0" | sed 's/^# \{0,3\}//' >&2
+    exit 2
+}
+
+proofs_dir="verification/proofs"
+legs=()
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --proofs-dir) [ "$#" -ge 2 ] || usage; proofs_dir="$2"; shift 2 ;;
+        agda|coq|lean4|idris2|scan) legs+=("$1"); shift ;;
+        all) legs+=(agda coq lean4 idris2 scan); shift ;;
+        *) usage ;;
+    esac
+done
+[ "${#legs[@]}" -gt 0 ] || usage
+[ -d "$proofs_dir" ] || { echo "proof-check: no proofs directory at $proofs_dir" >&2; exit 2; }
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+cp -R "$proofs_dir/." "$work/"
+
+failed=0
+unavailable=0
+report() {  # report <leg> <PASS|FAIL|UNAVAILABLE> <detail>
+    printf '%-7s %-11s %s\n' "$1" "$2" "$3"
+    case "$2" in
+        FAIL) failed=1 ;;
+        UNAVAILABLE) unavailable=1 ;;
+    esac
+}
+
+# run_files <leg> <tool> <subdir> <extension> <command-prefix...>
+# Checks each file from inside its leg directory; the file path is appended.
+run_files() {
+    local leg="$1" tool="$2" sub="$3" ext="$4"; shift 4
+    if ! command -v "$tool" >/dev/null 2>&1; then
+        report "$leg" UNAVAILABLE "$tool is not on PATH; the check did not run"
+        return
+    fi
+    local dir="$work/$sub" n=0 bad=0 f
+    if [ ! -d "$dir" ]; then
+        report "$leg" FAIL "no $sub/ directory under $proofs_dir"
+        return
+    fi
+    echo "== $leg: $("$tool" --version 2>&1 | head -n 1)"
+    while IFS= read -r f; do
+        n=$((n + 1))
+        if (cd "$dir" && "$@" "${f#./}") >"$work/.log" 2>&1; then
+            echo "   ok   $sub/${f#./}"
+        else
+            bad=$((bad + 1))
+            echo "   FAIL $sub/${f#./}"
+            sed 's/^/        /' "$work/.log" | tail -n 20
+        fi
+    done < <(cd "$dir" && find . -name "*.$ext" -type f | LC_ALL=C sort)
+    if [ "$n" -eq 0 ]; then
+        report "$leg" FAIL "no .$ext files under $sub/"
+    elif [ "$bad" -gt 0 ]; then
+        report "$leg" FAIL "$bad of $n file(s) did not check"
+    else
+        report "$leg" PASS "$n file(s) checked"
+    fi
+}
+
+# Remove comments, keeping line numbers and Agda pragmas ({-# ... #-}), so the
+# scan sees only code. Nested block comments and string literals are honoured.
+strip_comments() {  # strip_comments <file>
+    local line_tok open close doc=''
+    case "$1" in
+        *.idr) doc='|||' ;;  # Idris2 documentation comment, also a line comment
+    esac
+    case "$1" in
+        *.agda|*.idr) line_tok='--'; open='{-'; close='-}' ;;
+        *.lean)       line_tok='--'; open='/-'; close='-/' ;;
+        *.v)          line_tok='';   open='(*'; close='*)' ;;
+        *) cat "$1"; return ;;
+    esac
+    awk -v lt="$line_tok" -v op="$open" -v cl="$close" -v doc="$doc" '
+        BEGIN { depth = 0 }
+        {
+            out = ""; i = 1; n = length($0); instr = 0
+            while (i <= n) {
+                two = substr($0, i, 2); c = substr($0, i, 1)
+                if (depth > 0) {
+                    if (two == op) { depth++; i += 2; continue }
+                    if (two == cl) { depth--; i += 2; continue }
+                    i++; continue
+                }
+                if (instr) {  # string contents are dropped: a word there is not code
+                    if (c == "\\") { i += 2; continue }
+                    if (c == "\"") { instr = 0; out = out c }
+                    i++; continue
+                }
+                if (c == "\"") { instr = 1; out = out c; i++; continue }
+                if (two == op && substr($0, i, 3) != "{-#") { depth = 1; i += 2; continue }
+                if (lt != "" && two == lt) break
+                if (doc != "" && substr($0, i, 3) == doc) break
+                out = out c; i++
+            }
+            print out
+        }' "$1"
+}
+
+scan() {
+    local pattern='believe_me|assert_total|postulate|sorry|admit|Admitted|unsafeCoerce|Obj\.magic|TERMINATING|NON_TERMINATING|NO_TERMINATION_CHECK'
+    local hits=0 f m
+    while IFS= read -r f; do
+        m="$(strip_comments "$work/$f" | grep -nwE "$pattern" || true)"
+        if [ -n "$m" ]; then
+            hits=$((hits + 1))
+            echo "   escape hatch in ${f#./}:"
+            printf '%s\n' "$m" | sed 's/^/        /'
+        fi
+    done < <(cd "$work" && find . -type f \( -name '*.agda' -o -name '*.idr' -o -name '*.lean' -o -name '*.v' \) | LC_ALL=C sort)
+    if [ "$hits" -gt 0 ]; then
+        report scan FAIL "$hits file(s) contain an escape hatch in code"
+    else
+        report scan PASS "no escape hatch in code (comments ignored)"
+    fi
+}
+
+for leg in "${legs[@]}"; do
+    case "$leg" in
+        agda)
+            if [ -n "${AGDA_STDLIB:-}" ]; then
+                run_files agda agda agda agda agda --safe --without-K --cubical-compatible \
+                    --no-libraries -i . -i "$AGDA_STDLIB"
+            else
+                run_files agda agda agda agda agda --safe --without-K --cubical-compatible
+            fi ;;
+        coq)    run_files coq coqc coq v coqc ;;
+        lean4)  run_files lean4 lean lean4 lean lean ;;
+        idris2) run_files idris2 idris2 idris2 idr idris2 --source-dir . --check ;;
+        scan)   scan ;;
+    esac
+done
+
+if [ "$failed" -ne 0 ]; then exit 1; fi
+if [ "$unavailable" -ne 0 ]; then exit 3; fi
+exit 0
