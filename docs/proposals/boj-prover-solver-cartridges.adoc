@@ -370,7 +370,12 @@ the third. Mathesis derives a theorem's grade from the receipts and
 correspondence records these tools emit, and it never assigns one
 (Mathesis `docs/standards/AUTHORITY.adoc`). So every receipt carries what
 that derivation needs: the source commit, each checker's version and lock
-hash, the invocation and safe-mode flags, and the observed result.
+hash, the invocation and safe-mode flags, and the observed result. An Agda
+receipt also carries the library pin (name, version and lock hash of the
+standard library or other library it imports) and its import cone. The cone
+is the root module, the flags in force and the postulate count across
+every transitively imported module (PROOF-POLICY §1.1). Without them, a
+dependency cannot be counted as checked rather than assumed.
 
 One theory statement is worth an Agda file: echidna's five trust levels
 form a chain, and a portfolio's level is the meet of its members' levels

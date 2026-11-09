@@ -50,7 +50,7 @@ done
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
-cp -R "$proofs_dir/." "$work/"
+cp -RL "$proofs_dir/." "$work/"  # -L: a linked proof directory is copied, not left dangling
 
 failed=0
 unavailable=0
@@ -96,19 +96,22 @@ run_files() {
 }
 
 # Remove comments, keeping line numbers and Agda pragmas ({-# ... #-}), so the
-# scan sees only code. Nested block comments and string literals are honoured.
+# scan sees only code. Nested block comments, string literals and character
+# literals ('"', '\'') are honoured. In Agda, `--` opens a comment only at the
+# start of a token, since an identifier such as `a--b` may contain it.
 strip_comments() {  # strip_comments <file>
-    local line_tok open close doc=''
-    case "$1" in
+    local file="$1" line_tok open close doc='' agda=0
+    case "$file" in
         *.idr) doc='|||' ;;  # Idris2 documentation comment, also a line comment
+        *.agda) agda=1 ;;
     esac
-    case "$1" in
+    case "$file" in
         *.agda|*.idr) line_tok='--'; open='{-'; close='-}' ;;
         *.lean)       line_tok='--'; open='/-'; close='-/' ;;
         *.v)          line_tok='';   open='(*'; close='*)' ;;
-        *) cat "$1"; return ;;
+        *) cat "$file"; return ;;
     esac
-    awk -v lt="$line_tok" -v op="$open" -v cl="$close" -v doc="$doc" '
+    awk -v lt="$line_tok" -v op="$open" -v cl="$close" -v doc="$doc" -v agda="$agda" -v q="'" '
         BEGIN { depth = 0 }
         {
             out = ""; i = 1; n = length($0); instr = 0
@@ -124,21 +127,41 @@ strip_comments() {  # strip_comments <file>
                     if (c == "\"") { instr = 0; out = out c }
                     i++; continue
                 }
+                if (c == q) {  # character literal: drop it, so a quote inside is not a string
+                    if (substr($0, i + 1, 1) == "\\") {
+                        j = index(substr($0, i + 2), q)
+                        if (j > 0 && j <= 8) { i += j + 2; continue }
+                    } else if (substr($0, i + 2, 1) == q) { i += 3; continue }
+                }
                 if (c == "\"") { instr = 1; out = out c; i++; continue }
                 if (two == op && substr($0, i, 3) != "{-#") { depth = 1; i += 2; continue }
-                if (lt != "" && two == lt) break
+                if (lt != "" && two == lt) {
+                    p = (i == 1) ? " " : substr($0, i - 1, 1)
+                    if (!agda || p ~ /[ \t(){};@"]/) break
+                }
                 if (doc != "" && substr($0, i, 3) == doc) break
                 out = out c; i++
             }
             print out
-        }' "$1"
+        }' "$file"
+}
+
+# Escape hatches per language. A word that is an escape hatch in one language
+# can be an ordinary identifier in another (`admit` in Agda, say).
+hatch_pattern() {  # hatch_pattern <file>
+    case "$1" in
+        *.agda) echo 'postulate|TERMINATING|NON_TERMINATING|NO_TERMINATION_CHECK|unsafeCoerce' ;;
+        *.idr)  echo 'believe_me|assert_total|postulate|idris_crash' ;;
+        *.lean) echo 'sorry|admit' ;;
+        *.v)    echo 'Admitted|admit|Obj\.magic' ;;
+        *)      echo 'believe_me|assert_total|postulate|sorry|admit|Admitted|unsafeCoerce|Obj\.magic' ;;
+    esac
 }
 
 scan() {
-    local pattern='believe_me|assert_total|postulate|sorry|admit|Admitted|unsafeCoerce|Obj\.magic|TERMINATING|NON_TERMINATING|NO_TERMINATION_CHECK'
     local hits=0 f m
     while IFS= read -r f; do
-        m="$(strip_comments "$work/$f" | grep -nwE "$pattern" || true)"
+        m="$(strip_comments "$work/$f" | grep -nwE "$(hatch_pattern "$f")" || true)"
         if [ -n "$m" ]; then
             hits=$((hits + 1))
             echo "   escape hatch in ${f#./}:"
@@ -151,6 +174,12 @@ scan() {
         report scan PASS "no escape hatch in code (comments ignored)"
     fi
 }
+
+# Checkers run from inside the copy, so a relative library path is made
+# absolute against the caller's directory first.
+if [ -n "${AGDA_STDLIB:-}" ] && [ "${AGDA_STDLIB#/}" = "$AGDA_STDLIB" ]; then
+    AGDA_STDLIB="$PWD/$AGDA_STDLIB"
+fi
 
 for leg in "${legs[@]}"; do
     case "$leg" in

@@ -93,7 +93,24 @@ at `9bdf864`):
   the container.
 * The cartridge proposal now keeps the §5 status, the §2.2 correspondence
   state and the §8 grade as three separate fields. The cartridges never
-  write a grade: Mathesis derives grades from their receipts.
+  write a grade: Mathesis derives grades from their receipts. An Agda
+  receipt also carries its library pin and import cone.
+* Review of the new escape-hatch scan found three cases it missed or
+  misreported, all fixed with regression tests:
+  ** a Lean character literal such as `'"'` opened a phantom string that
+     hid a later `sorry`;
+  ** an Agda identifier containing `--` was read as a comment that hid a
+     later `postulate`;
+  ** `admit` was flagged in Agda, where it is an ordinary name. Patterns are
+     now chosen per language.
+* `scripts/proof-check.sh` also makes a relative `AGDA_STDLIB` absolute and
+  copies a linked proof directory as its contents.
+* `toolchain.kyaml` gives Verus's own Z3 a `verus-z3` entry. The deviation
+  records are written by the bundle build that owns the lock, and the
+  exemption from them follows the install route rather than the tool.
+* `.github/workflows/main-estate-audit.yml` calls the audit under cicd-suite's
+  new name, `hyperpolymath/proven-cicd-and-workflows`. Since the rename on
+  2026-11-09 the old name failed at startup with zero jobs.
 
 ==== Changed
 

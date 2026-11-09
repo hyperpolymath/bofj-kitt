@@ -56,6 +56,13 @@ AGDA_STDLIB=/opt/stdlib run 0 "$work/stubs:$work/sysbin" --proofs-dir "$proofs" 
 grep -q -- '--no-libraries -i . -i /opt/stdlib Properties.agda' "$work/agda.args" ||
     fail "AGDA_STDLIB not passed as an include path: $(cat "$work/agda.args")"
 
+# A relative AGDA_STDLIB is resolved against the caller's directory, not the
+# copy the checker runs in.
+: > "$work/agda.args"
+(cd "$work" && AGDA_STDLIB=lib/stdlib run 0 "$work/stubs:$work/sysbin" --proofs-dir "$proofs" agda)
+grep -q -- "-i $work/lib/stdlib Properties.agda" "$work/agda.args" ||
+    fail "relative AGDA_STDLIB not made absolute: $(cat "$work/agda.args")"
+
 # A missing checker is UNAVAILABLE with exit 3, never a pass.
 rm "$work/stubs/lean"
 run 3 "$work/stubs:$work/sysbin" --proofs-dir "$proofs" all
@@ -92,6 +99,21 @@ scan_expect 0 coq/C.v '(* NO Admitted allowed (* nested *) *) Lemma l : True. ex
 scan_expect 1 lean4/D.lean 'theorem t : True := by sorry'
 scan_expect 0 lean4/D.lean '/- sorry -/ def s := "sorry"'
 grep -q '^scan    PASS' "$work/out" || fail "comment and string not ignored"
+# A character literal holding a quote does not open a string that hides code.
+scan_expect 1 lean4/D.lean "example : False := by { let c : Char := '\"'; sorry }"
+scan_expect 1 lean4/D.lean "def c := '\\\\'  theorem t : True := by sorry"
+# In Agda, `--` inside an identifier does not start a comment.
+scan_expect 1 agda/A.agda 'f--g = x ; postulate p : Set'
+# Escape hatches are per language: `admit` is an ordinary Agda identifier.
+scan_expect 0 agda/A.agda 'admit : Set'
+scan_expect 1 coq/C.v 'Lemma l : True. admit. Qed.'
+
+# A proof directory that is a symbolic link is copied as its contents.
+rm -rf "$work/linked" "$work/real"; mkdir -p "$work/linked" "$work/real"
+printf '%s\n' 'Lemma l : True. Admitted.' > "$work/real/C.v"
+ln -s ../real "$work/linked/coq"
+run 1 "$work/sysbin" --proofs-dir "$work/linked" scan
+grep -q 'escape hatch in coq/C.v' "$work/out" || fail "linked proof directory not scanned"
 
 # Usage errors.
 run 2 "$work/sysbin" bogus-leg

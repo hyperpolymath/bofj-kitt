@@ -211,20 +211,28 @@ record, and most of the bundle is another route: release assets, opam,
 cargo and source builds. So the installer may not ship without these
 records:
 
-* `provers.sh install` writes one deviation record into the lock for each
-  entry it installs other than through Guix or the container. Each record
-  names the leg or obligation the entry serves, the tool, the version it
-  asserts, the digest of what was installed, why Guix or the container could
-  not be used, and its state (`open`, or `closed` with the change that
-  closed it).
-* A workflow that installs the bundle carries the same records, and every
-  consuming repository copies its entries into its own proof-status file.
+* The bundle build writes one deviation record into the lock for each entry
+  it builds other than through Guix or the container. The build owns the lock,
+  so the records are written where the lock is written, not on the host that
+  later installs it. Each record names the leg or obligation the entry
+  serves, the tool, the version it asserts, the digest of what was built,
+  why Guix or the container could not be used, and its state (`open`, or
+  `closed` with the change that closed it).
+* `provers.sh install` unpacks the lock with the bundle at
+  `$PREFIX/toolchain.lock.json`, so the records travel with what was
+  installed. A read-only checkout with a writable prefix is enough; the
+  installer writes nothing back into a repository.
+* A workflow that installs the bundle cites those records, and every
+  consuming repository copies the entries it uses into its own proof-status
+  file.
 * The run asserts each tool's version and fails on a mismatch, as `doctor`
   already does against the lock.
 
 Today nothing installs the bundle, so no deviation is open; this repository's
-`docs/status/PROOF-STATUS.adoc` says so. An entry Guix carries is projected
-into the Guix manifest instead and needs no record.
+`docs/status/PROOF-STATUS.adoc` says so. The exemption follows the route, not
+the tool. A tool installed through the Guix manifest or the container needs
+no record. The same tool installed from the bundle needs one, even if Guix
+also carries it.
 
 [[plan]]
 == Build plan (stacked PRs)
