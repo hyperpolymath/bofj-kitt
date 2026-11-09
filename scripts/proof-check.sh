@@ -30,6 +30,7 @@
 
 set -euo pipefail
 
+# Print the invocation syntax to stderr and terminate the script with exit 2.
 usage() {
     sed -n '/^#   proof-check.sh/,/^#   LEG:/p' "$0" | sed 's/^# \{0,3\}//' >&2
     exit 2
@@ -54,6 +55,8 @@ cp -RL "$proofs_dir/." "$work/"  # -L: a linked proof directory is copied, not l
 
 failed=0
 unavailable=0
+# Print a leg result to stdout and set the global failed or unavailable flag
+# for FAIL or UNAVAILABLE respectively; PASS leaves both flags unchanged.
 report() {  # report <leg> <PASS|FAIL|UNAVAILABLE> <detail>
     printf '%-7s %-11s %s\n' "$1" "$2" "$3"
     case "$2" in
@@ -63,7 +66,12 @@ report() {  # report <leg> <PASS|FAIL|UNAVAILABLE> <detail>
 }
 
 # run_files <leg> <tool> <subdir> <extension> <command-prefix...>
-# Checks each file from inside its leg directory; the file path is appended.
+# Check matching files recursively in the temporary copy of <subdir>, using
+# paths relative to that directory as the final command argument. <tool> is
+# checked on PATH; <extension> excludes the dot. Missing tools are reported as
+# UNAVAILABLE; missing directories, no matching files and checker failures are
+# reported as FAIL. Checker failures are collected so remaining files run;
+# these outcomes update global flags through report rather than returning an error.
 run_files() {
     local leg="$1" tool="$2" sub="$3" ext="$4"; shift 4
     if ! command -v "$tool" >/dev/null 2>&1; then
@@ -164,6 +172,10 @@ hatch_pattern() {  # hatch_pattern <file>
     esac
 }
 
+# Scan Agda, Idris2, Lean and Coq files in the temporary proof tree for each
+# language's escape-hatch patterns, ignoring comments and literals. Print
+# matches with source line numbers and report FAIL if any file has a match,
+# setting the global failed flag; an empty tree reports PASS.
 scan() {
     local hits=0 f m
     while IFS= read -r f; do
