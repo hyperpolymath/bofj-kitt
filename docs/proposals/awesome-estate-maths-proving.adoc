@@ -270,7 +270,8 @@ Reading the roster against the tools the lists above name shows what
 
 |*PROOF-POLICY names them* (highest priority: the estate's own mapping
 cannot be dispatched through its own prover platform)
-|Creusot, Kani, Aeneas (with Charon), Lambdapi as a checker (Dedukti has a
+|Creusot, Verus (a default Rust verifier since 2026-11-07), Kani, Aeneas (with
+Charon), Lambdapi as a checker (Dedukti has a
 variant, Lambdapi only an exchange format), agda2dedukti as a translator,
 Yices (in the kit manifest as a backend).
 

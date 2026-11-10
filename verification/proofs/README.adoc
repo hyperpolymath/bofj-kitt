@@ -1,59 +1,59 @@
 = Formal Verification Proofs
 // SPDX-License-Identifier: CC-BY-SA-4.0
 
-This directory contains formal proofs organised by proof assistant.
+The files here are RSR template material. They prove nothing about this
+repository, which has no first-party proof obligations; see
+`docs/status/PROOF-STATUS.adoc`. The estate
+https://github.com/metadatastician/standards/blob/main/3-practice/PROOF-POLICY.adoc[PROOF-POLICY]
+decides which prover carries which obligation.
 
-== Directory Structure
+== Directory structure
 
 [source]
 ----
 proofs/
-├── idris2/          # Idris2 proofs (ABI, dependent types)
-│   ├── ABI/         # ABI-specific proofs (mandatory)
-│   │   ├── Pointers.idr    # Non-null pointer safety
-│   │   ├── Layout.idr      # Memory layout correctness
-│   │   ├── Platform.idr    # Platform type size proofs
-│   │   ├── Foreign.idr     # FFI return type proofs
-│   │   └── Compliance.idr  # C ABI compliance
-│   └── Types.idr    # Core data type well-formedness
-├── lean4/           # Lean4 proofs (algebra, lattices)
+├── idris2/          # Idris2 (APIs, ABIs, engineering properties)
+│   ├── ABI/         # template ABI proofs
+│   └── Types.idr
+├── lean4/           # Lean 4 (a recheck leg for Agda theory)
 │   └── ApiTypes.lean
-├── agda/            # Agda proofs (induction, metatheory)
+├── agda/            # Agda (theory; the source of truth)
+│   ├── bofj-kitt-proofs.agda-lib   # depends on standard-library
 │   └── Properties.agda
-├── coq/             # Coq proofs (type systems, compilation)
+├── coq/             # Rocq/Coq (a recheck leg for Agda theory)
 │   └── TypeSafety.v
-└── tlaplus/         # TLA+ specs (distributed protocols)
+└── tlaplus/         # TLA+ (a §4 exception; a model check is TESTED)
     └── StateMachine.tla
 ----
 
-== Verification Commands
+== Checking
 
 [source,bash]
 ----
-just proof-check-all       # Run all proof checkers
-just proof-check-idris2    # Idris2 only
-just proof-check-lean4     # Lean4 only
-just proof-check-agda      # Agda only
-just proof-check-coq       # Coq only
+just proof-check-all       # every leg, then the escape-hatch scan
+just proof-check-idris2
+just proof-check-lean4
+just proof-check-agda      # agda --safe --without-K --cubical-compatible
+just proof-check-coq
+just proof-scan-dangerous
 ----
 
-== Banned Patterns
+The recipes call `scripts/proof-check.sh`. A missing checker is reported
+`UNAVAILABLE` and the run exits 3; it is never counted as a pass. Checkers
+run on a temporary copy, so no build artefacts are written here. If the
+Agda standard library is not a registered library, set `AGDA_STDLIB` to its
+source directory. TLA+ is not checked by any recipe.
 
-The following MUST NOT appear in any proof file:
+== Escape hatches
 
-- `believe_me` (Idris2)
-- `assert_total` (Idris2)
-- `postulate` (Idris2/Agda)
-- `sorry` (Lean4)
-- `Admitted` (Coq)
-- `unsafeCoerce` (Haskell)
+The scan fails on `believe_me`, `assert_total`, `postulate`, Agda's
+termination pragmas, `sorry`, `admit`, `Admitted`, `unsafeCoerce` and
+`Obj.magic` in proof code. Comments and strings are ignored. The full table
+is in `docs/status/PROOF-NEEDS.adoc`.
 
-CI enforces this via `panic-attack assail --proofs-only`.
+== Adding a proof
 
-== Adding New Proofs
-
-1. Choose the appropriate prover (see PROOF-NEEDS.md)
-2. Create the `.idr`/`.lean`/`.agda`/`.v`/`.tla` file in the right directory
-3. Ensure `%default total` (Idris2) or equivalent
-4. Run the verification command
-5. Update PROOF-STATUS.md
+. Pick the prover PROOF-POLICY §1 maps the obligation to.
+. Add the file under the matching directory.
+. Run its `just proof-check-*` recipe and the scan.
+. Record the obligation and its §5 status in `docs/status/PROOF-STATUS.adoc`.
