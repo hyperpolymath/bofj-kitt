@@ -1,121 +1,109 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // Template: rsr-template-repo/docs/status/PROOF-NEEDS.adoc
-// Authoritative master list: ~/Desktop/PROOF-REQUIREMENTS-MASTER.adoc
-= Proof Requirements — BOFJ_KITT
+= Proof Requirements — bofj-kitt
 
-== Proof Tier
+Normative: the estate
+https://github.com/metadatastician/standards/blob/main/3-practice/PROOF-POLICY.adoc[PROOF-POLICY].
+It decides which prover carries which obligation. This file records what
+that means for this repository. Status lives in `PROOF-STATUS.adoc`.
+
+== Proof tier
 
 // Assign one: T1 (Critical), T2 (High), T3 (Standard), T4 (Light), T5 (Exempt)
-*Tier*: T3 — Standard
+*Tier*: T5 — Exempt.
 
-== Proof Categories
+bofj-kitt is shell scripts, manifests and configuration. It has no ABI, no
+FFI, no typed API and no theory content, so PROOF-POLICY §1 maps nothing in
+it to a prover. Its scripts are covered by tests in `tests/`. Raise the tier
+if the repository gains code that §1 maps.
 
-[cols="1,3,1", options="header"]
+== Template obligations, withdrawn
+
+The RSR template lists these as mandatory for every repository. None of
+them has a subject here, so they are withdrawn rather than left as permanent
+"needed" rows. The template files themselves stay in `verification/proofs/`
+as template material.
+
+[cols="1,3,3", options="header"]
 |===
-| Code | Meaning | Applies?
+|# |Template obligation |Why it does not apply
 
-| *TP* | Typing Proofs (type soundness, type safety) | Yes
-| *INV* | Invariant Proofs (state machines, monotonicity, bounds) |
-| *SEC* | Security Proofs (crypto, injection freedom, access control) |
-| *CONC* | Concurrency Proofs (linearizability, deadlock freedom) |
-| *ALG* | Algorithm Proofs (termination, correctness, bounds) |
-| *ABI* | ABI/FFI Proofs (memory layout, pointer safety, platform compat) | Yes
-| *DOM* | Domain-Specific Proofs (bespoke to this project) |
-|===
+|ABI-1 to ABI-5
+|Pointer, layout, platform, FFI-return and C-ABI proofs (Idris2)
+|No ABI or FFI exists in this repository.
 
-== Mandatory Proofs (All RSR Repos)
+|TP-1
+|Core data type well-formedness (Idris2)
+|No typed data model exists in this repository.
 
-These proofs come from the rsr-template-repo and MUST be present in every repo:
-
-=== ABI/FFI Boundary Proofs (Idris2)
-
-[cols="1,3,1,3", options="header"]
-|===
-| # | Proof | Status | File
-
-| ABI-1 | Non-null pointer proofs (`So (ptr /= 0)`) | Needed | `verification/proofs/idris2/ABI/Pointers.idr`
-| ABI-2 | Memory layout correctness (`HasSize`, `HasAlignment`) | Needed | `verification/proofs/idris2/ABI/Layout.idr`
-| ABI-3 | Platform type size proofs (per platform) | Needed | `verification/proofs/idris2/ABI/Platform.idr`
-| ABI-4 | FFI function return type proofs | Needed | `verification/proofs/idris2/ABI/Foreign.idr`
-| ABI-5 | C ABI compliance (`CABICompliant`, `FieldsAligned`) | Needed | `verification/proofs/idris2/ABI/Compliance.idr`
+|TP-2
+|Public API type safety; the template assigned it to Lean 4
+|No typed API exists here. Where it applies, PROOF-POLICY §1 assigns API
+properties to Idris2, not Lean.
 |===
 
-=== Typing Proofs (Prover Varies)
+== Project-specific obligations
 
-[cols="1,3,1,3", options="header"]
-|===
-| # | Proof | Status | File
+None. Obligations named by the proposals belong to the repositories that
+will hold the code; `PROOF-STATUS.adoc` lists them under "Obligations owned
+elsewhere".
 
-| TP-1 | Core data type well-formedness | Needed | `verification/proofs/idris2/Types.idr`
-| TP-2 | Public API type safety (exported functions) | Needed | `verification/proofs/lean4/ApiTypes.lean`
-|===
+== Which prover (PROOF-POLICY §1)
 
-== Project-Specific Proofs
-
-// Fill in proofs specific to this project. Copy from PROOF-REQUIREMENTS-MASTER.adoc
-// Delete this section for T4/T5 repos
-
-[cols="1,3,1,1,1,2", options="header"]
-|===
-| # | Proof Needed | Category | Prover | Priority | File(s)
-
-| | | | | |
-|===
-
-== Dangerous Patterns (BANNED)
-
-The following MUST NOT appear anywhere in proof files:
+This section is a summary; PROOF-POLICY §1 is normative.
 
 [cols="2,2,3", options="header"]
 |===
-| Pattern | Language | Meaning
+|Code or obligation |Verifier |Notes
 
-| `believe_me` | Idris2 | Unsafe cast / trust-me
-| `assert_total` | Idris2 | Skip totality check
-| `postulate` | Idris2/Agda | Unproven axiom
-| `sorry` | Lean4 | Incomplete proof
-| `Admitted` | Coq | Incomplete proof
-| `unsafeCoerce` | Haskell | Unsafe type cast
-| `Obj.magic` | OCaml/AffineScript | Unsafe type cast
-| `unsafe` (unaudited) | Rust | Unsafe block without safety comment
+|Rust code
+|Creusot with Pearlite contracts, and Verus
+|Kani and Aeneas are standing exceptions (§4.1).
+
+|Ada code
+|SPARK
+|
+
+|APIs, ABIs and engineering properties
+|Idris2
+|Interface contracts, ABI layouts, wire formats, round trips.
+
+|Theory
+|Agda, rechecked in Rocq and Lean
+|Agda runs as `agda --safe --without-K --cubical-compatible` (§2.1). No
+Mathlib anywhere (§2).
 |===
 
-CI will reject any PR introducing these patterns (enforced by `panic-attack assail`).
+Any other tool (Isabelle/HOL, F*, TLA+, an SMT solver) needs a recorded §4
+exception. A finite model check, such as TLC, is `TESTED` with its bounds,
+not `PROVEN`.
 
-== Prover Selection Guide
+== Escape hatches
+
+`just proof-scan-dangerous` (`scripts/proof-check.sh scan`) fails on these
+words in proof code. Comments and string literals are ignored, so a comment
+that names a banned word does not trip it.
 
 [cols="2,2,3", options="header"]
 |===
-| Use Case | Recommended Prover | Why
+|Pattern |Language |Meaning
 
-| ABI/FFI boundaries | *Idris2* | Dependent types model layouts precisely
-| Type system proofs | *Coq* or *Lean4* | Mature proof assistants for metatheory
-| Algebraic properties | *Lean4* | Good mathlib support
-| Inductive/coinductive | *Agda* | Native support for (co)induction
-| Distributed systems | *TLA+* | Model checking for protocols
-| Numerical properties | *Isabelle* | Strong real analysis library
+|`believe_me` |Idris2 |Unchecked cast
+|`assert_total` |Idris2 |Skips the totality check
+|`postulate` |Agda, Idris2 |Unproven axiom
+|`TERMINATING`, `NON_TERMINATING`, `NO_TERMINATION_CHECK` |Agda pragmas |Skips the termination check
+|`sorry`, `admit` |Lean 4, Coq |Incomplete proof
+|`Admitted` |Coq |Incomplete proof
+|`unsafeCoerce` |Haskell |Unchecked cast
+|`Obj.magic` |OCaml |Unchecked cast
 |===
 
-== Proof File Locations
-
-----
-verification/proofs/
-├── idris2/          # Idris2 proofs (ABI, dependent types)
-│   ├── ABI/         # ABI-specific proofs
-│   └── *.idr        # Project-specific Idris2 proofs
-├── lean4/           # Lean4 proofs (algebra, lattices)
-│   └── *.lean
-├── agda/            # Agda proofs (induction, metatheory)
-│   └── *.agda
-├── coq/             # Coq proofs (type systems, compilation)
-│   └── *.v
-└── tlaplus/         # TLA+ specs (distributed protocols)
-    └── *.tla
-----
+How escape-hatch debt is budgeted and recorded is set by the standards
+repository's `docs/TRUSTED-BASE-REDUCTION-POLICY.adoc`, not here.
 
 == References
 
-* Master list: `~/Desktop/PROOF-REQUIREMENTS-MASTER.adoc`
-* Proof status tracking: `PROOF-STATUS.adoc` (this repo)
-* Proven library: `proven` repo (Idris2 verified foundations)
+* PROOF-POLICY: `metadatastician/standards`, `3-practice/PROOF-POLICY.adoc`
+* Estate proof needs: `metadatastician/standards`, `3-practice/PROOF-NEEDS.adoc`
+* Where estate proofs live: https://github.com/hyperpolymath/mathesis[mathesis]
 * Template: `rsr-template-repo/docs/status/PROOF-NEEDS.adoc`

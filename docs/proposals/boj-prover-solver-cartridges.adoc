@@ -113,12 +113,21 @@ json`; the five-level trust hierarchy and the axiom scan are echidna's.
 |`provers_portfolio`
 |Same input, two or more provers; returns each verdict and the combined
 trust level (level 5 only when two independent small-kernel systems agree
-with certificates, per echidna's `confidence.rs`).
+with certificates, per echidna's `confidence.rs`). echidna's trust level is
+not a Proof Witness Grade (PROOF-POLICY §8.6) and is never reported as one.
 
 |`provers_recheck`
 |The PROOF-POLICY §2 route: an Agda proof transported through Dedukti to
 Rocq and Lean, with `transported` or `re-proved` recorded per leg and the
 statement comparison named. Needs the kit's `transport` entries present.
+The Agda leg runs as `agda --safe --without-K --cubical-compatible` (§2.1).
+Each leg's record carries the §2.2 fields: the exact proposition,
+assumptions, source revision, checker and library versions by lock hash,
+invocation and observed result. It also carries two separate values: the
+leg's §5 status and its §2.2 correspondence state (`AGDA-PENDING`,
+`AGDA-VERIFIED`, `COQ-CHECKED`, `LEAN-CHECKED`, `BRIDGE-PENDING`,
+`RECONCILED`, `COUNTEREXAMPLE`, `QUARANTINED`). A transported leg stays
+`ASSUMED` until the statement comparison is recorded (§2).
 
 |`provers_exchange`
 |Translate between Dedukti, Lambdapi, TPTP, SMT-LIB, OpenTheory, SMTCoq
@@ -181,7 +190,9 @@ through one implementation.
 Input is a source tree with contracts; the answer is a proof ledger in
 the PROOF-POLICY §5 vocabulary (`PROVEN`, `PROVEN-WITH-AXIOMS`, `TESTED`,
 `ASSUMED`, `OPEN`) with a receipt. This is the cartridge for the tools that
-sit *on* code rather than on proof files: Creusot and Kani for Rust, SPARK
+sit *on* code rather than on proof files: Creusot (with Pearlite contracts)
+and Verus for Rust, the default pair since 2026-11-07 (PROOF-POLICY §1.2),
+with Kani as a standing exception; SPARK
 for Ada, Aeneas for Rust-to-model, Dafny, Why3 and Cameleer, F*, and the
 estate's own verifiers as they arrive: Quintessence (Elixir/OTP, three
 layers, already producing TrustLevel 4 certificates), Apodeixis.jl (Julia;
@@ -195,8 +206,11 @@ bactarin has no repository in the estate listing).
 
 |`verifiers_list`
 |The language-to-verifier mapping this host can serve, from PROOF-POLICY
-§1 and the capability record: Rust → Creusot (+ Kani, Aeneas), Ada → SPARK,
-Elixir → Quintessence, Julia → Apodeixis.jl, and the §4 exceptions.
+§1 and the capability record: Rust → Creusot and Verus (+ Kani, Aeneas),
+Ada → SPARK, Elixir → Quintessence, Julia → Apodeixis.jl, and the §4
+exceptions. Where Creusot and Verus prove the same property, the ledger
+records how the two statements correspond. It does not count them as
+independent results, because they share solver trust (§1.2, §4.1).
 
 |`verifiers_verify`
 |`{path, language?, tool?, obligations?}` → the ledger: one row per
@@ -346,14 +360,31 @@ are Idris2:
   host holds.
 * The ledger row. The §5 vocabulary is a closed sum type; a `TESTED` row
   carries bounds and a `PROVEN` row carries a certificate reference by
-  construction.
+  construction. A recheck row carries the §2.2 correspondence state as a
+  second closed type in its own field, so the two can never be written
+  into each other's place, as §2.2 requires.
+
+Status, correspondence state and Proof Witness Grade are three separate
+fields (PROOF-POLICY §2.2, §8). The cartridges write the first two and never
+the third. Mathesis derives a theorem's grade from the receipts and
+correspondence records these tools emit, and it never assigns one
+(Mathesis `docs/standards/AUTHORITY.adoc`). So every receipt carries what
+that derivation needs: the source commit, each checker's version and lock
+hash, the invocation and safe-mode flags, and the observed result. An Agda
+receipt also carries the library pin (name, version and lock hash of the
+standard library or other library it imports) and its import cone. The cone
+is the root module, the flags in force and the postulate count across
+every transitively imported module (PROOF-POLICY §1.1). Without them, a
+dependency cannot be counted as checked rather than assumed.
 
 One theory statement is worth an Agda file: echidna's five trust levels
 form a chain, and a portfolio's level is the meet of its members' levels
 except for the one case (two independent small-kernel systems, both with
 certificates) that lifts to level 5. Stating that as a lattice property and
 rechecking it in Rocq and Lean per §2 is small, and it is the property an
-agent relies on when it reads `trust_level: 5`.
+agent relies on when it reads `trust_level: 5`. It is theory about echidna,
+so it belongs in `hyperpolymath/echidna`; this repository's
+`docs/status/PROOF-STATUS.adoc` lists it as `OPEN` there.
 
 == Aspects
 
