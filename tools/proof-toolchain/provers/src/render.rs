@@ -58,24 +58,34 @@ fn url_host(url: &str) -> Option<&str> {
 const PRELUDE: &str = r#"set -u
 export DEBIAN_FRONTEND=noninteractive
 R=/var/lib/bofj-kitt; mkdir -p "$R"; : > "$R/setup-report.tsv"
-rep() { printf '%s\t%s\t%s\n' "$1" "$2" "$3" >> "$R/setup-report.tsv"
-  case "$2" in FAILED|UNAVAILABLE) echo "!!! bofj-kitt setup: $1 $2: $3" >&2 ;; esac; }
+rep() { # id status detail
+  local id="$1" status="$2" detail="$3"
+  printf '%s\t%s\t%s\n' "$id" "$status" "$detail" >> "$R/setup-report.tsv"
+  case "$status" in
+    FAILED|UNAVAILABLE) echo "!!! bofj-kitt setup: $id $status: $detail" >&2 ;;
+    *) ;;
+  esac; }
 apt_pin() { # id package version [link-from link-to]
-  if [ "$(dpkg-query -W -f='${Version}' "$2" 2>/dev/null)" = "$3" ]; then rep "$1" PRESENT "$2=$3"
-  elif apt-get install -y -q --no-install-recommends "$2=$3" >/dev/null 2>&1; then rep "$1" INSTALLED "$2=$3"
-  else rep "$1" FAILED "apt-get install $2=$3"; return 0; fi
-  if [ $# -ge 5 ]; then ln -sf "$4" "$5" || rep "$1" FAILED "link $5"; fi; }
+  local id="$1" pkg="$2" ver="$3" from="${4:-}" to="${5:-}" have
+  have="$(dpkg-query -W -f='${Version}' "$pkg" 2>/dev/null)"
+  if [[ "$have" == "$ver" ]]; then rep "$id" PRESENT "$pkg=$ver"
+  elif apt-get install -y -q --no-install-recommends "$pkg=$ver" >/dev/null 2>&1; then
+    rep "$id" INSTALLED "$pkg=$ver"
+  else rep "$id" FAILED "apt-get install $pkg=$ver"; return 0; fi
+  if [[ -n "$to" ]]; then ln -sf "$from" "$to" || rep "$id" FAILED "link $to"; fi; }
 asset() { # id format dest url sha256 [member]
-  if [ -e "$R/stamp.$1.$5" ] && [ -e "$3" ]; then rep "$1" PRESENT "sha256 $5"; return 0; fi
-  t=$(mktemp -d)
-  if ! curl -fsSL --retry 3 --max-time 900 -o "$t/a" "$4"; then rep "$1" FAILED "download $4"
-  elif ! printf '%s  %s\n' "$5" "$t/a" | sha256sum -c --status -; then rep "$1" FAILED "sha256 mismatch for $4"
-  elif case "$2" in
-      tar.gz) tar -xzf "$t/a" -C "$t" "$6" && install -m 755 "$t/$6" "$3" ;;
-      tar.zst) rm -rf "$3" && mkdir -p "$3" && tar --zstd -xf "$t/a" -C "$3" --strip-components=1 ;;
+  local id="$1" fmt="$2" dest="$3" url="$4" sha="$5" member="${6:-}" t
+  if [[ -e "$R/stamp.$id.$sha" && -e "$dest" ]]; then rep "$id" PRESENT "sha256 $sha"; return 0; fi
+  t="$(mktemp -d)"
+  if ! curl -fsSL --retry 3 --max-time 900 -o "$t/a" "$url"; then rep "$id" FAILED "download $url"
+  elif ! printf '%s  %s\n' "$sha" "$t/a" | sha256sum -c --status -; then
+    rep "$id" FAILED "sha256 mismatch for $url"
+  elif case "$fmt" in
+      tar.gz) tar -xzf "$t/a" -C "$t" "$member" && install -m 755 "$t/$member" "$dest" ;;
+      tar.zst) rm -rf "$dest" && mkdir -p "$dest" && tar --zstd -xf "$t/a" -C "$dest" --strip-components=1 ;;
       *) false ;;
-    esac; then touch "$R/stamp.$1.$5"; rep "$1" INSTALLED "sha256 $5"
-  else rep "$1" FAILED "unpack $2 to $3"; fi
+    esac; then touch "$R/stamp.$id.$sha"; rep "$id" INSTALLED "sha256 $sha"
+  else rep "$id" FAILED "unpack $fmt to $dest"; fi
   rm -rf "$t"; }
 apt-get update -q >/dev/null 2>&1 || rep apt-index FAILED "apt-get update"
 "#;

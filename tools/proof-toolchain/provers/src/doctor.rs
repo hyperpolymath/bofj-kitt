@@ -191,197 +191,273 @@ fn read_setup_report(path: &Path) -> Value {
     json!({"present": true, "items": items})
 }
 
+/// Running totals of statuses, which also decide doctor's exit code.
+#[derive(Default)]
+struct Tally {
+    present: u32,
+    drift: u32,
+    unavailable: u32,
+}
+
+impl Tally {
+    fn count(&mut self, status: &str) {
+        match status {
+            "PRESENT" => self.present += 1,
+            "DRIFT" => self.drift += 1,
+            _ => self.unavailable += 1,
+        }
+    }
+
+    fn exit_code(&self) -> i32 {
+        if self.drift > 0 {
+            1
+        } else if self.unavailable > 0 {
+            3
+        } else {
+            0
+        }
+    }
+}
+
+/// The lock, when the bundle build has written one, and its description.
+fn load_lock(ctx: &Ctx) -> Result<(Option<Value>, Value), String> {
+    let lock_path = ctx.root.join("tools/proof-toolchain/toolchain.lock.json");
+    let Ok(bytes) = std::fs::read(&lock_path) else {
+        let info = json!({"present": false, "sha256": null, "reason": "no toolchain.lock.json: the bundle build has not run, so no version is locked"});
+        return Ok((None, info));
+    };
+    let lock = ijson_jcs::parse_json_bytes(&bytes, ijson_jcs::JsonMode::Canonical)
+        .map_err(|e| format!("toolchain.lock.json is not canonical I-JSON: {e}"))?;
+    let info = json!({"present": true, "sha256": sha256_file(&lock_path)});
+    Ok((Some(lock), info))
+}
+
+/// What this environment's own setup promises, by toolchain entry.
+fn promised_by_setup(render: &Value) -> Map<String, Value> {
+    let mut promised = Map::new();
+    for item in render["setup"].as_array().into_iter().flatten() {
+        if let Some(t) = item["provides"]["tool"].as_str() {
+            promised.insert(t.to_string(), item["provides"].clone());
+        }
+    }
+    promised
+}
+
+/// The version a tool must report, and where that expectation came from:
+/// the lock, then the environment's setup, then a concrete manifest pin.
+fn expected_version(
+    tool: &Value,
+    locked: Option<&Value>,
+    promise: Option<&Value>,
+) -> (Option<String>, &'static str) {
+    if let Some(v) = locked.and_then(|l| l["version"].as_str()) {
+        return (Some(v.to_string()), "lock");
+    }
+    if let Some(v) = promise.and_then(|p| p["version"].as_str()) {
+        return (Some(v.to_string()), "environment setup");
+    }
+    match concrete_pin(&tool["pin"]) {
+        Some(v) => (Some(v), "manifest pin"),
+        None => (None, "none"),
+    }
+}
+
+fn string_list(v: Option<&Value>) -> Vec<String> {
+    v.and_then(Value::as_array)
+        .map(|a| {
+            a.iter()
+                .filter_map(|s| s.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Run a tool's verify command (once per toolchain when it names
+/// $TOOLCHAIN), then its version command. Returns the output to read the
+/// version from and the executable to hash, or why the tool is unavailable.
+fn run_checks(
+    tool: &Value,
+    toolchains: &[String],
+    prefix: &str,
+    timeout: Duration,
+) -> Result<(String, Option<PathBuf>), String> {
+    let verify = tool["verify"].as_str().unwrap_or("");
+    let version_cmd = tool["version"].as_str();
+    if verify.is_empty() {
+        return Err("the manifest entry has no verify command".into());
+    }
+    let runs: Vec<Option<&str>> = if !verify.contains("$TOOLCHAIN") {
+        vec![None]
+    } else if toolchains.is_empty() {
+        return Err("verify runs once per toolchain, and neither a lock nor this environment's setup names any".into());
+    } else {
+        toolchains.iter().map(|s| Some(s.as_str())).collect()
+    };
+    let mut text = String::new();
+    for tc in runs {
+        let r = run(verify, prefix, tc, timeout);
+        if r.code != Some(0) {
+            let what = tc.map_or("verify".to_string(), |s| format!("verify for {s}"));
+            return Err(failure_reason(&what, &r));
+        }
+        text.push_str(&r.output);
+    }
+    if let Some(vc) = version_cmd {
+        let r = run(vc, prefix, None, timeout);
+        if r.code != Some(0) {
+            return Err(failure_reason("version command", &r));
+        }
+        text = r.output;
+    }
+    Ok((text, entry_point(version_cmd.unwrap_or(verify), prefix)))
+}
+
+/// PRESENT, DRIFT or PRESENT-unchecked for a tool whose checks ran.
+fn classify(
+    rec: &mut Map<String, Value>,
+    text: &str,
+    expected: Option<&str>,
+    expected_from: &str,
+) -> &'static str {
+    let observed = first_line(text);
+    match expected {
+        Some(v) if !contains_version(text, v) => {
+            rec.insert(
+                "mismatch".into(),
+                json!(format!(
+                    "expected {v} ({expected_from}); the check printed: {observed}"
+                )),
+            );
+            "DRIFT"
+        }
+        Some(_) => "PRESENT",
+        None => {
+            rec.insert(
+                "version_check".into(),
+                json!("unchecked: no lock, no environment pin and no concrete manifest pin name a version"),
+            );
+            "PRESENT"
+        }
+    }
+}
+
+/// One toolchain entry's record.
+fn tool_record(
+    tool: &Value,
+    lock: Option<&Value>,
+    promised: &Map<String, Value>,
+    prefix: &str,
+    timeout: Duration,
+) -> Result<Value, String> {
+    let id = tool["id"].as_str().ok_or("toolchain entry without id")?;
+    let locked = lock.map(|l| &l["tools"][id]).filter(|v| !v.is_null());
+    let promise = promised.get(id);
+    let (expected, expected_from) = expected_version(tool, locked, promise);
+    let toolchains = {
+        let from_lock = string_list(locked.map(|l| &l["toolchains"]));
+        if from_lock.is_empty() {
+            string_list(promise.map(|p| &p["toolchains"]))
+        } else {
+            from_lock
+        }
+    };
+
+    let mut rec = Map::new();
+    rec.insert("id".into(), json!(id));
+    rec.insert("role".into(), tool["role"].clone());
+    rec.insert("expected_version".into(), json!(expected));
+    rec.insert("expected_from".into(), json!(expected_from));
+    let status = match run_checks(tool, &toolchains, prefix, timeout) {
+        Err(reason) => {
+            rec.insert("reason".into(), json!(reason));
+            "UNAVAILABLE"
+        }
+        Ok((text, exe)) => {
+            rec.insert("observed_version".into(), json!(first_line(&text)));
+            rec.insert(
+                "observed_sha256".into(),
+                json!(exe.as_deref().and_then(sha256_file)),
+            );
+            if let Some(l) = locked {
+                rec.insert("locked_sha256".into(), l["sha256"].clone());
+            }
+            if !toolchains.is_empty() {
+                rec.insert("toolchains".into(), json!(toolchains));
+            }
+            classify(&mut rec, &text, expected.as_deref(), expected_from)
+        }
+    };
+    rec.insert("status".into(), json!(status));
+    Ok(Value::Object(rec))
+}
+
+/// Records for the class's setup items that carry their own verify, and for
+/// its declared-unavailable items.
+fn environment_tool_records(render: &Value, prefix: &str, timeout: Duration) -> Vec<Value> {
+    let mut out = Vec::new();
+    for item in render["setup"].as_array().into_iter().flatten() {
+        let Some(cmd) = item["verify"].as_str() else {
+            continue;
+        };
+        let r = run(cmd, prefix, None, timeout);
+        let mut rec = json!({"id": item["id"].as_str().unwrap_or("")});
+        let expect = item["expect"].as_str();
+        if r.code != Some(0) {
+            rec["status"] = json!("UNAVAILABLE");
+            rec["reason"] = json!(failure_reason("verify", &r));
+        } else if let Some(v) = expect.filter(|v| !contains_version(&r.output, v)) {
+            rec["status"] = json!("DRIFT");
+            rec["mismatch"] = json!(format!("expected {v}; the check printed: {}", r.first_line));
+        } else {
+            rec["status"] = json!("PRESENT");
+            rec["observed_version"] = json!(r.first_line);
+        }
+        out.push(rec);
+    }
+    for item in render["unavailable"].as_array().into_iter().flatten() {
+        out.push(json!({"id": item["id"], "status": "UNAVAILABLE", "reason": item["reason"]}));
+    }
+    out
+}
+
+fn latest_measured(env: &Value) -> Value {
+    match &env["measured"] {
+        Value::Array(a) => a.last().cloned().unwrap_or(Value::Null),
+        Value::Object(m) if m.is_empty() => Value::Null,
+        v => v.clone(),
+    }
+}
+
 pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
     let (env_id, detected_by) = detect_env(o.env.as_deref());
-    let envs = ctx.environments["environments"]
+    let env = ctx.environments["environments"]
         .as_array()
-        .ok_or("environments.kyaml: no environments list")?;
-    let env = envs
+        .ok_or("environments.kyaml: no environments list")?
         .iter()
         .find(|e| e["id"] == env_id.as_str())
         .ok_or_else(|| format!("environment '{env_id}' is not declared in environments.kyaml"))?;
     let render = &ctx.environments["render"][env_id.as_str()];
     let prefix = ctx.toolchain["prefix"]
         .as_str()
-        .ok_or("toolchain.kyaml: no prefix")?
-        .to_string();
+        .ok_or("toolchain.kyaml: no prefix")?;
+    let (lock, lock_info) = load_lock(ctx)?;
+    let promised = promised_by_setup(render);
 
-    let lock_path = ctx.root.join("tools/proof-toolchain/toolchain.lock.json");
-    let lock: Option<Value> = match std::fs::read(&lock_path) {
-        Ok(b) => Some(
-            ijson_jcs::parse_json_bytes(&b, ijson_jcs::JsonMode::Canonical)
-                .map_err(|e| format!("toolchain.lock.json is not canonical I-JSON: {e}"))?,
-        ),
-        Err(_) => None,
-    };
-    let lock_info = match &lock {
-        Some(_) => json!({"present": true, "sha256": sha256_file(&lock_path)}),
-        None => {
-            json!({"present": false, "sha256": null, "reason": "no toolchain.lock.json: the bundle build has not run, so no version is locked"})
-        }
-    };
-
-    // What this environment's own setup promises, by toolchain entry.
-    let mut promised: Map<String, Value> = Map::new();
-    for item in render["setup"].as_array().into_iter().flatten() {
-        if let Some(t) = item["provides"]["tool"].as_str() {
-            promised.insert(t.to_string(), item["provides"].clone());
-        }
-    }
-
+    let mut tally = Tally::default();
     let mut tools = Vec::new();
-    let (mut n_present, mut n_drift, mut n_unavail) = (0, 0, 0);
     for t in ctx.toolchain["tools"]
         .as_array()
         .ok_or("toolchain.kyaml: no tools list")?
     {
-        let id = t["id"].as_str().ok_or("toolchain entry without id")?;
-        let locked = lock
-            .as_ref()
-            .map(|l| &l["tools"][id])
-            .filter(|v| !v.is_null());
-        let (expected, expected_from) = if let Some(v) = locked.and_then(|l| l["version"].as_str())
-        {
-            (Some(v.to_string()), "lock")
-        } else if let Some(v) = promised.get(id).and_then(|p| p["version"].as_str()) {
-            (Some(v.to_string()), "environment setup")
-        } else if let Some(v) = concrete_pin(&t["pin"]) {
-            (Some(v), "manifest pin")
-        } else {
-            (None, "none")
-        };
-        let toolchains: Vec<String> = locked
-            .and_then(|l| l["toolchains"].as_array())
-            .or_else(|| promised.get(id).and_then(|p| p["toolchains"].as_array()))
-            .map(|a| {
-                a.iter()
-                    .filter_map(|s| s.as_str().map(String::from))
-                    .collect()
-            })
-            .unwrap_or_default();
-
-        let mut rec = Map::new();
-        rec.insert("id".into(), json!(id));
-        rec.insert("role".into(), t["role"].clone());
-        rec.insert("expected_version".into(), json!(expected));
-        rec.insert("expected_from".into(), json!(expected_from));
-        let verify = t["verify"].as_str().unwrap_or("");
-        let version_cmd = t["version"].as_str();
-
-        let outcome: Result<(String, Option<PathBuf>), String> = (|| {
-            if verify.is_empty() {
-                return Err("the manifest entry has no verify command".into());
-            }
-            let runs: Vec<Option<&str>> = if verify.contains("$TOOLCHAIN") {
-                if toolchains.is_empty() {
-                    return Err("verify runs once per toolchain, and neither a lock nor this environment's setup names any".into());
-                }
-                toolchains.iter().map(|s| Some(s.as_str())).collect()
-            } else {
-                vec![None]
-            };
-            let mut text = String::new();
-            for tc in &runs {
-                let r = run(verify, &prefix, *tc, o.timeout);
-                if r.code != Some(0) {
-                    let what = tc.map_or("verify".to_string(), |s| format!("verify for {s}"));
-                    return Err(failure_reason(&what, &r));
-                }
-                text.push_str(&r.output);
-            }
-            if let Some(vc) = version_cmd {
-                let r = run(vc, &prefix, None, o.timeout);
-                if r.code != Some(0) {
-                    return Err(failure_reason("version command", &r));
-                }
-                text = r.output;
-            }
-            Ok((text, entry_point(version_cmd.unwrap_or(verify), &prefix)))
-        })();
-
-        match outcome {
-            Err(reason) => {
-                n_unavail += 1;
-                rec.insert("status".into(), json!("UNAVAILABLE"));
-                rec.insert("reason".into(), json!(reason));
-            }
-            Ok((text, exe)) => {
-                let observed = first_line(&text);
-                rec.insert("observed_version".into(), json!(observed));
-                rec.insert(
-                    "observed_sha256".into(),
-                    json!(exe.as_deref().and_then(sha256_file)),
-                );
-                if let Some(l) = locked {
-                    rec.insert("locked_sha256".into(), l["sha256"].clone());
-                }
-                if !toolchains.is_empty() {
-                    rec.insert("toolchains".into(), json!(toolchains));
-                }
-                match &expected {
-                    Some(v) if !contains_version(&text, v) => {
-                        n_drift += 1;
-                        rec.insert("status".into(), json!("DRIFT"));
-                        rec.insert(
-                            "mismatch".into(),
-                            json!(format!(
-                                "expected {v} ({expected_from}); the check printed: {observed}"
-                            )),
-                        );
-                    }
-                    Some(_) => {
-                        n_present += 1;
-                        rec.insert("status".into(), json!("PRESENT"));
-                    }
-                    None => {
-                        n_present += 1;
-                        rec.insert("status".into(), json!("PRESENT"));
-                        rec.insert("version_check".into(), json!("unchecked: no lock, no environment pin and no concrete manifest pin name a version"));
-                    }
-                }
-            }
-        }
-        tools.push(Value::Object(rec));
+        let rec = tool_record(t, lock.as_ref(), &promised, prefix, o.timeout)?;
+        tally.count(rec["status"].as_str().unwrap_or(""));
+        tools.push(rec);
+    }
+    let env_tools = environment_tool_records(render, prefix, o.timeout);
+    for rec in &env_tools {
+        tally.count(rec["status"].as_str().unwrap_or(""));
     }
 
-    // Items the environment installs that are not toolchain entries.
-    let mut env_tools = Vec::new();
-    for item in render["setup"].as_array().into_iter().flatten() {
-        let Some(cmd) = item["verify"].as_str() else {
-            continue;
-        };
-        let id = item["id"].as_str().unwrap_or("");
-        let r = run(cmd, &prefix, None, o.timeout);
-        let mut rec = json!({"id": id});
-        if r.code != Some(0) {
-            rec["status"] = json!("UNAVAILABLE");
-            rec["reason"] = json!(failure_reason("verify", &r));
-            n_unavail += 1;
-        } else if let Some(v) = item["expect"]
-            .as_str()
-            .filter(|v| !contains_version(&r.output, v))
-        {
-            rec["status"] = json!("DRIFT");
-            rec["mismatch"] = json!(format!("expected {v}; the check printed: {}", r.first_line));
-            n_drift += 1;
-        } else {
-            rec["status"] = json!("PRESENT");
-            rec["observed_version"] = json!(r.first_line);
-            n_present += 1;
-        }
-        env_tools.push(rec);
-    }
-    for item in render["unavailable"].as_array().into_iter().flatten() {
-        n_unavail += 1;
-        env_tools
-            .push(json!({"id": item["id"], "status": "UNAVAILABLE", "reason": item["reason"]}));
-    }
-
-    let measured = match &env["measured"] {
-        Value::Array(a) => a.last().cloned().unwrap_or(Value::Null),
-        Value::Object(m) if m.is_empty() => Value::Null,
-        v => v.clone(),
-    };
     let rec = json!({
         "record_type": {"id": RECORD_TYPE_ID, "profile": "ESTATE-UUID-V8 profile C", "name": RECORD_TYPE_NAME},
         "schema": 1,
@@ -391,7 +467,7 @@ pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
             "id": env_id,
             "detected_by": detected_by,
             "host": {"os": std::env::consts::OS, "arch": std::env::consts::ARCH},
-            "measured": measured,
+            "measured": latest_measured(env),
             "measured_note": "the latest dated probe block recorded in environments.kyaml for this class; doctor does not probe the network",
         },
         "manifests": {
@@ -400,18 +476,11 @@ pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
         },
         "lock": lock_info,
         "setup": read_setup_report(&o.setup_report),
-        "summary": {"present": n_present, "drift": n_drift, "unavailable": n_unavail},
+        "summary": {"present": tally.present, "drift": tally.drift, "unavailable": tally.unavailable},
         "tools": tools,
         "environment_tools": env_tools,
     });
-    let code = if n_drift > 0 {
-        1
-    } else if n_unavail > 0 {
-        3
-    } else {
-        0
-    };
-    Ok((rec, code))
+    Ok((rec, tally.exit_code()))
 }
 
 pub fn text(rec: &Value) -> String {
