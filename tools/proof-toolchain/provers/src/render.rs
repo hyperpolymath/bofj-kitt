@@ -18,7 +18,8 @@ pub const MAX_HOSTS: usize = 20;
 pub type Files = BTreeMap<String, String>;
 
 fn s<'a>(v: &'a Value, k: &str, ctx: &str) -> Result<&'a str, String> {
-    v[k].as_str().ok_or_else(|| format!("{ctx}: missing string field '{k}'"))
+    v[k].as_str()
+        .ok_or_else(|| format!("{ctx}: missing string field '{k}'"))
 }
 
 /// Single-quote for bash; the manifest never needs a quote inside a value.
@@ -30,7 +31,9 @@ fn q(v: &str, ctx: &str) -> Result<String, String> {
 }
 
 fn is_hex64(v: &str) -> bool {
-    v.len() == 64 && v.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+    v.len() == 64
+        && v.bytes()
+            .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
 }
 
 fn is_hostname(h: &str) -> bool {
@@ -38,8 +41,12 @@ fn is_hostname(h: &str) -> bool {
         && h.len() <= 253
         && h.contains('.')
         && h.split('.').all(|l| {
-            !l.is_empty() && l.len() <= 63 && !l.starts_with('-') && !l.ends_with('-')
-                && l.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+            !l.is_empty()
+                && l.len() <= 63
+                && !l.starts_with('-')
+                && !l.ends_with('-')
+                && l.bytes()
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
         })
         && !h.split('.').all(|l| l.bytes().all(|b| b.is_ascii_digit()))
 }
@@ -84,8 +91,16 @@ fn setup_script(class: &str, r: &Value, manifest_sha: &str) -> Result<String, St
          # failure is printed loudly instead of stopping the session from starting.\n"
     ));
     out.push_str(PRELUDE);
-    let hosts: Vec<&str> = r["allowed-hosts"].as_array().into_iter().flatten().filter_map(|h| h["host"].as_str()).collect();
-    for item in r["setup"].as_array().ok_or(format!("{class}: no setup list"))? {
+    let hosts: Vec<&str> = r["allowed-hosts"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|h| h["host"].as_str())
+        .collect();
+    for item in r["setup"]
+        .as_array()
+        .ok_or(format!("{class}: no setup list"))?
+    {
         let id = s(item, "id", class)?;
         let ctx = format!("{class} setup {id}");
         match s(item, "via", &ctx)? {
@@ -114,7 +129,9 @@ fn setup_script(class: &str, r: &Value, manifest_sha: &str) -> Result<String, St
                 }
                 let host = url_host(url).ok_or(format!("{ctx}: url is not https"))?;
                 if !hosts.contains(&host) {
-                    return Err(format!("{ctx}: {host} is not in allowed-hosts, so this download would fail under Limited network"));
+                    return Err(format!(
+                        "{ctx}: {host} is not in allowed-hosts, so this download would fail under Limited network"
+                    ));
                 }
                 let format = s(item, "format", &ctx)?;
                 // Three lines joined by continuations, so a long URL fits the line limit.
@@ -140,7 +157,11 @@ fn setup_script(class: &str, r: &Value, manifest_sha: &str) -> Result<String, St
     for item in r["unavailable"].as_array().into_iter().flatten() {
         let id = s(item, "id", class)?;
         let reason = s(item, "reason", class)?;
-        out.push_str(&format!("rep {} UNAVAILABLE {}\n", q(id, class)?, q(reason, class)?));
+        out.push_str(&format!(
+            "rep {} UNAVAILABLE {}\n",
+            q(id, class)?,
+            q(reason, class)?
+        ));
     }
     out.push_str("exit 0\n");
     check_script(&out)?;
@@ -154,28 +175,51 @@ pub fn check_script(script: &str) -> Result<(), String> {
     }
     let lines: Vec<&str> = script.lines().collect();
     if lines.len() > MAX_LINES {
-        return Err(format!("setup script has {} lines; the limit is {MAX_LINES}", lines.len()));
+        return Err(format!(
+            "setup script has {} lines; the limit is {MAX_LINES}",
+            lines.len()
+        ));
     }
     for (n, l) in lines.iter().enumerate() {
         if l.len() > MAX_LINE_BYTES {
-            return Err(format!("setup script line {} is {} bytes; the limit is {MAX_LINE_BYTES}", n + 1, l.len()));
+            return Err(format!(
+                "setup script line {} is {} bytes; the limit is {MAX_LINE_BYTES}",
+                n + 1,
+                l.len()
+            ));
         }
         if l.contains('\r') || l.chars().any(|c| c.is_control() && c != '\t') {
-            return Err(format!("setup script line {} has a control character", n + 1));
+            return Err(format!(
+                "setup script line {} has a control character",
+                n + 1
+            ));
         }
     }
-    for secret in ["CLAUDE_SIGNING_KEY", "TOKEN", "PASSWORD", "BEGIN OPENSSH", "SECRET"] {
+    for secret in [
+        "CLAUDE_SIGNING_KEY",
+        "TOKEN",
+        "PASSWORD",
+        "BEGIN OPENSSH",
+        "SECRET",
+    ] {
         if script.contains(secret) {
-            return Err(format!("setup script mentions {secret}; secrets never go in a setup script"));
+            return Err(format!(
+                "setup script mentions {secret}; secrets never go in a setup script"
+            ));
         }
     }
     Ok(())
 }
 
 fn allowlist(class: &str, r: &Value, env: &Value) -> Result<String, String> {
-    let hosts = r["allowed-hosts"].as_array().ok_or(format!("{class}: no allowed-hosts list"))?;
+    let hosts = r["allowed-hosts"]
+        .as_array()
+        .ok_or(format!("{class}: no allowed-hosts list"))?;
     if hosts.len() > MAX_HOSTS {
-        return Err(format!("{class}: {} allowed hosts; the limit is {MAX_HOSTS}", hosts.len()));
+        return Err(format!(
+            "{class}: {} allowed hosts; the limit is {MAX_HOSTS}",
+            hosts.len()
+        ));
     }
     let latest = match &env["measured"] {
         Value::Array(a) => a.last().cloned().unwrap_or(Value::Null),
@@ -192,7 +236,9 @@ fn allowlist(class: &str, r: &Value, env: &Value) -> Result<String, String> {
     for h in hosts {
         let host = s(h, "host", class)?;
         if !is_hostname(host) {
-            return Err(format!("{class}: '{host}' is not an exact lowercase host name"));
+            return Err(format!(
+                "{class}: '{host}' is not an exact lowercase host name"
+            ));
         }
         if seen.contains(&host) {
             return Err(format!("{class}: {host} is listed twice"));
@@ -216,12 +262,25 @@ fn allowlist(class: &str, r: &Value, env: &Value) -> Result<String, String> {
 
 fn env_vars(class: &str, r: &Value) -> Result<String, String> {
     let mut out = String::new();
-    for v in r["env-vars"].as_array().ok_or(format!("{class}: no env-vars list"))? {
+    for v in r["env-vars"]
+        .as_array()
+        .ok_or(format!("{class}: no env-vars list"))?
+    {
         let name = s(v, "name", class)?;
-        if name.is_empty() || !name.bytes().all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_') {
-            return Err(format!("{class}: '{name}' is not an environment variable name"));
+        if name.is_empty()
+            || !name
+                .bytes()
+                .all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_')
+        {
+            return Err(format!(
+                "{class}: '{name}' is not an environment variable name"
+            ));
         }
-        let req = if v["required"] == Value::Bool(true) { "required" } else { "optional" };
+        let req = if v["required"] == Value::Bool(true) {
+            "required"
+        } else {
+            "optional"
+        };
         out.push_str(&format!("{name} {req}\n"));
     }
     Ok(out)
@@ -231,16 +290,26 @@ fn env_vars(class: &str, r: &Value) -> Result<String, String> {
 /// relative to tools/environments/rendered/.
 pub fn render_all(ctx: &Ctx) -> Result<Files, String> {
     let manifest_sha = sha256_hex(ctx.environments_src.as_bytes());
-    let blocks = ctx.environments["render"].as_object().ok_or("environments.kyaml: no render block")?;
-    let envs = ctx.environments["environments"].as_array().ok_or("environments.kyaml: no environments list")?;
+    let blocks = ctx.environments["render"]
+        .as_object()
+        .ok_or("environments.kyaml: no render block")?;
+    let envs = ctx.environments["environments"]
+        .as_array()
+        .ok_or("environments.kyaml: no environments list")?;
     let mut files = Files::new();
     for (class, r) in blocks {
         let env = envs
             .iter()
             .find(|e| e["id"] == class.as_str())
             .ok_or(format!("render block for undeclared environment '{class}'"))?;
-        files.insert(format!("{class}/setup.sh"), setup_script(class, r, &manifest_sha)?);
-        files.insert(format!("{class}/allowed-hosts.txt"), allowlist(class, r, env)?);
+        files.insert(
+            format!("{class}/setup.sh"),
+            setup_script(class, r, &manifest_sha)?,
+        );
+        files.insert(
+            format!("{class}/allowed-hosts.txt"),
+            allowlist(class, r, env)?,
+        );
         files.insert(format!("{class}/env-vars.txt"), env_vars(class, r)?);
         // REUSE sidecars, so the pasteable lists carry no header lines.
         for f in ["allowed-hosts.txt", "env-vars.txt"] {
@@ -260,7 +329,16 @@ mod tests {
     #[test]
     fn hostnames_are_exact() {
         assert!(is_hostname("release-assets.githubusercontent.com"));
-        for bad in ["*.github.com", "GitHub.com", "localhost", "10.0.0.1", "a..b", "-a.com", "a.com/x", "a.com:443"] {
+        for bad in [
+            "*.github.com",
+            "GitHub.com",
+            "localhost",
+            "10.0.0.1",
+            "a..b",
+            "-a.com",
+            "a.com/x",
+            "a.com:443",
+        ] {
             assert!(!is_hostname(bad), "accepted {bad}");
         }
     }
