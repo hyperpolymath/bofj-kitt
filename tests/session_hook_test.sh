@@ -34,7 +34,7 @@ hook() {
 # 1. Local session: no signing, record written, UNAVAILABLE legs named.
 out="$(hook env CLAUDE_CODE_REMOTE=false PROVERS_BIN="$engine")" || fail "hook exited non-zero"
 rec="$proj/.session/capability-record.json"
-[ -s "$rec" ] || fail "no capability record written"
+[[ -s "$rec" ]] || fail "no capability record written"
 jq -e '.record_type.id == "5934cd83-73e5-80ab-abf5-f1c0bd3526fd"' "$rec" >/dev/null || fail "record has the wrong type id"
 grep -q "Capability record written" <<<"$out" || fail "hook did not report the record: $out"
 want="$(jq -r '[.tools[], .environment_tools[]] | map(select(.status == "UNAVAILABLE")) | .[0].id' "$rec")"
@@ -45,20 +45,20 @@ grep -q "commit signing" <<<"$out" && fail "hook touched signing outside a cloud
 rm -f "$rec"
 out="$(hook env CLAUDE_CODE_REMOTE=true PROVERS_BIN="$engine")" || fail "hook exited non-zero without signing variables"
 grep -q "commit signing NOT configured: missing environment variable(s): CLAUDE_SIGNING_KEY" <<<"$out" || fail "no loud signing warning: $out"
-[ ! -e "$work/home/.ssh/id_ed25519_signing" ] || fail "a key file was written without a key"
-[ -s "$rec" ] || fail "signing failure stopped the capability record"
+[[ ! -e "$work/home/.ssh/id_ed25519_signing" ]] || fail "a key file was written without a key"
+[[ -s "$rec" ]] || fail "signing failure stopped the capability record"
 
 # 3. A failing doctor: loud, no record, exit 0.
 rm -f "$rec"
 out="$(hook env CLAUDE_CODE_REMOTE=false PROVERS_BIN=/bin/false)" || fail "hook exited non-zero when doctor failed"
 grep -q "capability record NOT written: doctor exited" <<<"$out" || fail "failing doctor not reported: $out"
-[ ! -e "$rec" ] || fail "a failing doctor left a record"
+[[ ! -e "$rec" ]] || fail "a failing doctor left a record"
 
 # 4. A doctor that overruns the budget: loud, no record, exit 0.
 printf '#!/bin/sh\nsleep 30\n' > "$work/slow"; chmod +x "$work/slow"
 out="$(hook env CLAUDE_CODE_REMOTE=false PROVERS_BIN="$work/slow" PROVERS_HOOK_BUDGET=1)" || fail "hook exited non-zero on timeout"
 grep -q "did not finish within 1s" <<<"$out" || fail "timeout not reported: $out"
-[ ! -e "$rec" ] || fail "a timed-out doctor left a record"
+[[ ! -e "$rec" ]] || fail "a timed-out doctor left a record"
 
 # 5. Every signing variable the hook reads is in the rendered env-var names.
 for v in $(grep -o '\${CLAUDE_SIGNING_[A-Z_]*' "$repo_root/.claude/hooks/session-start.sh" | tr -d '${' | sort -u); do

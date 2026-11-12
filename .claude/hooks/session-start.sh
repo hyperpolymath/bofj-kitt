@@ -28,7 +28,8 @@ warn() {
 # --- 1. Commit signing -------------------------------------------------------
 
 signing_warn() {
-  warn "commit signing NOT configured: $1"
+  reason="$1"
+  warn "commit signing NOT configured: $reason"
   printf '%s\n' "!!! Commits from this session will not carry the CLAUDE_SIGNING_KEY signature."
 }
 
