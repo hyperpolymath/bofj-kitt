@@ -14,7 +14,8 @@
 #                       policy (decided per instance; the probe records what it found)
 #   container-runtime   podman | docker | none
 #   report              who reads this environment's capability record
-#   measured            dated probe facts; manual measurements labelled separately
+#   measured            a list of dated probe blocks, one per environment instance
+#                       measured; manual measurements labelled separately
 {
   schema: 1,
   policy: "standards 3-practice/PROOF-POLICY.adoc §6; 3-practice/provisioning/PROVISIONING-STANDARD.adoc",
@@ -22,11 +23,76 @@
   record: {format: "JCS I-JSON", producer: "provers.sh doctor --json (planned)", schema: "verification/proofs/idris2/EnvCapability.idr (planned)"},
   environments: [
     {id: "workstation", kind: "host", installs: ["guix", "mise", "bundle"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: true, container-runtime: "podman", report: ["echidna", "echidnabot", "proof-burrower", "boj-server"], notes: "tools/workstation/env.sh is the live PATH; versions are unrecorded until doctor runs here", measured: {}},
-    {id: "agent-session", kind: "cloud-session", installs: ["bundle", "mise"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: "policy", container-runtime: "none", report: ["session .session/ capture", "boj-server"], notes: "network and execution policy differ per session class; measure, never assume", measured: {date: "2026-11-04", platform: "Ubuntu 24.04.5 x86_64 glibc 2.39", hosts-file: "hosts.txt (24 URLs, every one probed twice: HEAD, then --get with a one-byte ranged GET capped at 64 KiB)", reachable: ["github.com release asset (HEAD 302 to release-assets.githubusercontent.com then 200; GET bytes 0-0 206)", "codeload.github.com (GET range-ignored: answers 200 with the whole archive, capped)", "raw.githubusercontent.com", "opam.ocaml.org", "alire.ada.dev", "hackage.haskell.org", "static.rust-lang.org", "index.crates.io (Cargo's sparse index)", "static.crates.io/crates/just/1.56.0/download (the route Cargo downloads from; GET range-ignored, capped)", "releases.lean-lang.org", "mizar.uwb.edu.pl", "pvs.csl.sri.com", "cvc5.github.io", "downloads.sourceforge.net (SBCL binary)", "ftp.gnu.org", "smt-lib.org", "www.tptp.org (GET range-ignored, capped)"], intermittent: ["isabelle.in.tum.de (HEAD 200; GET 206 on 1 of 4 tries, the rest reset during the TLS handshake, curl exit 35)"], refused: ["github.com release landing page (/releases/latest; HEAD and GET 403)", "api.github.com (HEAD and GET 403)", "crates.io/api (HEAD and GET 403; Cargo does not use it to install)"], registry-answered: ["ghcr.io (HEAD 405, GET 401)", "cgr.dev (HEAD 405, GET 401)"], tls-failed: ["www.cs.utexas.edu (HEAD and GET)"], execute-downloaded: "denied-before-download", execute-downloaded-note: "the 2026-10-27 Z3 install experiment was refused by session policy before any bytes moved; whether a fetched binary would run was not observed. One-byte GETs show asset bytes can flow, not that a full download or a run is permitted. On 2026-11-04 the Mizar distribution was downloaded and inspected with file(1) without being run"}},
+    {id: "agent-session", kind: "cloud-session", installs: ["bundle", "mise"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: "policy", container-runtime: "none", report: ["session .session/ capture", "boj-server"], notes: "network and execution policy differ per session class; measure, never assume", measured: [{date: "2026-11-04", network-policy: "not recorded on the day; not Unrestricted, per the owner (2026-11-12)", platform: "Ubuntu 24.04.5 x86_64 glibc 2.39", hosts-file: "hosts.txt (24 URLs, every one probed twice: HEAD, then --get with a one-byte ranged GET capped at 64 KiB)", reachable: ["github.com release asset (HEAD 302 to release-assets.githubusercontent.com then 200; GET bytes 0-0 206)", "codeload.github.com (GET range-ignored: answers 200 with the whole archive, capped)", "raw.githubusercontent.com", "opam.ocaml.org", "alire.ada.dev", "hackage.haskell.org", "static.rust-lang.org", "index.crates.io (Cargo's sparse index)", "static.crates.io/crates/just/1.56.0/download (the route Cargo downloads from; GET range-ignored, capped)", "releases.lean-lang.org", "mizar.uwb.edu.pl", "pvs.csl.sri.com", "cvc5.github.io", "downloads.sourceforge.net (SBCL binary)", "ftp.gnu.org", "smt-lib.org", "www.tptp.org (GET range-ignored, capped)"], intermittent: ["isabelle.in.tum.de (HEAD 200; GET 206 on 1 of 4 tries, the rest reset during the TLS handshake, curl exit 35)"], refused: ["github.com release landing page (/releases/latest; HEAD and GET 403)", "api.github.com (HEAD and GET 403)", "crates.io/api (HEAD and GET 403; Cargo does not use it to install)"], registry-answered: ["ghcr.io (HEAD 405, GET 401)", "cgr.dev (HEAD 405, GET 401)"], tls-failed: ["www.cs.utexas.edu (HEAD and GET)"], execute-downloaded: "denied-before-download", execute-downloaded-note: "the 2026-10-27 Z3 install experiment was refused by session policy before any bytes moved; whether a fetched binary would run was not observed. One-byte GETs show asset bytes can flow, not that a full download or a run is permitted. On 2026-11-04 the Mizar distribution was downloaded and inspected with file(1) without being run"}, {date: "2026-11-12", network-policy: "Unrestricted (the owner's Default environment; the 2026-11-04 block was taken under a narrower policy)", platform: "Ubuntu 24.04.5 x86_64 glibc 2.39, curl 8.5.0", hosts-file: "hosts.txt at 4d7adbd (24 URLs, each probed once with HEAD at 18:39:58Z and once with --get at 18:40:09Z)", reachable: ["github.com release asset (HEAD 200 after redirects; GET 206)", "codeload.github.com (GET range-ignored, capped)", "raw.githubusercontent.com", "opam.ocaml.org", "alire.ada.dev", "hackage.haskell.org", "static.rust-lang.org", "index.crates.io", "static.crates.io/crates/just/1.56.0/download (GET range-ignored, capped)", "releases.lean-lang.org", "ftp.gnu.org (GET 200: range ignored, body under the cap)", "bordeaux.guix.gnu.org and ci.guix.gnu.org (nix-cache-info; HEAD and GET 200, probed separately at 18:44Z and added to hosts.txt after the main run)", "release-assets.githubusercontent.com (the redirect target of every release download probed; traced with curl -I -L)", "isabelle.in.tum.de (HEAD 200, GET 206 on the one try made)", "mizar.uwb.edu.pl", "pvs.csl.sri.com", "cvc5.github.io", "downloads.sourceforge.net (SBCL binary)", "smt-lib.org", "www.tptp.org (GET range-ignored, capped)"], refused: ["github.com release landing page (/releases/latest; HEAD and GET 403)", "api.github.com (HEAD and GET 403)", "crates.io/api (HEAD and GET 403)"], registry-answered: ["ghcr.io (HEAD 405, GET 401)", "cgr.dev (HEAD 405, GET 401)"], tls-failed: ["www.cs.utexas.edu (HEAD and GET)"], reading: "Unrestricted does not mean every path answers: the agent proxy still refused the three discovery paths it refused on 2026-11-04, so the lock must keep carrying concrete asset URLs. Isabelle answered GET once here; one try does not clear its 2026-11-04 intermittency", execute-downloaded-note: "no download-and-run attempt was made on 2026-11-12, so execute-downloaded is not recorded for this instance"}]},
     {id: "ci-runner", kind: "ci-runner", installs: ["bundle", "guix", "image"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: true, container-runtime: "podman", report: ["workflow summary", "echidnabot"], notes: "full network, limited minutes: a cold opam build is not acceptable here", measured: {}},
     {id: "devcontainer", kind: "container", installs: ["image", "bundle"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: true, container-runtime: "none", report: ["doctor on attach"], notes: ".devcontainer/Containerfile (Wolfi) names no prover today", measured: {}},
     {id: "guix-shell", kind: "guix-shell", installs: ["guix"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: false, container-runtime: "none", report: ["doctor"], notes: "primary packager (ruling 2026-05-18); the bundle covers only the tail Guix does not carry", measured: {}},
     {id: "sealed-container", kind: "container", installs: ["image"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: false, container-runtime: "podman", report: ["echidna dispatcher"], notes: "echidna .containerization/Containerfile.wave3 pattern; licensed or not-in-Guix provers live here", measured: {}},
     {id: "boj-registered", kind: "remote", installs: ["none"], prefix: "", execute-downloaded: false, container-runtime: "none", report: ["boj-server"], notes: "not an environment the kit provisions: the view a BoJ server holds of any of the above after registration (groove.a2ml capabilities)", measured: {}},
   ],
+  # What `provers.sh render` projects for an environment class whose
+  # settings live outside any repository (E3). One block per class id.
+  #   setup          what the class's setup script preinstalls, in order. Owner
+  #                  decision 2026-11-12: whatever is always needed is already
+  #                  installed when the session starts; the session hook only
+  #                  runs doctor and never installs. via "apt" pins an exact
+  #                  archive version (apt checks it against the signed index);
+  #                  via "asset" pins a URL and its SHA-256. `provides` names the
+  #                  toolchain.kyaml entry an item satisfies and the version
+  #                  doctor expects of it here. `verify` (no provides) is the
+  #                  command doctor runs for an item outside the toolchain.
+  #   unavailable    always-needed tools with no pinned release to install
+  #                  yet; the setup script reports each one, loudly.
+  #   allowed-hosts  the Limited-network allowlist: exact host names, at most
+  #                  20, package registries (apt, crates, npm, PyPI) assumed
+  #                  allowed. Each must be reachable in this class's latest
+  #                  measured block, or say why not under `unmeasured`.
+  #   env-vars       the variable NAMES sessions need; values never live here.
+  render: {
+    agent-session: {
+      setup: [
+        {id: "openssh-client", via: "apt", package: "openssh-client", version: "1:9.6p1-3ubuntu13.20", verify: "ssh -V", why: "ssh-keygen, which git needs to sign commits (session hook)"},
+        {id: "zstd", via: "apt", package: "zstd", version: "1.5.5+dfsg2-2build1.1", verify: "zstd --version", why: "unpacks the Lean toolchain asset"},
+        {id: "just", via: "asset", url: "https://github.com/casey/just/releases/download/1.56.0/just-1.56.0-x86_64-unknown-linux-musl.tar.gz", sha256: "fa2a8ec1015d9df5330941ade12437488fc40d33f9c9f8cd4eb70a26de11b639", format: "tar.gz", member: "just", dest: "/usr/local/bin/just", verify: "just --version", expect: "1.56.0", why: "the estate's recipe runner"},
+        {id: "agda", via: "apt", package: "agda-bin", version: "2.6.3-1build1", link: {from: "/usr/bin/agda", to: "/usr/local/bin/agda-2.6.3"}, provides: {tool: "agda-2.6.3", version: "2.6.3"}, why: "theory-source prover (agda-bin ships /usr/bin/agda, checked with dpkg -c; it depends on libghc-agda-dev). The link gives it the wrapper name toolchain.kyaml verifies. Ubuntu ships stdlib 1.7.3, not the v2.3 and v2.1 the manifest pins, so those stay UNAVAILABLE"},
+        {id: "coq", via: "apt", package: "coq", version: "8.18.0+dfsg-1build2", provides: {tool: "rocq", version: "8.18.0"}, why: "recheck prover (ships /usr/bin/coqc, checked with dpkg -c)"},
+        {id: "elan", via: "apt", package: "elan", version: "3.1.0-1ubuntu0.1", verify: "elan --version", expect: "3.1.0", why: "Lean toolchain manager"},
+        {id: "lean-4.13.0", via: "asset", url: "https://github.com/leanprover/lean4/releases/download/v4.13.0/lean-4.13.0-linux.tar.zst", sha256: "44ceeac7ee4c98d177bfb4a3e5c210555c87e75b08807b68d523237fe4f09997", format: "tar.zst", dest: "/root/.elan/toolchains/leanprover--lean4---v4.13.0", provides: {tool: "lean", version: "4.13.0", toolchains: ["leanprover/lean4:v4.13.0"]}, why: "the toolchain echidna's proofs pin; other consumers pin 4.15 to 4.35 and fetch through elan"},
+        {id: "z3", via: "apt", package: "z3", version: "4.8.12-3.1build1", provides: {tool: "z3", version: "4.8.12"}, why: "SMT backend in echidna's core"},
+        {id: "cvc5", via: "apt", package: "cvc5", version: "1.1.2-1build1", provides: {tool: "cvc5", version: "1.1.2"}, why: "SMT backend in echidna's core"},
+        {id: "podman", via: "apt", package: "podman", version: "4.9.3+ds1-1ubuntu0.2", verify: "podman --version", expect: "4.9.3", why: "container runtime; whether it can run a container inside a session is unmeasured"},
+        {id: "guix", via: "apt", package: "guix", version: "1.4.0-6build1", verify: "guix --version", expect: "1.4.0", why: "the estate's primary packager; the daemon is not started, so guix shell is unmeasured"},
+      ],
+      unavailable: [
+        {id: "kyq", reason: "metadatastician/kyq has no pinned release that passes its positive and negative tests"},
+        {id: "deed", reason: "no pinned deed tool release is published"},
+        {id: "k9", reason: "no pinned k9-coordination tool release is published"},
+      ],
+      allowed-hosts: [
+        {host: "github.com", why: "the owner's repositories; release asset downloads"},
+        {host: "release-assets.githubusercontent.com", why: "where github.com release downloads redirect (measured 2026-11-12)"},
+        {host: "codeload.github.com", why: "source archives"},
+        {host: "raw.githubusercontent.com", why: "raw files, including consumers' lean-toolchain pins"},
+        {host: "api.github.com", why: "the gh CLI", unmeasured: "the probe only requests an unauthenticated release path, which the proxy refuses; authenticated gh calls were seen to work on 2026-11-12 but are not a probe result"},
+        {host: "opam.ocaml.org", why: "Rocq, Why3, Dedukti, Lambdapi, HOL Light, Alt-Ergo"},
+        {host: "hackage.haskell.org", why: "Agda and Agda2Dedukti builds"},
+        {host: "releases.lean-lang.org", why: "Lean releases"},
+        {host: "static.rust-lang.org", why: "rustup toolchains for Creusot, Kani and Verus"},
+        {host: "ftp.gnu.org", why: "Guix releases"},
+        {host: "bordeaux.guix.gnu.org", why: "Guix substitutes"},
+        {host: "ci.guix.gnu.org", why: "Guix substitutes"},
+        {host: "isabelle.in.tum.de", why: "Isabelle"},
+        {host: "mizar.uwb.edu.pl", why: "Mizar and its MML"},
+        {host: "pvs.csl.sri.com", why: "PVS"},
+        {host: "alire.ada.dev", why: "Alire, for SPARK and gnatprove"},
+        {host: "ghcr.io", why: "estate container images"},
+      ],
+      env-vars: [
+        {name: "CLAUDE_SIGNING_KEY", required: true, why: "commit signing key read by .claude/hooks/session-start.sh; a secret held as a variable, see docs/proposals/short-lived-signing-certificates.adoc"},
+        {name: "CLAUDE_SIGNING_NAME", required: true, why: "git user.name for signed commits"},
+        {name: "CLAUDE_SIGNING_EMAIL", required: true, why: "git user.email and the allowed_signers principal"},
+        {name: "BOJ_SERVER_URL", required: false, why: "BoJ registration and the boj-build workflow; unset means no registration"},
+      ],
+    },
+  },
 }

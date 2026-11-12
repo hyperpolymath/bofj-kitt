@@ -1,0 +1,123 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Environment capability record, schema 1
+:toc:
+
+The one machine-readable answer to "which provers does this environment
+have" (proposal E2, `docs/proposals/environment-of-environments.adoc`).
+`provers.sh doctor --json` is its only producer. echidna, echidnabot,
+proof-burrower, the BoJ server and `proof-check-*` are its consumers.
+
+== Encoding
+
+One JSON object, JCS-canonical (RFC 8785) and valid I-JSON (RFC 7493),
+written through `hyperpolymath/ijson-jcs` at a pinned revision, followed by
+exactly one line feed. Integers only; no floating-point values occur.
+
+== Fields
+
+[cols="2,1,4",options="header"]
+|===
+|Field |Type |Meaning
+
+|`record_type.id` |string
+|`5934cd83-73e5-80ab-abf5-f1c0bd3526fd`: an ADR-008 profile C UUIDv8 of
+`record_type.name`. A consumer matches on the id.
+
+|`record_type.name` |string |`bofj-kitt.record-type:env-capability`
+|`record_type.profile` |string |`ESTATE-UUID-V8 profile C`
+|`schema` |integer |`1`. A consumer refuses a schema it does not know.
+|`producer` |string |`provers doctor <version>`
+|`observed_at` |string |RFC 3339 UTC time the checks ran, to the second.
+
+|`environment.id` |string
+|An `environments.kyaml` id. Chosen by `--env`, else `agent-session` when
+`CLAUDE_CODE_REMOTE=true`, `ci-runner` when `GITHUB_ACTIONS=true`,
+`workstation` otherwise.
+
+|`environment.detected_by` |string |Which of those rules chose the id.
+|`environment.host` |object |`os` and `arch` of the running engine.
+
+|`environment.measured` |object or null
+|The latest dated `measured` block recorded for the class. Copied from the
+manifest; doctor does not probe the network.
+
+|`manifests.toolchain_sha256`, `manifests.environments_sha256` |string
+|SHA-256 of the two manifests as read.
+
+|`lock` |object
+|`present`; `sha256` of `toolchain.lock.json` when present; `reason` when
+absent.
+
+|`setup` |object
+|The class's setup report (`/var/lib/bofj-kitt/setup-report.tsv`, written
+by the rendered setup script): `present`, and `items` of `id`, `status`
+(`PRESENT`, `INSTALLED`, `FAILED`, `UNAVAILABLE`) and `detail`; or
+`present: false` with a `reason`.
+
+|`summary` |object
+|Counts of `present`, `drift` and `unavailable` over `tools` and
+`environment_tools`.
+
+|`tools` |array
+|*Exactly one entry per `toolchain.kyaml` tool, in manifest order.*
+
+|`environment_tools` |array
+|Entries for the class's setup items that are not toolchain tools (they
+carry their own `verify`), and for its declared `unavailable` items.
+|===
+
+=== A tool entry
+
+[cols="2,4",options="header"]
+|===
+|Field |Meaning
+
+|`id`, `role` |From the manifest.
+|`status` |`PRESENT`, `DRIFT` or `UNAVAILABLE`. The vocabulary is closed.
+
+|`expected_version`, `expected_from`
+|The version the tool must report and where it came from: `lock`, then
+`environment setup` (the class's `provides`), then `manifest pin` (a
+concrete pin), else `none` with a null version.
+
+|`reason` |`UNAVAILABLE` only: why the check did not pass. Never empty.
+
+|`observed_version`
+|The first meaningful line the check printed (home paths shown as `~`).
+
+|`observed_sha256`
+|SHA-256 of the executable the check starts, when it names one directly;
+otherwise null.
+
+|`locked_sha256` |From the lock, when there is one.
+|`mismatch` |`DRIFT` only: the expected version and what was printed.
+
+|`version_check`
+|Present when no expected version exists, saying the version was observed
+but not checked.
+
+|`toolchains` |The toolchains a `$TOOLCHAIN` check ran against.
+|===
+
+== Rules
+
+* A tool whose check did not run, failed, or timed out is `UNAVAILABLE`
+  with a reason. It is never `PRESENT` (PROOF-POLICY §6).
+* `PRESENT` means the check exited 0 and, when an expected version exists,
+  its output contains that version as a whole token. With no expected
+  version it means "ran", and `version_check` says so.
+* `DRIFT` means the check ran and printed a different version.
+* doctor exits 0 when everything is `PRESENT`, 1 on any `DRIFT`, 3 when
+  something is `UNAVAILABLE` and nothing drifted, 2 on a usage or manifest
+  error.
+
+== Not yet
+
+* The Idris2 type under `verification/proofs/idris2/` that the proposal's
+  formal route calls for (closed status vocabulary, I-JSON round trip,
+  totality over the manifest). Until it exists, the engine's unit tests
+  check the same three properties and are the `TESTED` stand-in.
+* A deed form of the record (the proposal specifies the record against
+  the deed). The deed tool has no pinned release.
+* Registration of the profile C domain `bofj-kitt.record-type` with the
+  estate (ADR-008 requires registered domains).

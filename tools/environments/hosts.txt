@@ -29,6 +29,9 @@ https://index.crates.io/ju/st/just
 https://static.crates.io/crates/just/1.56.0/download
 https://releases.lean-lang.org/
 https://ftp.gnu.org/gnu/guix/
+# Guix substitute servers (binary caches)
+https://bordeaux.guix.gnu.org/nix-cache-info
+https://ci.guix.gnu.org/nix-cache-info
 
 # Prover homes with their own downloads
 https://isabelle.in.tum.de/
