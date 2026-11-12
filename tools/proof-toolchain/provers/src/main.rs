@@ -97,6 +97,108 @@ fn usage() -> ExitCode {
     ExitCode::from(2)
 }
 
+fn fail(context: &str, e: impl std::fmt::Display) -> ExitCode {
+    eprintln!("{context}: {e}");
+    ExitCode::from(2)
+}
+
+/// Parse doctor's options; None means a usage error.
+fn doctor_opts(rest: &[String]) -> Option<(doctor::Opts, bool)> {
+    let mut json = false;
+    let mut o = doctor::Opts {
+        env: None,
+        timeout: Duration::from_secs(20),
+        setup_report: PathBuf::from(
+            std::env::var("PROVERS_SETUP_REPORT")
+                .unwrap_or_else(|_| "/var/lib/bofj-kitt/setup-report.tsv".into()),
+        ),
+    };
+    let mut it = rest.iter();
+    while let Some(a) = it.next() {
+        match a.as_str() {
+            "--json" => json = true,
+            "--env" => o.env = Some(it.next()?.clone()),
+            "--timeout" => o.timeout = Duration::from_secs(it.next()?.parse().ok()?),
+            "--setup-report" => o.setup_report = PathBuf::from(it.next()?),
+            _ => return None,
+        }
+    }
+    Some((o, json))
+}
+
+fn cmd_doctor(ctx: &Ctx, rest: &[String]) -> ExitCode {
+    let Some((o, json)) = doctor_opts(rest) else {
+        return usage();
+    };
+    let (rec, code) = match doctor::record(ctx, &o) {
+        Ok(r) => r,
+        Err(e) => return fail("provers doctor", e),
+    };
+    if json {
+        match jcs_line(&rec) {
+            Ok(s) => print!("{s}"),
+            Err(e) => return fail("provers", e),
+        }
+    } else {
+        print!("{}", doctor::text(&rec));
+    }
+    ExitCode::from(code as u8)
+}
+
+fn write_rendered(p: &Path, body: &str) -> Result<(), String> {
+    if let Some(d) = p.parent() {
+        std::fs::create_dir_all(d).map_err(|e| format!("{}: {e}", d.display()))?;
+    }
+    std::fs::write(p, body).map_err(|e| format!("{}: {e}", p.display()))
+}
+
+fn cmd_render(ctx: &Ctx, rest: &[String]) -> ExitCode {
+    let mut check = false;
+    let mut out = ctx.root.join("tools/environments/rendered");
+    let mut it = rest.iter();
+    while let Some(a) = it.next() {
+        match (a.as_str(), it.clone().next()) {
+            ("--check", _) => check = true,
+            ("--out", Some(v)) => {
+                out = PathBuf::from(v);
+                it.next();
+            }
+            _ => return usage(),
+        }
+    }
+    let files = match render::render_all(ctx) {
+        Ok(f) => f,
+        Err(e) => return fail("provers render", e),
+    };
+    if !check {
+        for (rel, body) in &files {
+            let p = out.join(rel);
+            if let Err(e) = write_rendered(&p, body) {
+                return fail("provers render", e);
+            }
+            println!("rendered {}", p.display());
+        }
+        return ExitCode::SUCCESS;
+    }
+    let drifted: Vec<PathBuf> = files
+        .iter()
+        .map(|(rel, body)| (out.join(rel), body))
+        .filter(|(p, body)| std::fs::read_to_string(p).ok().as_deref() != Some(body.as_str()))
+        .map(|(p, _)| p)
+        .collect();
+    for p in &drifted {
+        eprintln!(
+            "DRIFT {}: differs from what the manifests render; run provers.sh render",
+            p.display()
+        );
+    }
+    if !drifted.is_empty() {
+        return ExitCode::from(1);
+    }
+    println!("render --check: {} files match the manifests", files.len());
+    ExitCode::SUCCESS
+}
+
 fn main() -> ExitCode {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
     let mut root = PathBuf::from(".");
@@ -110,125 +212,13 @@ fn main() -> ExitCode {
     let Some(cmd) = args.first().cloned() else {
         return usage();
     };
-    let rest = &args[1..];
     let ctx = match load(&root) {
         Ok(c) => c,
-        Err(e) => {
-            eprintln!("provers: {e}");
-            return ExitCode::from(2);
-        }
+        Err(e) => return fail("provers", e),
     };
     match cmd.as_str() {
-        "doctor" => {
-            let mut json = false;
-            let mut o = doctor::Opts {
-                env: None,
-                timeout: Duration::from_secs(20),
-                setup_report: PathBuf::from(
-                    std::env::var("PROVERS_SETUP_REPORT")
-                        .unwrap_or_else(|_| "/var/lib/bofj-kitt/setup-report.tsv".into()),
-                ),
-            };
-            let mut it = rest.iter();
-            while let Some(a) = it.next() {
-                match a.as_str() {
-                    "--json" => json = true,
-                    "--env" => match it.next() {
-                        Some(v) => o.env = Some(v.clone()),
-                        None => return usage(),
-                    },
-                    "--timeout" => match it.next().and_then(|v| v.parse().ok()) {
-                        Some(n) => o.timeout = Duration::from_secs(n),
-                        None => return usage(),
-                    },
-                    "--setup-report" => match it.next() {
-                        Some(v) => o.setup_report = PathBuf::from(v),
-                        None => return usage(),
-                    },
-                    _ => return usage(),
-                }
-            }
-            match doctor::record(&ctx, &o) {
-                Ok((rec, code)) => {
-                    if json {
-                        match jcs_line(&rec) {
-                            Ok(s) => print!("{s}"),
-                            Err(e) => {
-                                eprintln!("provers: {e}");
-                                return ExitCode::from(2);
-                            }
-                        }
-                    } else {
-                        print!("{}", doctor::text(&rec));
-                    }
-                    ExitCode::from(code as u8)
-                }
-                Err(e) => {
-                    eprintln!("provers doctor: {e}");
-                    ExitCode::from(2)
-                }
-            }
-        }
-        "render" => {
-            let mut check = false;
-            let mut out = root.join("tools/environments/rendered");
-            let mut it = rest.iter();
-            while let Some(a) = it.next() {
-                match a.as_str() {
-                    "--check" => check = true,
-                    "--out" => match it.next() {
-                        Some(v) => out = PathBuf::from(v),
-                        None => return usage(),
-                    },
-                    _ => return usage(),
-                }
-            }
-            let files = match render::render_all(&ctx) {
-                Ok(f) => f,
-                Err(e) => {
-                    eprintln!("provers render: {e}");
-                    return ExitCode::from(2);
-                }
-            };
-            let mut drift = 0;
-            for (rel, body) in &files {
-                let p = out.join(rel);
-                if check {
-                    if std::fs::read_to_string(&p).ok().as_deref() != Some(body.as_str()) {
-                        eprintln!(
-                            "DRIFT {}: differs from what the manifests render; run provers.sh render",
-                            p.display()
-                        );
-                        drift += 1;
-                    }
-                } else {
-                    if let Some(d) = p.parent() {
-                        if let Err(e) = std::fs::create_dir_all(d) {
-                            eprintln!("provers render: {}: {e}", d.display());
-                            return ExitCode::from(2);
-                        }
-                    }
-                    if let Err(e) = std::fs::write(&p, body) {
-                        eprintln!("provers render: {}: {e}", p.display());
-                        return ExitCode::from(2);
-                    }
-                    #[cfg(unix)]
-                    if rel.ends_with(".sh") {
-                        use std::os::unix::fs::PermissionsExt;
-                        let _ =
-                            std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755));
-                    }
-                    println!("rendered {}", p.display());
-                }
-            }
-            if check {
-                if drift > 0 {
-                    return ExitCode::from(1);
-                }
-                println!("render --check: {} files match the manifests", files.len());
-            }
-            ExitCode::SUCCESS
-        }
+        "doctor" => cmd_doctor(&ctx, &args[1..]),
+        "render" => cmd_render(&ctx, &args[1..]),
         _ => usage(),
     }
 }
