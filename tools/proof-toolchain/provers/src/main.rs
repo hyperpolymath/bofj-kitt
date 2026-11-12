@@ -30,7 +30,10 @@ pub struct Ctx {
 }
 
 pub fn sha256_hex(b: &[u8]) -> String {
-    Sha256::digest(b).iter().map(|x| format!("{x:02x}")).collect()
+    Sha256::digest(b)
+        .iter()
+        .map(|x| format!("{x:02x}"))
+        .collect()
 }
 
 pub fn sha256_file(p: &Path) -> Option<String> {
@@ -54,7 +57,12 @@ pub fn utc_now() -> String {
     let d = doy - (153 * mp + 2) / 5 + 1;
     let m = if mp < 10 { mp + 3 } else { mp - 9 };
     let y = yoe + era * 400 + i64::from(m <= 2);
-    format!("{y:04}-{m:02}-{d:02}T{:02}:{:02}:{:02}Z", rem / 3600, rem % 3600 / 60, rem % 60)
+    format!(
+        "{y:04}-{m:02}-{d:02}T{:02}:{:02}:{:02}Z",
+        rem / 3600,
+        rem % 3600 / 60,
+        rem % 60
+    )
 }
 
 fn load(root: &Path) -> Result<Ctx, String> {
@@ -66,7 +74,13 @@ fn load(root: &Path) -> Result<Ctx, String> {
     };
     let (toolchain_src, toolchain) = read("tools/proof-toolchain/toolchain.kyaml")?;
     let (environments_src, environments) = read("tools/environments/environments.kyaml")?;
-    Ok(Ctx { root: root.to_path_buf(), toolchain, toolchain_src, environments, environments_src })
+    Ok(Ctx {
+        root: root.to_path_buf(),
+        toolchain,
+        toolchain_src,
+        environments,
+        environments_src,
+    })
 }
 
 /// JCS bytes of the record plus the one final newline estate files carry.
@@ -93,7 +107,9 @@ fn main() -> ExitCode {
         root = PathBuf::from(args.remove(1));
         args.remove(0);
     }
-    let Some(cmd) = args.first().cloned() else { return usage() };
+    let Some(cmd) = args.first().cloned() else {
+        return usage();
+    };
     let rest = &args[1..];
     let ctx = match load(&root) {
         Ok(c) => c,
@@ -109,7 +125,8 @@ fn main() -> ExitCode {
                 env: None,
                 timeout: Duration::from_secs(20),
                 setup_report: PathBuf::from(
-                    std::env::var("PROVERS_SETUP_REPORT").unwrap_or_else(|_| "/var/lib/bofj-kitt/setup-report.tsv".into()),
+                    std::env::var("PROVERS_SETUP_REPORT")
+                        .unwrap_or_else(|_| "/var/lib/bofj-kitt/setup-report.tsv".into()),
                 ),
             };
             let mut it = rest.iter();
@@ -178,7 +195,10 @@ fn main() -> ExitCode {
                 let p = out.join(rel);
                 if check {
                     if std::fs::read_to_string(&p).ok().as_deref() != Some(body.as_str()) {
-                        eprintln!("DRIFT {}: differs from what the manifests render; run provers.sh render", p.display());
+                        eprintln!(
+                            "DRIFT {}: differs from what the manifests render; run provers.sh render",
+                            p.display()
+                        );
                         drift += 1;
                     }
                 } else {
@@ -195,7 +215,8 @@ fn main() -> ExitCode {
                     #[cfg(unix)]
                     if rel.ends_with(".sh") {
                         use std::os::unix::fs::PermissionsExt;
-                        let _ = std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755));
+                        let _ =
+                            std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755));
                     }
                     println!("rendered {}", p.display());
                 }
@@ -236,18 +257,38 @@ mod tests {
             setup_report: PathBuf::from("/nonexistent/setup-report.tsv"),
         };
         let (rec, _) = doctor::record(&c, &o).unwrap();
-        let ids: Vec<&str> = c.toolchain["tools"].as_array().unwrap().iter().map(|t| t["id"].as_str().unwrap()).collect();
-        let got: Vec<&str> = rec["tools"].as_array().unwrap().iter().map(|t| t["id"].as_str().unwrap()).collect();
+        let ids: Vec<&str> = c.toolchain["tools"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|t| t["id"].as_str().unwrap())
+            .collect();
+        let got: Vec<&str> = rec["tools"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|t| t["id"].as_str().unwrap())
+            .collect();
         assert_eq!(ids, got, "every manifest entry exactly once, in order");
-        for t in rec["tools"].as_array().unwrap().iter().chain(rec["environment_tools"].as_array().unwrap()) {
+        for t in rec["tools"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .chain(rec["environment_tools"].as_array().unwrap())
+        {
             let st = t["status"].as_str().unwrap();
             assert!(doctor::STATUSES.contains(&st));
             if st == "UNAVAILABLE" {
-                assert!(t["reason"].as_str().is_some_and(|r| !r.is_empty()), "UNAVAILABLE without a reason");
+                assert!(
+                    t["reason"].as_str().is_some_and(|r| !r.is_empty()),
+                    "UNAVAILABLE without a reason"
+                );
             }
         }
         let line = jcs_line(&rec).unwrap();
-        let back = ijson_jcs::parse_json(line.trim_end_matches('\n'), ijson_jcs::JsonMode::Canonical).unwrap();
+        let back =
+            ijson_jcs::parse_json(line.trim_end_matches('\n'), ijson_jcs::JsonMode::Canonical)
+                .unwrap();
         assert_eq!(jcs_line(&back).unwrap(), line, "JCS round trip");
         assert_eq!(rec["setup"]["present"], false);
     }
@@ -259,7 +300,10 @@ mod tests {
         for (rel, body) in files {
             let p = c.root.join("tools/environments/rendered").join(&rel);
             let committed = std::fs::read_to_string(&p).unwrap_or_default();
-            assert_eq!(committed, body, "{rel} drifted; run tools/proof-toolchain/provers.sh render");
+            assert_eq!(
+                committed, body,
+                "{rel} drifted; run tools/proof-toolchain/provers.sh render"
+            );
         }
     }
 }

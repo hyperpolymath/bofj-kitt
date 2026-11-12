@@ -30,7 +30,10 @@ struct P<'a> {
 }
 
 pub fn parse(src: &str) -> Result<Value, Error> {
-    let mut p = P { s: src.as_bytes(), i: 0 };
+    let mut p = P {
+        s: src.as_bytes(),
+        i: 0,
+    };
     p.ws();
     let v = p.value()?;
     p.ws();
@@ -45,7 +48,11 @@ impl P<'_> {
         let before = &self.s[..self.i.min(self.s.len())];
         let line = before.iter().filter(|&&b| b == b'\n').count() + 1;
         let col = before.iter().rev().take_while(|&&b| b != b'\n').count() + 1;
-        Error { line, col, msg: msg.to_string() }
+        Error {
+            line,
+            col,
+            msg: msg.to_string(),
+        }
     }
 
     fn peek(&self) -> Option<u8> {
@@ -97,7 +104,11 @@ impl P<'_> {
                 self.i += 1;
                 return Ok(Value::Object(m));
             }
-            let key = if self.peek() == Some(b'"') { self.string()? } else { self.bare_key()? };
+            let key = if self.peek() == Some(b'"') {
+                self.string()?
+            } else {
+                self.bare_key()?
+            };
             self.ws();
             self.expect(b':')?;
             self.ws();
@@ -168,7 +179,7 @@ impl P<'_> {
         let digits = tok.strip_prefix('-').unwrap_or(tok);
         if !digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit()) {
             if let Ok(n) = tok.parse::<i64>() {
-                if n.unsigned_abs() <= (1u64 << 53) - 1 {
+                if n.unsigned_abs() < (1u64 << 53) {
                     return Ok(Value::Number(Number::from(n)));
                 }
             }
@@ -217,7 +228,10 @@ impl P<'_> {
     }
 
     fn hex4(&mut self) -> Result<u32, Error> {
-        let h = self.s.get(self.i..self.i + 4).ok_or_else(|| self.err("short \\u escape"))?;
+        let h = self
+            .s
+            .get(self.i..self.i + 4)
+            .ok_or_else(|| self.err("short \\u escape"))?;
         let v = u32::from_str_radix(std::str::from_utf8(h).unwrap_or("x"), 16)
             .map_err(|_| self.err("bad \\u escape"))?;
         self.i += 4;
@@ -248,7 +262,8 @@ mod tests {
 
     #[test]
     fn accepts_the_subset() {
-        let v = parse("# c\n{a: 1, b-c: \"x\\u00e9\", d: [true, null, -2,], \"e f\": {},}\n").unwrap();
+        let v =
+            parse("# c\n{a: 1, b-c: \"x\\u00e9\", d: [true, null, -2,], \"e f\": {},}\n").unwrap();
         assert_eq!(v["a"], 1);
         assert_eq!(v["b-c"], "x\u{e9}");
         assert_eq!(v["d"][2], -2);
@@ -258,13 +273,13 @@ mod tests {
     #[test]
     fn rejects_what_it_does_not_know() {
         for bad in [
-            "{a: b}",          // unquoted string
-            "{a: 1, a: 2}",    // duplicate key
-            "{a: 1.5}",        // floats are not in the subset
-            "{a: \"x\\q\"}",   // unknown escape
-            "{a: \"\\ud800\"}", // lone surrogate
-            "{a: 1} x",        // trailing content
-            "a: 1",            // block style
+            "{a: b}",                // unquoted string
+            "{a: 1, a: 2}",          // duplicate key
+            "{a: 1.5}",              // floats are not in the subset
+            "{a: \"x\\q\"}",         // unknown escape
+            "{a: \"\\ud800\"}",      // lone surrogate
+            "{a: 1} x",              // trailing content
+            "a: 1",                  // block style
             "{a: 9007199254740992}", // beyond I-JSON integers
         ] {
             assert!(parse(bad).is_err(), "accepted {bad}");
@@ -274,7 +289,10 @@ mod tests {
     #[test]
     fn reads_the_committed_manifests() {
         let root = env!("CARGO_MANIFEST_DIR");
-        for f in ["../toolchain.kyaml", "../../environments/environments.kyaml"] {
+        for f in [
+            "../toolchain.kyaml",
+            "../../environments/environments.kyaml",
+        ] {
             let src = std::fs::read_to_string(format!("{root}/{f}")).unwrap();
             parse(&src).unwrap_or_else(|e| panic!("{f}: {e}"));
         }
