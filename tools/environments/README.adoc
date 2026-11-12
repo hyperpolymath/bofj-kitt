@@ -21,7 +21,8 @@ who reads its capability record, and a `measured` block.
 for the first byte only, capped at 64 KiB when the server ignores the
 range) and prints the HTTP status this environment saw, as text or as one
 JSON object. Keeps no body, executes nothing. Its output is what goes
-into an entry's `measured` block, with the date.
+into one dated block in an entry's `measured` list: one block per
+environment instance probed, never merged with another instance's.
 `tests/probe_reachability_test.sh` checks it offline with stub `curl` and
 `ldd` executables.
 
