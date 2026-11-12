@@ -48,6 +48,9 @@ jobs:
       - name: Rendered setup script helpers (stub apt and curl)
         run: bash tests/setup_script_test.sh
 
+      - name: SessionStart hook (signing and capability record, E4)
+        run: bash tests/session_hook_test.sh
+
       - name: Reachability probe (offline, stub curl)
         run: bash tests/probe_reachability_test.sh
 

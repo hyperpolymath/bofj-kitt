@@ -207,6 +207,9 @@ recipe. The install step honours `execute-downloaded` from E1.
 Owner decision of 2026-11-12 (decision 1 below): the hook never installs.
 Whatever a session always needs is preinstalled by the class's rendered
 setup script, so the hook only runs `doctor`.
+Built 2026-11-12: `.claude/hooks/session-start.sh` writes
+`.session/capability-record.json` in every session, names each
+`UNAVAILABLE` leg, and exits 0 whatever happens.
 
 === E5. Register capabilities with the BoJ server
 

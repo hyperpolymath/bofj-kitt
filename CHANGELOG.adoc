@@ -40,6 +40,13 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   none has a pinned release.
 * `tests/provers_test.sh`, plus `estate-rules.yml` steps that run it, the
   engine's unit tests and the reachability probe test in CI.
+* `.claude/hooks/session-start.sh` (E4) now also runs `provers.sh doctor
+  --json` in every session, within a 50 s budget. It writes the record to
+  `.session/capability-record.json` (gitignored) and names every
+  UNAVAILABLE leg. Signing problems, a failing or slow doctor, and output
+  that is not a record are each reported loudly, and the hook still exits
+  0. Signing still runs only in cloud sessions. `tests/session_hook_test.sh`
+  covers these cases and runs in CI.
 * `docs/proposals/environment-of-environments.adoc` — how the kit becomes
   the environment of environments: an environment manifest beside the
   toolchain manifest, one capability record, rendered projections, the
