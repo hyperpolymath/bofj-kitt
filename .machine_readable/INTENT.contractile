@@ -35,7 +35,7 @@
 
   ; === Purpose (what this repo IS) ===
   (purpose
-    "{{ONE_PARAGRAPH_PURPOSE}}"
+    "bofj-kitt is the shared Developer Environment Extension Kit (the SuperChainsaw) for the BoJ (Box of Justice) server: it provisions and extends estate-compliant developer environments and registers them with the BoJ MCP gateway (ADR-001)."
   )
 
   ; === Anti-Purpose (what this repo is NOT — prevents scope creep) ===
@@ -63,7 +63,7 @@
 
   ; === Ecosystem Position ===
   (ecosystem
-    (belongs-to "{{MONOREPO_OR_STANDALONE}}")
+    (belongs-to "standalone")
     (depends-on ("{{DEP1}}" "{{DEP2}}"))
     (depended-on-by ("{{CONSUMER1}}" "{{CONSUMER2}}"))
   )

@@ -60,7 +60,7 @@
     ;; TODO: Add runtime dependencies
     ))
   (home-page "https://github.com/hyperpolymath/bofj-kitt")
-  (synopsis "{{PROJECT_PURPOSE}}")
+  (synopsis "Shared Developer Environment Extension Kit (the SuperChainsaw for the BoJ server)")
   (description "RSR-compliant project. See README.adoc for details.")
   (license (list
             ;; MPL-2.0 extends MPL-2.0
