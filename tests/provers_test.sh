@@ -25,7 +25,7 @@ command -v jq >/dev/null || fail "jq is not on PATH; the test cannot run"
 cp -R "$repo_root/tools/environments/rendered" "$work/rendered"
 printf '# hand edit\n' >> "$work/rendered/agent-session/setup.sh"
 rc=0; "$provers" render --check --out "$work/rendered" >/dev/null 2>"$work/err" || rc=$?
-[ "$rc" -eq 1 ] || fail "render --check on an edited file exited $rc, expected 1"
+[[ "$rc" -eq 1 ]] || fail "render --check on an edited file exited $rc, expected 1"
 grep -q "DRIFT .*setup.sh" "$work/err" || fail "render --check did not name the drifted file"
 
 # A self-contained root with a three-entry toolchain and stub tools.
@@ -57,26 +57,26 @@ engine="$repo_root/tools/proof-toolchain/provers/target/release/provers"
 doctor() { PATH="$work/bin:$PATH" "$engine" --root "$root" doctor --env workstation --setup-report "$work/none" "$@"; }
 
 rc=0; out="$(doctor)" || rc=$?
-[ "$rc" -eq 1 ] || fail "doctor with a drifted tool exited $rc, expected 1"
+[[ "$rc" -eq 1 ]] || fail "doctor with a drifted tool exited $rc, expected 1"
 grep -Eq '^PRESENT +good +stubgood 1.2.3$' <<<"$out" || fail "good is not PRESENT: $out"
 grep -Eq '^DRIFT +old +expected 2.0.0' <<<"$out" || fail "old is not DRIFT: $out"
 grep -Eq '^UNAVAILABLE +gone +verify: command or file not found' <<<"$out" || fail "gone is not UNAVAILABLE with a reason: $out"
 
 rc=0; doctor --json > "$work/rec.json" || rc=$?
-[ "$rc" -eq 1 ] || fail "doctor --json exited $rc, expected 1"
-[ "$(tail -c 1 "$work/rec.json" | od -An -c | tr -d ' ')" = '\n' ] || fail "record lacks its final newline"
-[ "$(wc -l < "$work/rec.json")" -eq 1 ] || fail "record is not one line"
+[[ "$rc" -eq 1 ]] || fail "doctor --json exited $rc, expected 1"
+[[ "$(tail -c 1 "$work/rec.json" | od -An -c | tr -d ' ')" == '\n' ]] || fail "record lacks its final newline"
+[[ "$(wc -l < "$work/rec.json")" -eq 1 ]] || fail "record is not one line"
 # For these ASCII keys, jq's sorted compact form is the JCS form.
-[ "$(jq -cS . "$work/rec.json")" = "$(head -c -1 "$work/rec.json")" ] || fail "record is not canonical"
-[ "$(jq -r '[.tools[].id] | join(",")' "$work/rec.json")" = "good,old,gone" ] || fail "record is not total over the manifest, in order"
-[ "$(jq -r '.tools[2].status' "$work/rec.json")" = "UNAVAILABLE" ] || fail "missing tool not UNAVAILABLE in the record"
+[[ "$(jq -cS . "$work/rec.json")" == "$(head -c -1 "$work/rec.json")" ]] || fail "record is not canonical"
+[[ "$(jq -r '[.tools[].id] | join(",")' "$work/rec.json")" == "good,old,gone" ]] || fail "record is not total over the manifest, in order"
+[[ "$(jq -r '.tools[2].status' "$work/rec.json")" == "UNAVAILABLE" ]] || fail "missing tool not UNAVAILABLE in the record"
 
 # Without the drifting entry, a missing tool alone exits 3, never 0.
 sed -i '/id: "old"/d' "$root/tools/proof-toolchain/toolchain.kyaml"
 rc=0; doctor >/dev/null || rc=$?
-[ "$rc" -eq 3 ] || fail "doctor with only an unavailable tool exited $rc, expected 3"
+[[ "$rc" -eq 3 ]] || fail "doctor with only an unavailable tool exited $rc, expected 3"
 
 rc=0; "$provers" install 2>/dev/null || rc=$?
-[ "$rc" -eq 2 ] || fail "install exited $rc, expected 2 (not built by decision)"
+[[ "$rc" -eq 2 ]] || fail "install exited $rc, expected 2 (not built by decision)"
 
 echo "PASS: render drift caught both ways; doctor PRESENT/DRIFT/UNAVAILABLE and exit codes; canonical record; install refused"
