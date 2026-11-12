@@ -141,8 +141,147 @@ sessions.
 |Low: unbounded, unexpiring, readable by every session.
 |===
 
-Recommendation: A. C is worth adding for workstation signing later and
-complements A: the CA key itself can live in the workstation's TPM.
+Recommendation: A, with the authority key in the workstation's TPM as set
+out in <<authority>>. C is not an alternative to A but where A's CA key
+lives.
+
+[[authority]]
+== The authority key: TPM, recovery and revocation
+
+Owner input, 2026-11-12: the authority key must be offline, ideally bound
+to the workstation's TPM; it must be possible to cut it off fast after
+theft and to recover after a hardware failure without the old TPM.
+
+Each claim below is marked *checked* (run in this session, 2026-11-12,
+OpenSSH 9.6p1 and git 2.43.0, with software keys only) or *unchecked*
+(from documentation or published research, not run here). This session
+has no TPM and no FIDO device, so nothing TPM- or token-specific was run.
+
+=== Owner's preferred direction
+
+*TPM + PIN for daily use, plus an offline recovery authority listed from
+day one.* The CA key is generated inside the workstation's TPM and cannot
+be exported. Using it needs the TPM authorisation value (a PIN), and the
+TPM's dictionary-attack lockout limits PIN guessing, so the key is
+something the owner has (that machine) and something the owner knows.
+A second, offline authority, on a hardware key kept in a safe or on
+paper, is trusted alongside it so that losing the workstation does not
+lose the ability to sign.
+
+=== TPM binding
+
+* *Key type.* TPM 2.0 parts commonly implement RSA and ECC NIST P-256.
+  Ed25519 is rare on shipped TPMs, so the CA key would be
+  `ecdsa-sha2-nistp256`. *Unchecked* for any particular TPM. *Checked*:
+  an ECDSA P-256 CA works end to end with git. A session certificate
+  signed by a software P-256 CA verified as `G` under
+  `cert-authority,namespaces="git"`, so the key type is no obstacle.
+* *How ssh-keygen reaches it.* Either through an agent that holds TPM
+  keys (for example `ssh-tpm-agent`), with `ssh-keygen -s ca.pub -U`, or
+  through a TPM 2.0 PKCS#11 module (`tpm2-pkcs11`), with
+  `ssh-keygen -s ca.pub -D <module>`. *Unchecked*: neither was run.
+* *PIN and lockout.* The TPM authValue and its dictionary-attack lockout
+  are TPM 2.0 features. *Unchecked*, and the lockout thresholds are set
+  per TPM.
+* *Discrete versus firmware TPM.* Firmware TPMs share the CPU and have had
+  practical key-extraction attacks: TPM-Fail (2019, timing leaks in ECDSA
+  on Intel fTPM and one discrete part) and faulTPM (2023, voltage fault
+  injection on AMD fTPM, needing physical access). A discrete TPM on
+  current firmware, or a firmware TPM with the vendor's fixes applied, is
+  the stronger choice. *Unchecked*: from published research, not
+  reproduced; check the workstation's TPM model and firmware before
+  relying on it.
+
+=== Where a touch-required security key is stronger
+
+A TPM key has no user-presence step. Malware running on the unlocked
+workstation, once the PIN has been entered or cached by an agent, can ask
+the TPM to sign whatever it likes. A FIDO security key (`ed25519-sk` or
+`ecdsa-sk`) needs a physical touch for each signature, and optionally its
+own PIN, so malware cannot sign silently. *Checked*: OpenSSH 9.6p1 lists
+`sk-ssh-ed25519@openssh.com` and `sk-ecdsa-sha2-nistp256@openssh.com`
+among its CA signing algorithms (`ssh -Q key-ca-sign`). *Unchecked*:
+signing a certificate with a real token, which needs the device. The
+trade: a token can be lost or left in the machine, and a touch per
+certificate means the owner is present for every session window. That
+presence is the condition-gated window the owner asked for.
+
+The preferred direction stands, with this stated plainly. A touch-required
+key is stronger against malware on the workstation. The TPM is more
+convenient and is stronger against theft of a portable token.
+
+=== Who holds the issuing key
+
+SSH certificates have no intermediate CAs. A verifier trusts exactly the
+keys listed with `cert-authority` in `allowed_signers`, and each
+certificate is signed directly by one of them.
+
+[cols="1,3,3",options="header"]
+|===
+|Option |Shape |Fit
+
+|*(a) The TPM key is the CA*
+|The workstation signs each session certificate. A session asks, and the
+owner approves on the workstation with the PIN (or a touch).
+|Fits "offline authority": the only trusted key never leaves the TPM.
+Short session certificates work, but only while the workstation is on
+and the owner responds, so it is a gate, not a service. OpenBao is not
+needed.
+
+|*(b) OpenBao holds the issuing CA; the TPM key approves issuance*
+|OpenBao's SSH engine signs certificates; it releases one only for a
+request authenticated with the TPM key (for example TLS client
+certificate auth, or a signed request).
+|Does not fit "offline authority": the key verifiers trust lives in
+OpenBao, online. The TPM only guards the door. It is a service that does
+not need the owner present for each issuance.
+|===
+
+For the owner's stated requirement, (a). Option (b) is the one to choose
+if sessions must obtain certificates while the owner is away, and it
+should then be described as an online CA with an offline approver, not an
+offline authority.
+
+=== Recovery without the old TPM
+
+. *Day one:* generate the recovery authority offline (a FIDO key kept in a
+  safe, or an ed25519 key printed on paper and never stored online). List
+  it in `allowed_signers` with `cert-authority,namespaces="git"` beside
+  the TPM CA, in every repository and on every verifier.
+. *If the TPM dies:* on new hardware, generate a new TPM CA. With the
+  recovery authority, sign a certificate for the owner and use it to sign
+  the commit that adds the new TPM CA to `allowed_signers`. The old TPM
+  CA gets a `valid-before` set to the failure date if it was not stolen
+  (see below if it might have been).
+. *GitHub:* account recovery must not depend on that workstation. Keep
+  GitHub's recovery codes offline and register a second security key, and
+  update any SSH signing key registered on the account.
+. *Unchecked*: the whole procedure; it should be rehearsed once with
+  throwaway keys before it is relied on.
+
+=== Revocation after theft
+
+`valid-before` on an `allowed_signers` entry looks like a clean cut-off:
+old history keeps verifying, new signatures stop. It is not, because the
+commit date is chosen by whoever signs. *Checked*: a key with
+`valid-before="20260101"` gave `U` for a commit dated now, but a commit
+made today with the same key and backdated to 2025-06-01 verified as `G`.
+Removing the key from `allowed_signers` turned that commit to `U`.
+
+So after a theft:
+
+* *Remove* the stolen authority from `allowed_signers` entirely; do not
+  rely on `valid-before`.
+* Every past signature by that authority then reads `U` locally. Treat
+  the history already pushed before the theft as the record. The remote
+  holds the commits as they were before the thief had the key, and GitHub
+  keeps its own verification state for commits it has already seen
+  (*unchecked*: GitHub's persistence of verification after a key is
+  removed).
+* *Option:* bind signatures to time independently of the signer, with an
+  RFC 3161 timestamp or a transparency log (Rekor, as gitsign uses), so
+  a backdated signature can be told apart from a genuine old one. That
+  restores the meaning of `valid-before`. *Unchecked*.
 
 [[open]]
 == Open questions

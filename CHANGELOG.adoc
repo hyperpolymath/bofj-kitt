@@ -15,7 +15,11 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   (OpenBao) that grants each session a certificate valid for minutes.
   It includes measured git behaviour with certificates (expiry makes a
   signature untrusted but does not stop signing) and compares the design
-  with gitsign, a TPM key, FROST and the status quo. Design only.
+  with gitsign, a TPM key, FROST and the status quo. Covers the authority
+  key: TPM binding with a PIN, recovery without the old TPM, and
+  revocation after theft. A key retired with `valid-before` still verifies
+  a backdated commit (measured), so a stolen key must be removed. Design
+  only.
 * `docs/proposals/environment-of-environments.adoc` — how the kit becomes
   the environment of environments: an environment manifest beside the
   toolchain manifest, one capability record, rendered projections, the
