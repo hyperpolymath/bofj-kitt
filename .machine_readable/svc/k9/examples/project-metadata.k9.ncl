@@ -37,7 +37,7 @@ K9!
     author = {
       name = "Jonathan D.A. Jewell",
       email = "j.d.a.jewell@open.ac.uk",
-      organization = "{{AUTHOR_ORG}}",
+      organization = "hyperpolymath",
     },
 
     license = "MPL-2.0",

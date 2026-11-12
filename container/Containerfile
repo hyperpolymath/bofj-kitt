@@ -6,13 +6,13 @@
 # resulting binary/release into the minimal runtime stage.
 #
 # Build with Podman:
-#   podman build -t {{SERVICE_NAME}}:latest -f container/Containerfile .
+#   podman build -t bofj-kitt:latest -f container/Containerfile .
 #
 # Run:
-#   podman run -p {{PORT}}:{{PORT}} {{SERVICE_NAME}}:latest
+#   podman run -p {{PORT}}:{{PORT}} bofj-kitt:latest
 #
 # Run with persistent volume:
-#   podman run -p {{PORT}}:{{PORT}} -v {{SERVICE_NAME}}-data:/data {{SERVICE_NAME}}:latest
+#   podman run -p {{PORT}}:{{PORT}} -v bofj-kitt-data:/data bofj-kitt:latest
 
 # ============================================================================
 # Stage 1: Builder
@@ -29,7 +29,7 @@
 #   COPY Cargo.toml Cargo.lock ./
 #   COPY src/ ./src/
 #   RUN cargo build --release
-#   # Output: /build/target/release/{{SERVICE_NAME}}
+#   # Output: /build/target/release/bofj-kitt
 #
 # --- Elixir ---
 #   RUN apk add --no-cache erl27-elixir-1.18 erlang-27 erlang-27-dev git build-base
@@ -39,7 +39,7 @@
 #   ENV MIX_ENV=prod
 #   RUN mix local.hex --force && mix local.rebar --force && \
 #       mix deps.get --only prod && mix compile && mix release
-#   # Output: /build/_build/prod/rel/{{SERVICE_NAME}}/
+#   # Output: /build/_build/prod/rel/bofj-kitt/
 #
 FROM cgr.dev/chainguard/wolfi-base:latest AS builder
 
@@ -63,11 +63,11 @@ FROM cgr.dev/chainguard/wolfi-base:latest
 
 # OCI image labels (compatible with cerro-torre .ctp bundle metadata)
 LABEL org.opencontainers.image.title="bofj-kitt" \
-      org.opencontainers.image.description="{{PROJECT_DESCRIPTION}}" \
+      org.opencontainers.image.description="Shared Developer Environment Extension Kit (the SuperChainsaw for the BoJ server)" \
       org.opencontainers.image.url="https://github.com/hyperpolymath/bofj-kitt" \
       org.opencontainers.image.source="https://github.com/hyperpolymath/bofj-kitt" \
       org.opencontainers.image.vendor="hyperpolymath" \
-      org.opencontainers.image.licenses="{{LICENSE}}" \
+      org.opencontainers.image.licenses="MPL-2.0" \
       org.opencontainers.image.authors="Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>" \
       dev.cerrotorre.manifest="container/manifest.toml" \
       dev.cerrotorre.gatekeeper="container/.gatekeeper.yaml" \
@@ -89,8 +89,8 @@ WORKDIR /app
 
 # TODO: Copy compiled binary/release from builder stage.
 # Examples:
-#   COPY --from=builder /build/target/release/{{SERVICE_NAME}} /app/{{SERVICE_NAME}}
-#   COPY --from=builder /build/_build/prod/rel/{{SERVICE_NAME}} /app/release/
+#   COPY --from=builder /build/target/release/bofj-kitt /app/bofj-kitt
+#   COPY --from=builder /build/_build/prod/rel/bofj-kitt /app/release/
 
 # Copy entrypoint script
 COPY container/entrypoint.sh /app/entrypoint.sh
