@@ -42,10 +42,18 @@ fn run(cmd: &str, prefix: &str, toolchain: Option<&str>, timeout: Duration) -> R
     }
     let path = std::env::var("PATH").unwrap_or_default();
     c.env("PATH", format!("{prefix}/bin:{path}"));
-    c.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    c.stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
     let mut child = match c.spawn() {
         Ok(ch) => ch,
-        Err(e) => return Ran { code: None, first_line: format!("could not start sh: {e}"), output: String::new() },
+        Err(e) => {
+            return Ran {
+                code: None,
+                first_line: format!("could not start sh: {e}"),
+                output: String::new(),
+            };
+        }
     };
     let start = Instant::now();
     let status = loop {
@@ -69,8 +77,16 @@ fn run(cmd: &str, prefix: &str, toolchain: Option<&str>, timeout: Duration) -> R
     }
     let first_line = first_line(&out);
     match status {
-        Some(s) => Ran { code: s.code(), first_line, output: out },
-        None => Ran { code: None, first_line: format!("timed out after {}s", timeout.as_secs()), output: out },
+        Some(s) => Ran {
+            code: s.code(),
+            first_line,
+            output: out,
+        },
+        None => Ran {
+            code: None,
+            first_line: format!("timed out after {}s", timeout.as_secs()),
+            output: out,
+        },
     }
 }
 
@@ -98,7 +114,10 @@ fn scrub(line: &str) -> String {
 
 fn failure_reason(what: &str, r: &Ran) -> String {
     match r.code {
-        Some(127) => format!("{what}: command or file not found (exit 127): {}", r.first_line),
+        Some(127) => format!(
+            "{what}: command or file not found (exit 127): {}",
+            r.first_line
+        ),
         Some(c) => format!("{what} exited {c}: {}", r.first_line),
         None => format!("{what} did not finish: {}", r.first_line),
     }
@@ -129,7 +148,8 @@ fn contains_version(output: &str, v: &str) -> bool {
         let after = output[i + v.len()..].chars().next();
         !before.is_some_and(|c| c.is_ascii_digit() || c == '.')
             && !after.is_some_and(|c| c.is_ascii_digit())
-            && !(after == Some('.') && output[i + v.len() + 1..].starts_with(|c: char| c.is_ascii_digit()))
+            && !(after == Some('.')
+                && output[i + v.len() + 1..].starts_with(|c: char| c.is_ascii_digit()))
     })
 }
 
@@ -150,7 +170,10 @@ pub fn detect_env(explicit: Option<&str>) -> (String, String) {
     if std::env::var("GITHUB_ACTIONS").as_deref() == Ok("true") {
         return ("ci-runner".into(), "GITHUB_ACTIONS=true".into());
     }
-    ("workstation".into(), "default: no session or CI marker set".into())
+    (
+        "workstation".into(),
+        "default: no session or CI marker set".into(),
+    )
 }
 
 fn read_setup_report(path: &Path) -> Value {
@@ -170,13 +193,18 @@ fn read_setup_report(path: &Path) -> Value {
 
 pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
     let (env_id, detected_by) = detect_env(o.env.as_deref());
-    let envs = ctx.environments["environments"].as_array().ok_or("environments.kyaml: no environments list")?;
+    let envs = ctx.environments["environments"]
+        .as_array()
+        .ok_or("environments.kyaml: no environments list")?;
     let env = envs
         .iter()
         .find(|e| e["id"] == env_id.as_str())
         .ok_or_else(|| format!("environment '{env_id}' is not declared in environments.kyaml"))?;
     let render = &ctx.environments["render"][env_id.as_str()];
-    let prefix = ctx.toolchain["prefix"].as_str().ok_or("toolchain.kyaml: no prefix")?.to_string();
+    let prefix = ctx.toolchain["prefix"]
+        .as_str()
+        .ok_or("toolchain.kyaml: no prefix")?
+        .to_string();
 
     let lock_path = ctx.root.join("tools/proof-toolchain/toolchain.lock.json");
     let lock: Option<Value> = match std::fs::read(&lock_path) {
@@ -188,7 +216,9 @@ pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
     };
     let lock_info = match &lock {
         Some(_) => json!({"present": true, "sha256": sha256_file(&lock_path)}),
-        None => json!({"present": false, "sha256": null, "reason": "no toolchain.lock.json: the bundle build has not run, so no version is locked"}),
+        None => {
+            json!({"present": false, "sha256": null, "reason": "no toolchain.lock.json: the bundle build has not run, so no version is locked"})
+        }
     };
 
     // What this environment's own setup promises, by toolchain entry.
@@ -201,10 +231,17 @@ pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
 
     let mut tools = Vec::new();
     let (mut n_present, mut n_drift, mut n_unavail) = (0, 0, 0);
-    for t in ctx.toolchain["tools"].as_array().ok_or("toolchain.kyaml: no tools list")? {
+    for t in ctx.toolchain["tools"]
+        .as_array()
+        .ok_or("toolchain.kyaml: no tools list")?
+    {
         let id = t["id"].as_str().ok_or("toolchain entry without id")?;
-        let locked = lock.as_ref().map(|l| &l["tools"][id]).filter(|v| !v.is_null());
-        let (expected, expected_from) = if let Some(v) = locked.and_then(|l| l["version"].as_str()) {
+        let locked = lock
+            .as_ref()
+            .map(|l| &l["tools"][id])
+            .filter(|v| !v.is_null());
+        let (expected, expected_from) = if let Some(v) = locked.and_then(|l| l["version"].as_str())
+        {
             (Some(v.to_string()), "lock")
         } else if let Some(v) = promised.get(id).and_then(|p| p["version"].as_str()) {
             (Some(v.to_string()), "environment setup")
@@ -216,7 +253,11 @@ pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
         let toolchains: Vec<String> = locked
             .and_then(|l| l["toolchains"].as_array())
             .or_else(|| promised.get(id).and_then(|p| p["toolchains"].as_array()))
-            .map(|a| a.iter().filter_map(|s| s.as_str().map(String::from)).collect())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|s| s.as_str().map(String::from))
+                    .collect()
+            })
             .unwrap_or_default();
 
         let mut rec = Map::new();
@@ -267,7 +308,10 @@ pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
             Ok((text, exe)) => {
                 let observed = first_line(&text);
                 rec.insert("observed_version".into(), json!(observed));
-                rec.insert("observed_sha256".into(), json!(exe.as_deref().and_then(sha256_file)));
+                rec.insert(
+                    "observed_sha256".into(),
+                    json!(exe.as_deref().and_then(sha256_file)),
+                );
                 if let Some(l) = locked {
                     rec.insert("locked_sha256".into(), l["sha256"].clone());
                 }
@@ -278,7 +322,12 @@ pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
                     Some(v) if !contains_version(&text, v) => {
                         n_drift += 1;
                         rec.insert("status".into(), json!("DRIFT"));
-                        rec.insert("mismatch".into(), json!(format!("expected {v} ({expected_from}); the check printed: {observed}")));
+                        rec.insert(
+                            "mismatch".into(),
+                            json!(format!(
+                                "expected {v} ({expected_from}); the check printed: {observed}"
+                            )),
+                        );
                     }
                     Some(_) => {
                         n_present += 1;
@@ -298,7 +347,9 @@ pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
     // Items the environment installs that are not toolchain entries.
     let mut env_tools = Vec::new();
     for item in render["setup"].as_array().into_iter().flatten() {
-        let Some(cmd) = item["verify"].as_str() else { continue };
+        let Some(cmd) = item["verify"].as_str() else {
+            continue;
+        };
         let id = item["id"].as_str().unwrap_or("");
         let r = run(cmd, &prefix, None, o.timeout);
         let mut rec = json!({"id": id});
@@ -306,7 +357,10 @@ pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
             rec["status"] = json!("UNAVAILABLE");
             rec["reason"] = json!(failure_reason("verify", &r));
             n_unavail += 1;
-        } else if let Some(v) = item["expect"].as_str().filter(|v| !contains_version(&r.output, v)) {
+        } else if let Some(v) = item["expect"]
+            .as_str()
+            .filter(|v| !contains_version(&r.output, v))
+        {
             rec["status"] = json!("DRIFT");
             rec["mismatch"] = json!(format!("expected {v}; the check printed: {}", r.first_line));
             n_drift += 1;
@@ -319,7 +373,8 @@ pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
     }
     for item in render["unavailable"].as_array().into_iter().flatten() {
         n_unavail += 1;
-        env_tools.push(json!({"id": item["id"], "status": "UNAVAILABLE", "reason": item["reason"]}));
+        env_tools
+            .push(json!({"id": item["id"], "status": "UNAVAILABLE", "reason": item["reason"]}));
     }
 
     let measured = match &env["measured"] {
@@ -349,7 +404,13 @@ pub fn record(ctx: &Ctx, o: &Opts) -> Result<(Value, i32), String> {
         "tools": tools,
         "environment_tools": env_tools,
     });
-    let code = if n_drift > 0 { 1 } else if n_unavail > 0 { 3 } else { 0 };
+    let code = if n_drift > 0 {
+        1
+    } else if n_unavail > 0 {
+        3
+    } else {
+        0
+    };
     Ok((rec, code))
 }
 
@@ -375,7 +436,10 @@ pub fn text(rec: &Value) -> String {
         }
     }
     let sm = &rec["summary"];
-    s.push_str(&format!("summary: {} present, {} drift, {} unavailable\n", sm["present"], sm["drift"], sm["unavailable"]));
+    s.push_str(&format!(
+        "summary: {} present, {} drift, {} unavailable\n",
+        sm["present"], sm["drift"], sm["unavailable"]
+    ));
     s
 }
 
@@ -396,7 +460,12 @@ mod tests {
     #[test]
     fn pin_rules_are_not_versions() {
         assert_eq!(concrete_pin(&json!("0.8.0")), Some("0.8.0".into()));
-        for rule in ["resolve", "resolve-stable", "from creusot rust-toolchain", "consumer lean-toolchain files"] {
+        for rule in [
+            "resolve",
+            "resolve-stable",
+            "from creusot rust-toolchain",
+            "consumer lean-toolchain files",
+        ] {
             assert_eq!(concrete_pin(&json!(rule)), None);
         }
         assert_eq!(concrete_pin(&json!(["a", "b"])), None);
@@ -404,7 +473,12 @@ mod tests {
 
     #[test]
     fn a_missing_tool_is_unavailable_not_a_pass() {
-        let r = run("definitely-not-a-tool-xyz --version", "/nonexistent", None, Duration::from_secs(5));
+        let r = run(
+            "definitely-not-a-tool-xyz --version",
+            "/nonexistent",
+            None,
+            Duration::from_secs(5),
+        );
         assert_eq!(r.code, Some(127));
         assert!(failure_reason("verify", &r).contains("not found"));
     }
@@ -423,11 +497,20 @@ mod id_tests {
     #[test]
     fn record_type_id_is_profile_c_of_its_name() {
         let h = crate::sha256_hex(RECORD_TYPE_NAME.as_bytes());
-        let mut b: Vec<u8> = (0..16).map(|i| u8::from_str_radix(&h[2 * i..2 * i + 2], 16).unwrap()).collect();
+        let mut b: Vec<u8> = (0..16)
+            .map(|i| u8::from_str_radix(&h[2 * i..2 * i + 2], 16).unwrap())
+            .collect();
         b[6] = (b[6] & 0x0f) | 0x80;
         b[8] = (b[8] & 0x3f) | 0x80;
         let hex: String = b.iter().map(|x| format!("{x:02x}")).collect();
-        let id = format!("{}-{}-{}-{}-{}", &hex[0..8], &hex[8..12], &hex[12..16], &hex[16..20], &hex[20..32]);
+        let id = format!(
+            "{}-{}-{}-{}-{}",
+            &hex[0..8],
+            &hex[8..12],
+            &hex[12..16],
+            &hex[16..20],
+            &hex[20..32]
+        );
         assert_eq!(id, RECORD_TYPE_ID);
     }
 }
