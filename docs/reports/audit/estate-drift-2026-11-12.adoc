@@ -1,0 +1,60 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= bofj-kitt — Estate-canon drift inventory (M1)
+:date: 2026-11-12
+
+Report only. Nothing here was converted in bulk. Compared against
+`hyperpolymath/rsr-template-repo` `main`.
+
+== A2ML (retired)
+
+106 tracked `.a2ml` files (A2ML is retired). Conversion to the deed format is
+kyX's job per ruling D313, never by hand in bulk. Largest groups:
+`.machine_readable/descriptiles` (6), `docs/governance` (5),
+`.machine_readable/integrations` (5), `.machine_readable/policies` (4),
+`.machine_readable/agent_instructions` (3), `.machine_readable` root (3),
+`.machine_readable/anchors` (2), `.machine_readable/ai` (2), plus `0-AI-MANIFEST.a2ml`.
+
+== Missing deed
+
+No `bofj-kitt_chora.deed`. The template carries `rsr-template-repo_chora.deed`
+whose clauses (`anchor`, `agentic`, `ecosystem`, `status`, `neurosym`,
+`playbook`) replace the `.a2ml` files above. `CLADE.a2ml` (uuid `f46cc03d-…`)
+holds the identity the deed header must carry.
+
+== YAML that should be KYAML
+
+Non-exempt: `.github/FUNDING.yml`, `.github/settings.yml`, `.gitlab-ci.yml`,
+`.pre-commit-config.yaml`, `container/.gatekeeper.yaml` (26 yaml/yml files in
+total; the rest are GitHub workflow/dependabot names, exempt by filename, and
+their content migrates only after the D280 lock-coverage shim is required).
+
+== JSON not JCS-canonical
+
+Checked with `jq -cS` as an approximation of JCS (it is not a full RFC 8785
+implementation; numbers and UTF-16 key ordering are unverified). All fail
+because they are pretty-printed: `.github/label-classifier.json`,
+`.github/labels.json`, `.github/rulesets/Immutable-Tags.json`,
+`.github/rulesets/Optimus-Branch.json`, `examples/web-project-deno.json`.
+`.devcontainer/devcontainer.json` is JSONC, exempt (tool-demanded). A pinned
+kyq / ijson-jcs run has not been executed; no pass is claimed.
+
+== Files in the template and absent here
+
+`CLAUDE.md`, `rsr-template-repo_chora.deed`, `.claude/`, `CITATION.cff`,
+`CODE_OF_CONDUCT.adoc`, `CONTRIBUTING.adoc`, `LICENSE.adoc`, `SUPPORT.adoc`,
+`coordination.k9.ncl`, `mise.toml`/`mise.lock`, `sonar-project.properties`,
+`.gitmessage`, `.mailmap`, `.gitleaksignore`, `.hypatia-ignore`,
+`.cicd-hygiene-allow`, `.clinerules`, `.coderabbit.yaml`, `.gitbot-fleet`,
+`archetypes/`, `benches/`, `ci/`, `launcher.sh`.
+
+== Present here and absent from the template
+
+`.tool-versions`, `.gitlab-ci.yml`, `.pre-commit-config.yaml`,
+`0-AI-MANIFEST.a2ml`, root `CONTRIBUTING.md` and `SECURITY.md`/`SECURITY.adoc`,
+`coordination.k9` (template: `coordination.k9.ncl`), `MAINTAINERS`,
+`container/`, `tools/`, `REQUIRES_INITIALISATION.adoc`.
+
+== Other
+
+`.md` files outside `docs/` (`CONTRIBUTING.md`, `SECURITY.md`, several under
+`.github/`) are allowed by the current estate rule, not drift.

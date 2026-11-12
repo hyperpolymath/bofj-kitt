@@ -12,8 +12,8 @@
 #   vordr report
 
 [metadata]
-name = "{{SERVICE_NAME}}"
-version = "{{VERSION}}"
+name = "bofj-kitt"
+version = "0.1.0"
 
 # ============================================================================
 # Health Monitoring
@@ -79,7 +79,7 @@ format = "json"
 level = "info"
 # Write vordr logs to stdout (captured by Podman) and optionally to file.
 output = "stdout"
-# file = "/var/log/vordr/{{SERVICE_NAME}}.log"
+# file = "/var/log/vordr/bofj-kitt.log"
 
 # ============================================================================
 # Notifications (optional)
@@ -95,6 +95,6 @@ output = "stdout"
 
 # [notifications.email]
 # to = "j.d.a.jewell@open.ac.uk"
-# from = "vordr@{{SERVICE_NAME}}.local"
+# from = "vordr@bofj-kitt.local"
 # smtp = "smtp://localhost:25"
 # on = ["failure", "resource_critical"]
