@@ -15,7 +15,7 @@ set -e
 # when Podman sends stop signals (e.g. `podman stop`, `selur-compose down`).
 
 cleanup() {
-    echo "Received shutdown signal — stopping {{SERVICE_NAME}}..."
+    echo "Received shutdown signal — stopping bofj-kitt..."
     # If the main process is backgrounded, kill it here:
     # kill "$MAIN_PID" 2>/dev/null || true
     # wait "$MAIN_PID" 2>/dev/null || true
@@ -27,7 +27,7 @@ trap cleanup TERM INT
 # Startup logging
 # ---------------------------------------------------------------------------
 
-echo "Starting {{SERVICE_NAME}}..."
+echo "Starting bofj-kitt..."
 echo "  Host: ${APP_HOST:-[::]}"
 echo "  Port: ${APP_PORT:-{{PORT}}}"
 echo "  Data: ${APP_DATA_DIR:-/data}"
@@ -56,8 +56,8 @@ fi
 #
 # TODO: Replace the command below with your application binary.
 # Examples:
-#   exec /app/{{SERVICE_NAME}}
-#   exec /app/release/bin/{{SERVICE_NAME}} start
-#   exec /app/{{SERVICE_NAME}} serve --host "${APP_HOST}" --port "${APP_PORT}"
+#   exec /app/bofj-kitt
+#   exec /app/release/bin/bofj-kitt start
+#   exec /app/bofj-kitt serve --host "${APP_HOST}" --port "${APP_PORT}"
 
 exec "$@"

@@ -6,16 +6,16 @@
 # container packaging. Used by `ct pack` to create .ctp bundles.
 
 [metadata]
-name = "{{SERVICE_NAME}}"
-version = "{{VERSION}}"
+name = "bofj-kitt"
+version = "0.1.0"
 revision = 1
-summary = "{{PROJECT_DESCRIPTION}}"
+summary = "Shared Developer Environment Extension Kit (the SuperChainsaw for the BoJ server)"
 description = """
 bofj-kitt — containerised service packaged as a verified
 cerro-torre .ctp bundle with Ed25519 signing and full provenance
 tracking.
 """
-license = "{{LICENSE}}"
+license = "MPL-2.0"
 homepage = "https://github.com/hyperpolymath/bofj-kitt"
 maintainer = "Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"
 
@@ -35,7 +35,7 @@ APP_HOST = "[::]"
 APP_PORT = "{{PORT}}"
 
 [outputs]
-primary = "{{SERVICE_NAME}}"
+primary = "bofj-kitt"
 split = []
 
 [attestations]
