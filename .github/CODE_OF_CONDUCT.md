@@ -133,7 +133,7 @@ If you experience or witness unacceptable behaviour, or have any other concerns,
 **What Happens Next**
 
 1. You will receive acknowledgment within **48 hours**
-2. The repository owner (@hyperpolymath) will review the report
+2. The repository owner (@hyperpolymath) will review the report, except where it concerns the owner (see Conflicts of Interest)
 3. We may ask for additional information
 4. We will determine appropriate action
 5. We will inform you of the outcome (respecting others' privacy)
@@ -149,10 +149,10 @@ All reports will be handled with discretion:
 
 ### Conflicts of Interest
 
-bofj-kitt currently has a single maintainer (@hyperpolymath) and no independent conduct reviewer has been designated. If a report concerns the maintainer:
+If a report concerns the maintainer (@hyperpolymath), it must not be handled by the maintainer. Send it instead to the independent contact designated by the owner:
 
-- The maintainer cannot impartially handle it. Report the conduct to GitHub (https://github.com/contact/report-abuse), which is independent of this project
-- An independent reviewer will be named here once the owner designates one
+- George Booden, Cyber Incident Response Lead, The Open University: george.booden@open.ac.uk
+- If that route is unavailable, report the conduct to GitHub (https://github.com/contact/report-abuse), which is independent of this project
 - We will disclose any potential conflicts
 
 ---
@@ -217,7 +217,7 @@ If you believe an enforcement decision was made in error:
 
 **Appeals Process**
 
-- While there is a single maintainer, appeals cannot be reviewed independently; until an independent reviewer is designated, appeals about the maintainer go to GitHub (see Conflicts of Interest). Otherwise appeals are reviewed by a different person than the original reviewer
+- Appeals about the maintainer are reviewed by the independent contact named under Conflicts of Interest (George Booden, george.booden@open.ac.uk); all other appeals are reviewed by a different person than the original reviewer
 - You will receive a response within 14 days
 - The appeals decision is final
 - You may only appeal once per incident
