@@ -36,8 +36,11 @@ jobs:
       # Rendered environment settings are never hand-edited: this fails when
       # tools/environments/rendered/ drifts from the manifests, and checks
       # doctor's PRESENT/DRIFT/UNAVAILABLE reporting with stub tools.
-      - name: provers engine unit tests
-        run: cargo test --locked --manifest-path tools/proof-toolchain/provers/Cargo.toml
+      - name: provers engine format, lints and unit tests
+        run: |
+          cargo fmt --check --manifest-path tools/proof-toolchain/provers/Cargo.toml
+          cargo clippy --locked --all-targets --manifest-path tools/proof-toolchain/provers/Cargo.toml -- -D warnings
+          cargo test --locked --manifest-path tools/proof-toolchain/provers/Cargo.toml
 
       - name: provers.sh render drift and doctor reporting
         run: bash tests/provers_test.sh
