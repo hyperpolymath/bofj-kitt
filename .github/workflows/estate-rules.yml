@@ -42,6 +42,9 @@ jobs:
       - name: provers.sh render drift and doctor reporting
         run: bash tests/provers_test.sh
 
+      - name: SessionStart hook (signing and capability record, E4)
+        run: bash tests/session_hook_test.sh
+
       - name: Reachability probe (offline, stub curl)
         run: bash tests/probe_reachability_test.sh
 
