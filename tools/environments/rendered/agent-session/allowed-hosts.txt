@@ -1,0 +1,17 @@
+github.com
+release-assets.githubusercontent.com
+codeload.github.com
+raw.githubusercontent.com
+api.github.com
+opam.ocaml.org
+hackage.haskell.org
+releases.lean-lang.org
+static.rust-lang.org
+ftp.gnu.org
+bordeaux.guix.gnu.org
+ci.guix.gnu.org
+isabelle.in.tum.de
+mizar.uwb.edu.pl
+pvs.csl.sri.com
+alire.ada.dev
+ghcr.io

@@ -14,9 +14,11 @@ The capability record and the Groove `capabilities` field proposed below
 are specified against the deed; the conversion of this repository's own
 files follows ruling D313.
 
-Status: proposal, 2026-10-27. Nothing here is built. The measured facts in
-<<measured>> were taken in cloud agent sessions on 2026-10-27 and
-2026-11-04 and are reproducible with `tools/environments/probe-reachability.sh`.
+Status: proposal, 2026-10-27; partly built. E1 has measured blocks; E2
+(`provers.sh doctor --json`) and E3 for the agent-session class
+(`provers.sh render`) were built on 2026-11-12, and E4 follows them. E5 is
+not built. The measured facts in <<measured>> were taken in cloud agent
+sessions on 2026-10-27, 2026-11-04 and 2026-11-12 and are reproducible with `tools/environments/probe-reachability.sh`.
 
 == The claim
 
@@ -188,6 +190,11 @@ fragment, and the session setup-script snippet. The rule is the one the
 design already states: what a machine *has* is `doctor`'s job; what a
 machine *should have* is rendered, never hand-edited.
 
+Built 2026-11-12 for the agent-session class: its setup script,
+Limited-network allowlist and environment variable names, rendered from
+the class's `render` block into `tools/environments/rendered/`. The other
+projections listed above are not rendered yet.
+
 === E4. The agent-session leg
 
 Cloud sessions are the environment class the estate controls least and uses
@@ -196,6 +203,10 @@ install` where policy allows and `provers.sh doctor --json` always, writing
 the capability record to `.session/`. A session that cannot install says so
 in the record, which PROOF-POLICY §6 requires, instead of a `SKIP` in a
 recipe. The install step honours `execute-downloaded` from E1.
+
+Owner decision of 2026-11-12 (decision 1 below): the hook never installs.
+Whatever a session always needs is preinstalled by the class's rendered
+setup script, so the hook only runs `doctor`.
 
 === E5. Register capabilities with the BoJ server
 
@@ -401,10 +412,15 @@ rather than lost:
 
 == Decisions needed
 
-. Whether the agent-session install step may execute fetched binaries at
-  all, given the policy measured here. If not, the session leg is
-  `doctor`-only and the session's provers come from a prebuilt image or
-  from a mise/Guix path the platform allows.
+. Decided 2026-11-12: whatever is always needed (Agda, Lean, Rocq, the
+  estate format tools, Guix, a container runtime) is already installed
+  when a session starts, through the class's rendered setup script, which
+  pins every download by SHA-256 and which the owner approves. The session
+  hook is `doctor`-only and never installs. Everything else is reached
+  through an allowlist of exact canonical hosts plus the owner's own
+  repositories, and any other access needs a grant. Tools in regular use
+  that sit just outside that boundary may be held in a private estate
+  repository and kept updated there (not built).
 . Decided 2026-10-27: HOL Light, HOL4, ACL2 and Mizar join the manifest
   now (E6); the entries are in `toolchain.kyaml`.
 . Whether X3 runs before the first bundle release, so the transport is
