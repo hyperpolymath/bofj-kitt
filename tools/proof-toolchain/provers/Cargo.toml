@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# provers: the engine behind tools/proof-toolchain/provers.sh (doctor, render).
+# JCS output goes through the estate's own ijson-jcs, pinned by revision.
+[package]
+name = "provers"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MPL-2.0"
+publish = false
+description = "Environment capability record (doctor) and rendered environment settings (render) for bofj-kitt"
+
+[dependencies]
+ijson-jcs = { git = "https://github.com/hyperpolymath/ijson-jcs", rev = "1735d68768920f6f59667c9ba2c84769d8d45336" }
+serde_json = "1"
+sha2 = "0.10"
+
+[profile.release]
+strip = true

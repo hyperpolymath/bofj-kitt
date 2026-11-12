@@ -21,6 +21,25 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   The agent proxy refused the same three discovery paths as on 2026-11-04,
   so those refusals belong to the proxy, not to the network policy.
   `hosts.txt` gains the two Guix substitute servers.
+* `tools/proof-toolchain/provers.sh` with its Rust engine
+  (`tools/proof-toolchain/provers/`; owner decision 2026-11-12). It has two
+  commands. `doctor [--json]` runs every toolchain entry's own check and
+  reports PRESENT, DRIFT or UNAVAILABLE with a reason; `--json` prints the
+  capability record (E2, specified in `CAPABILITY-RECORD.adoc`) as
+  JCS-canonical I-JSON through `hyperpolymath/ijson-jcs`. `render`
+  projects the agent-session class's setup script, Limited-network
+  allowlist and variable names into `tools/environments/rendered/` (E3),
+  and `render --check` fails on drift. `install` is refused: by owner
+  decision, sessions never install, and their setup script preinstalls
+  what they always need.
+* `environments.kyaml` gains a `render` block for `agent-session`. Its
+  setup preinstalls openssh-client, zstd, just 1.56.0, Agda 2.6.3,
+  Rocq 8.18, elan with Lean 4.13.0, Z3, CVC5, Podman and Guix, each pinned
+  by apt version or SHA-256. It lists 17 allowed hosts and the four
+  variable names sessions use. kyq, deed and k9 are reported UNAVAILABLE:
+  none has a pinned release.
+* `tests/provers_test.sh`, plus `estate-rules.yml` steps that run it, the
+  engine's unit tests and the reachability probe test in CI.
 * `docs/proposals/environment-of-environments.adoc` — how the kit becomes
   the environment of environments: an environment manifest beside the
   toolchain manifest, one capability record, rendered projections, the
