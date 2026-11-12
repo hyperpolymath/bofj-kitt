@@ -149,10 +149,10 @@ All reports will be handled with discretion:
 
 ### Conflicts of Interest
 
-If a repository owner (@hyperpolymath) member is involved in an incident:
+bofj-kitt currently has a single maintainer (@hyperpolymath) and no independent conduct reviewer has been designated. If a report concerns the maintainer:
 
-- They will recuse themselves from the process
-- Another maintainer or external party will handle the report
+- The maintainer cannot impartially handle it. Report the conduct to GitHub (https://github.com/contact/report-abuse), which is independent of this project
+- An independent reviewer will be named here once the owner designates one
 - We will disclose any potential conflicts
 
 ---
@@ -217,7 +217,7 @@ If you believe an enforcement decision was made in error:
 
 **Appeals Process**
 
-- Appeals are reviewed by a different repository owner (@hyperpolymath) member than the original
+- While there is a single maintainer, appeals cannot be reviewed independently; until an independent reviewer is designated, appeals about the maintainer go to GitHub (see Conflicts of Interest). Otherwise appeals are reviewed by a different person than the original reviewer
 - You will receive a response within 14 days
 - The appeals decision is final
 - You may only appeal once per incident
