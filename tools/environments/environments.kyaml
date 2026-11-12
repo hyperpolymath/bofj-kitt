@@ -30,4 +30,69 @@
     {id: "sealed-container", kind: "container", installs: ["image"], prefix: "/opt/hyperpolymath/provers", execute-downloaded: false, container-runtime: "podman", report: ["echidna dispatcher"], notes: "echidna .containerization/Containerfile.wave3 pattern; licensed or not-in-Guix provers live here", measured: {}},
     {id: "boj-registered", kind: "remote", installs: ["none"], prefix: "", execute-downloaded: false, container-runtime: "none", report: ["boj-server"], notes: "not an environment the kit provisions: the view a BoJ server holds of any of the above after registration (groove.a2ml capabilities)", measured: {}},
   ],
+  # What `provers.sh render` projects for an environment class whose
+  # settings live outside any repository (E3). One block per class id.
+  #   setup          what the class's setup script preinstalls, in order. Owner
+  #                  decision 2026-11-12: whatever is always needed is already
+  #                  installed when the session starts; the session hook only
+  #                  runs doctor and never installs. via "apt" pins an exact
+  #                  archive version (apt checks it against the signed index);
+  #                  via "asset" pins a URL and its SHA-256. `provides` names the
+  #                  toolchain.kyaml entry an item satisfies and the version
+  #                  doctor expects of it here. `verify` (no provides) is the
+  #                  command doctor runs for an item outside the toolchain.
+  #   unavailable    always-needed tools with no pinned release to install
+  #                  yet; the setup script reports each one, loudly.
+  #   allowed-hosts  the Limited-network allowlist: exact host names, at most
+  #                  20, package registries (apt, crates, npm, PyPI) assumed
+  #                  allowed. Each must be reachable in this class's latest
+  #                  measured block, or say why not under `unmeasured`.
+  #   env-vars       the variable NAMES sessions need; values never live here.
+  render: {
+    agent-session: {
+      setup: [
+        {id: "openssh-client", via: "apt", package: "openssh-client", version: "1:9.6p1-3ubuntu13.20", verify: "ssh -V", why: "ssh-keygen, which git needs to sign commits (session hook)"},
+        {id: "zstd", via: "apt", package: "zstd", version: "1.5.5+dfsg2-2build1.1", verify: "zstd --version", why: "unpacks the Lean toolchain asset"},
+        {id: "just", via: "asset", url: "https://github.com/casey/just/releases/download/1.56.0/just-1.56.0-x86_64-unknown-linux-musl.tar.gz", sha256: "fa2a8ec1015d9df5330941ade12437488fc40d33f9c9f8cd4eb70a26de11b639", format: "tar.gz", member: "just", dest: "/usr/local/bin/just", verify: "just --version", expect: "1.56.0", why: "the estate's recipe runner"},
+        {id: "agda", via: "apt", package: "agda-bin", version: "2.6.3-1build1", link: {from: "/usr/bin/agda", to: "/usr/local/bin/agda-2.6.3"}, provides: {tool: "agda-2.6.3", version: "2.6.3"}, why: "theory-source prover (agda-bin ships /usr/bin/agda, checked with dpkg -c; it depends on libghc-agda-dev). The link gives it the wrapper name toolchain.kyaml verifies. Ubuntu ships stdlib 1.7.3, not the v2.3 and v2.1 the manifest pins, so those stay UNAVAILABLE"},
+        {id: "coq", via: "apt", package: "coq", version: "8.18.0+dfsg-1build2", provides: {tool: "rocq", version: "8.18.0"}, why: "recheck prover (ships /usr/bin/coqc, checked with dpkg -c)"},
+        {id: "elan", via: "apt", package: "elan", version: "3.1.0-1ubuntu0.1", verify: "elan --version", expect: "3.1.0", why: "Lean toolchain manager"},
+        {id: "lean-4.13.0", via: "asset", url: "https://github.com/leanprover/lean4/releases/download/v4.13.0/lean-4.13.0-linux.tar.zst", sha256: "44ceeac7ee4c98d177bfb4a3e5c210555c87e75b08807b68d523237fe4f09997", format: "tar.zst", dest: "/root/.elan/toolchains/leanprover--lean4---v4.13.0", provides: {tool: "lean", version: "4.13.0", toolchains: ["leanprover/lean4:v4.13.0"]}, why: "the toolchain echidna's proofs pin; other consumers pin 4.15 to 4.35 and fetch through elan"},
+        {id: "z3", via: "apt", package: "z3", version: "4.8.12-3.1build1", provides: {tool: "z3", version: "4.8.12"}, why: "SMT backend in echidna's core"},
+        {id: "cvc5", via: "apt", package: "cvc5", version: "1.1.2-1build1", provides: {tool: "cvc5", version: "1.1.2"}, why: "SMT backend in echidna's core"},
+        {id: "podman", via: "apt", package: "podman", version: "4.9.3+ds1-1ubuntu0.2", verify: "podman --version", expect: "4.9.3", why: "container runtime; whether it can run a container inside a session is unmeasured"},
+        {id: "guix", via: "apt", package: "guix", version: "1.4.0-6build1", verify: "guix --version", expect: "1.4.0", why: "the estate's primary packager; the daemon is not started, so guix shell is unmeasured"},
+      ],
+      unavailable: [
+        {id: "kyq", reason: "metadatastician/kyq has no pinned release that passes its positive and negative tests"},
+        {id: "deed", reason: "no pinned deed tool release is published"},
+        {id: "k9", reason: "no pinned k9-coordination tool release is published"},
+      ],
+      allowed-hosts: [
+        {host: "github.com", why: "the owner's repositories; release asset downloads"},
+        {host: "release-assets.githubusercontent.com", why: "where github.com release downloads redirect (measured 2026-11-12)"},
+        {host: "codeload.github.com", why: "source archives"},
+        {host: "raw.githubusercontent.com", why: "raw files, including consumers' lean-toolchain pins"},
+        {host: "api.github.com", why: "the gh CLI", unmeasured: "the probe only requests an unauthenticated release path, which the proxy refuses; authenticated gh calls were seen to work on 2026-11-12 but are not a probe result"},
+        {host: "opam.ocaml.org", why: "Rocq, Why3, Dedukti, Lambdapi, HOL Light, Alt-Ergo"},
+        {host: "hackage.haskell.org", why: "Agda and Agda2Dedukti builds"},
+        {host: "releases.lean-lang.org", why: "Lean releases"},
+        {host: "static.rust-lang.org", why: "rustup toolchains for Creusot, Kani and Verus"},
+        {host: "ftp.gnu.org", why: "Guix releases"},
+        {host: "bordeaux.guix.gnu.org", why: "Guix substitutes"},
+        {host: "ci.guix.gnu.org", why: "Guix substitutes"},
+        {host: "isabelle.in.tum.de", why: "Isabelle"},
+        {host: "mizar.uwb.edu.pl", why: "Mizar and its MML"},
+        {host: "pvs.csl.sri.com", why: "PVS"},
+        {host: "alire.ada.dev", why: "Alire, for SPARK and gnatprove"},
+        {host: "ghcr.io", why: "estate container images"},
+      ],
+      env-vars: [
+        {name: "CLAUDE_SIGNING_KEY", required: true, why: "commit signing key read by .claude/hooks/session-start.sh; a secret held as a variable, see docs/proposals/short-lived-signing-certificates.adoc"},
+        {name: "CLAUDE_SIGNING_NAME", required: true, why: "git user.name for signed commits"},
+        {name: "CLAUDE_SIGNING_EMAIL", required: true, why: "git user.email and the allowed_signers principal"},
+        {name: "BOJ_SERVER_URL", required: false, why: "BoJ registration and the boj-build workflow; unset means no registration"},
+      ],
+    },
+  },
 }
