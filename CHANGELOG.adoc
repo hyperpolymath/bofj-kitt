@@ -10,6 +10,11 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 ==== Added
 
+* `.claude/settings.json` and `.claude/hooks/session-start.sh`, ported
+  unchanged from `rsr-template-repo` main: in cloud sessions the
+  SessionStart hook decodes `CLAUDE_SIGNING_KEY` and sets global git SSH
+  signing, so commits verify locally as `G`. `.gitignore` now ignores
+  `.claude/*` except these two paths, as the template does.
 * `docs/proposals/environment-of-environments.adoc` — how the kit becomes
   the environment of environments: an environment manifest beside the
   toolchain manifest, one capability record, rendered projections, the
