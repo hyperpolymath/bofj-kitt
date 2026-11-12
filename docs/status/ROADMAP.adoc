@@ -21,9 +21,9 @@ established this baseline.
 * [x] Commit this assessment and roadmap.
 
 === M1 — Finish the hygiene pass
-* [ ] Fill the remaining ~75 placeholder-token files (`container/`, `.devcontainer/`, `.github/*`, `build/*`, `.machine_readable/svc/k9/*`).
-* [ ] Restore a full SECURITY policy once PGP material exists.
-* [ ] Curate the remaining template-authored docs (keep historical records, retarget live guidance).
+* [x] Fill the placeholder tokens that have a true value; the rest are listed as blocked in `REQUIRES_INITIALISATION.adoc` (M2/M3/owner).
+* [ ] Restore a full SECURITY policy once PGP material exists (none in repo or estate canon; owner to generate a key; the root SECURITY policy carries the real contact).
+* [x] Curate template-authored docs (live guidance retargeted; historical records kept; onboarding quickstarts wait on M3).
 
 === M2 — Product spec
 * [ ] Define precisely what a developer-environment "extension" is for this kit.

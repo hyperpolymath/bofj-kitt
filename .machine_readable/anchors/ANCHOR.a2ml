@@ -20,9 +20,9 @@ purpose = [
 
 [identity]
 project = "bofj-kitt"
-kind = "{{PROJECT_KIND}}"                # language | library | service | tool
-one-sentence = "{{PROJECT_PURPOSE}}"
-domain = "{{PROJECT_DOMAIN}}"
+kind = "tool"                # language | library | service | tool
+one-sentence = "Shared Developer Environment Extension Kit (the SuperChainsaw for the BoJ server)"
+domain = "developer environments"
 
 [semantic-authority]
 policy = "canonical"
