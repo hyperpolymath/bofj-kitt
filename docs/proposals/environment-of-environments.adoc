@@ -115,6 +115,15 @@ to HEAD, 200 or 206 to GET).
 |`www.cs.utexas.edu/~moore/acl2/` |TLS failure (HEAD and GET) |Host certificate not in the session CA bundle. The `acl2` entry fetches from GitHub instead, so this does not block it.
 |===
 
+A third run, on 2026-11-12, used an instance whose network policy was
+*Unrestricted* (the owner's Default environment), where the 2026-11-04
+instance ran under a narrower policy. Every URL answered as in the table
+above except one: Isabelle answered its single GET with 206. The agent
+proxy still refused the release landing page, `api.github.com` and the
+crates.io API under Unrestricted, so those refusals belong to the proxy,
+not to the network policy. The block is the second entry in
+`agent-session`'s `measured` list.
+
 A second experiment, installing Z3 from that release asset into a scratch
 prefix and running `z3 --version`, was *refused by the session's execution
 policy* before any bytes moved: a step that downloads and executes an
