@@ -45,6 +45,9 @@ jobs:
       - name: provers.sh render drift and doctor reporting
         run: bash tests/provers_test.sh
 
+      - name: Rendered setup script helpers (stub apt and curl)
+        run: bash tests/setup_script_test.sh
+
       - name: SessionStart hook (signing and capability record, E4)
         run: bash tests/session_hook_test.sh
 
