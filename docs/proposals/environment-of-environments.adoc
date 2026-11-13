@@ -15,10 +15,16 @@ are specified against the deed; the conversion of this repository's own
 files follows ruling D313.
 
 Status: proposal, 2026-10-27; partly built. E1 has measured blocks; E2
-(`provers.sh doctor --json`) and E3 for the agent-session class
-(`provers.sh render`) were built on 2026-11-12, and E4 follows them. E5 is
-not built. The measured facts in <<measured>> were taken in cloud agent
-sessions on 2026-10-27, 2026-11-04 and 2026-11-12 and are reproducible with `tools/environments/probe-reachability.sh`.
+(`provers.sh doctor --json`), E3 for the agent-session class
+(`provers.sh render`) and E4 (the SessionStart hook) were built on
+2026-11-12. The rendered setup script was run as root against real apt on
+2026-11-13 (exit 0, 13 items installed, nothing failed, a second run
+reinstalled nothing; see `tools/environments/README.adoc`). E5 and E6 are
+not built, and applying the rendered settings to the real environment is the
+owner's step. The measured facts in <<measured>> were taken in cloud agent
+sessions on 2026-10-27, 2026-11-04, 2026-11-12 and 2026-11-13 (the last under
+the Limited network) and are reproducible with
+`tools/environments/probe-reachability.sh`.
 
 == The claim
 

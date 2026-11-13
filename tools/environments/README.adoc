@@ -82,3 +82,81 @@ produce them.
 
 A block is a fact about one environment instance on one date. It is never
 copied from one environment class to another.
+
+== Applying a rendered setup to an environment
+
+This repository renders the files and never applies them. Changing the
+cloud environment is the owner's step (or a session's environment-editing
+tool, which puts an approval card in front of the owner). Nothing here may
+change it on its own.
+
+. Run `tools/proof-toolchain/provers.sh render --check`. It confirms the
+  committed files match the manifests.
+. Open the environment's settings: the cloud environment menu in the
+  session title bar, then Edit.
+. *Setup script:* paste the whole of `rendered/agent-session/setup.sh`.
+. *Network access:* Limited, with package registries allowed. Add every
+  host in `rendered/agent-session/allowed-hosts.txt` (the toolchain hosts,
+  at most 20) and in `allowed-hosts-mcp.txt` (the MCP connector hosts, kept
+  apart). The platform accepted 27 hosts on 2026-11-13.
+. *Environment variables:* set the names in `env-vars.txt`, each marked
+  `required` or `optional`. The file holds names only. Values live in the
+  environment's settings and never in this repository.
+. Start a new session. The setup script runs only when a container is
+  built fresh, not when a session resumes.
+
+The setup script is bash. The platform runs it as root while the container
+is built, after the session's repositories are cloned and before Claude
+starts. It is non-interactive, idempotent and at most 100 lines of at most
+200 bytes, and it holds no secrets. Every download is pinned by SHA-256
+and checked before it is unpacked; every apt package is pinned to a
+version. It exits 0 even when an item fails, so a bad item never stops a
+session from starting.
+
+== The `!!!` lines and the setup report
+
+Two places print `!!!` lines, both on purpose:
+
+* *The setup script*, on stderr while the container is built:
+  `!!! bofj-kitt setup: <id> <FAILED|UNAVAILABLE>: <detail>`. These appear
+  in the environment's setup log, not in a session's chat. Every item, good
+  or bad, is also a tab-separated line (`id`, status, detail) in
+  `/var/lib/bofj-kitt/setup-report.tsv`, with status `PRESENT`,
+  `INSTALLED`, `FAILED` or `UNAVAILABLE`. `doctor` reads that file.
+* *The SessionStart hook* (`.claude/hooks/session-start.sh`), on stdout in
+  every session: `!!! WARNING: ...` for a signing problem, for drift, and
+  for the list of `UNAVAILABLE` ids. It also writes
+  `.session/capability-record.json`, which is runtime output and is not
+  tracked. The hook always exits 0 and never installs anything.
+
+`UNAVAILABLE` does not mean the script broke. It means nothing installed
+that tool, and the record says why. `kyq`, `deed` and `k9` are
+`UNAVAILABLE` on purpose until a pinned release of each exists.
+
+== Verified against real apt (2026-11-13)
+
+`rendered/agent-session/setup.sh` from commit `6aebb6b` was run as root in
+a disposable cloud session container, against the real apt archive and the
+network that session had:
+
+* *First run:* exit 0 in 1 m 42 s. `zstd`, `just`, `agda` 2.6.3, `coq`
+  8.18.0, `elan`, `nickel` 1.18.0, `yq` v4.53.3, `lean` 4.13.0, `julia`
+  1.13.3, `z3`, `cvc5`, `podman` 4.9.3 and `guix` 1.4.0 reported
+  `INSTALLED`; `openssh-client` was already `PRESENT`; `kyq`, `deed` and
+  `k9` were `UNAVAILABLE` as declared. Nothing reported `FAILED`.
+* *Second run:* exit 0 in about 1 s, 14 `PRESENT` and 3 `UNAVAILABLE`.
+* *Doctor afterwards:* 15 present, 0 drift, 36 unavailable. The 36 are
+  tools the script does not install (why3, verus, Kani, Isabelle, hol4 and
+  others).
+
+Known gaps from that run:
+
+* A bare `lean` outside a Lean project prints "no default toolchain
+  configured". The script unpacks the 4.13.0 toolchain and elan lists it,
+  but no elan default is set. Whether a project whose `lean-toolchain`
+  names v4.13.0 resolves it was not tested.
+* Isabelle's host resets the TLS handshake under the Limited network (see
+  its `measured` entry), so Isabelle cannot be installed there until that
+  changes. The script does not install it today.
+* The network policy was not re-recorded for the run itself. The host
+  probe taken earlier that day recorded Limited.

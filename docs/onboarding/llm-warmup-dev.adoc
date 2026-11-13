@@ -3,7 +3,9 @@
 
 == What is bofj-kitt?
 
-See `README.md` for overview: bofj-kitt is the shared Developer Environment Extension Kit for the BoJ (Box of Justice) server.
+See `README.adoc` for overview: bofj-kitt is the shared Developer Environment Extension Kit for the BoJ (Box of Justice) server.
+
+Read `CLAUDE.md` first: it holds the rules for agents, including how to ask the owner questions and what never to change in the cloud environment.
 
 == Key Commands
 
@@ -12,6 +14,8 @@ See `README.md` for overview: bofj-kitt is the shared Developer Environment Exte
 * `just test` — run tests
 * `just doctor` — diagnose issues
 * `just heal` — attempt auto-repair
+* `tools/proof-toolchain/provers.sh doctor` — which provers this environment really has (`--json` for the capability record)
+* `tools/proof-toolchain/provers.sh render --check` — fail if a rendered environment file drifted from the manifests
 
 == Quick Context
 

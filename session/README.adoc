@@ -42,4 +42,9 @@ Run `+just session-help+` to list aliases, then use recipes such as:
 === Runtime Artifacts
 
 Runtime files are generated per repository in `+.session/+` and are not
-canonical standards text.
+canonical standards text. `+.session/+` also receives
+`+capability-record.json+`, which the SessionStart hook
+(`+.claude/hooks/session-start.sh+`) writes in every Claude Code session
+from `+tools/proof-toolchain/provers.sh doctor --json+`. It is runtime
+output, not tracked, and its schema is in
+`+tools/proof-toolchain/CAPABILITY-RECORD.adoc+`.

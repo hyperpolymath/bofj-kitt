@@ -3,7 +3,7 @@
 
 == What is bofj-kitt?
 
-See `README.md` for overview: bofj-kitt is the shared Developer Environment Extension Kit for the BoJ (Box of Justice) server.
+See `README.adoc` for overview: bofj-kitt is the shared Developer Environment Extension Kit for the BoJ (Box of Justice) server.
 
 == Key Commands
 
@@ -12,6 +12,7 @@ See `README.md` for overview: bofj-kitt is the shared Developer Environment Exte
 * `just test` — run tests
 * `just doctor` — diagnose issues
 * `just heal` — attempt auto-repair
+* `tools/proof-toolchain/provers.sh doctor` — which provers this environment really has (`--json` for the capability record)
 
 == Quick Context
 
