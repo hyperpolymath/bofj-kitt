@@ -10,6 +10,22 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 ==== Added
 
+* Documentation brought up to date with the environment tooling
+  (documentation only; no manifest, script or rendered file changed):
+  `tools/environments/README.adoc` now says how the owner applies the
+  rendered setup (setup script, Limited allowlists, variable names), that
+  the script runs as root at container build, what the `!!!` lines from the
+  setup script and the SessionStart hook mean, and records the 2026-11-13
+  run of the script against real apt (exit 0 in 1 m 42 s, 13 items
+  installed, nothing failed; a second run took about 1 s and reinstalled
+  nothing; doctor afterwards showed 15 present, 0 drift, 36 unavailable).
+  It also lists the known gaps from that run: a bare `lean` has no elan
+  default, and Isabelle cannot be installed under Limited. `README.adoc`,
+  `EXPLAINME.adoc`, `CLAUDE.md` (the rules for agents), the two LLM warmups,
+  `session/README.adoc`, the roadmap, `STATE.a2ml`, the proposal's status,
+  `DESIGN.adoc` and `CAPABILITY-RECORD.adoc` now describe the built E1 to
+  E4 work, the open owner steps (apply the environment settings; pin kyq,
+  deed and k9) and the remaining unavailable tools.
 * A `julia` toolchain entry (role `runtime`, pinned 1.13.3) and a matching
   agent-session setup item, owner decision 2026-11-13. The setup pins the
   official `julia-1.13.3-linux-x86_64.tar.gz` from

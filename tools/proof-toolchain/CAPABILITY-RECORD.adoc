@@ -7,6 +7,12 @@ have" (proposal E2, `docs/proposals/environment-of-environments.adoc`).
 `provers.sh doctor --json` is its only producer. echidna, echidnabot,
 proof-burrower, the BoJ server and `proof-check-*` are its consumers.
 
+In a Claude Code session the SessionStart hook
+(`.claude/hooks/session-start.sh`, proposal E4) runs the producer and writes
+the record to `.session/capability-record.json` (runtime output, not
+tracked). The hook never installs anything and always exits 0; it prints a
+`!!!` line for each `UNAVAILABLE` id so a missing tool is loud.
+
 == Encoding
 
 One JSON object, JCS-canonical (RFC 8785) and valid I-JSON (RFC 7493),

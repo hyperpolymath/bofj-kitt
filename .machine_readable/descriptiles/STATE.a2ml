@@ -8,7 +8,7 @@
 [metadata]
 project = "bofj-kitt"
 version = "0.3.0"
-last-updated = "2026-10-27"
+last-updated = "2026-11-13"
 status = "active"  # active | paused | archived
 
 [project-context]
@@ -39,7 +39,10 @@ actions = [
   "M1 — fill the remaining ~75 placeholder-token files (container/, .devcontainer/, .github/*)",
   "M1 — restore a full SECURITY policy once PGP material exists",
   "M2 — specify the kit's first capability and its BoJ integration contract",
-  "M2 — decide the proposals in docs/proposals/environment-of-environments.adoc (E1–E6, X1–X5), docs/proposals/awesome-estate-maths-proving.adoc and docs/proposals/boj-prover-solver-cartridges.adoc (Z1–Z6)",
+  "M2 — decide the proposals in docs/proposals/environment-of-environments.adoc (E5, E6, X1–X5; E1–E4 are built), docs/proposals/awesome-estate-maths-proving.adoc and docs/proposals/boj-prover-solver-cartridges.adoc (Z1–Z6)",
+  "Owner — apply tools/environments/rendered/agent-session/ (setup script, allowlists, variable names) to the real cloud environment; see tools/environments/README.adoc",
+  "Owner — publish pinned releases of kyq, deed and k9; until then they stay UNAVAILABLE and the Rust KYAML reader stays",
+  "Environment — Isabelle is unreachable under the Limited network; set an elan default for the preinstalled Lean 4.13.0; install the other UNAVAILABLE provers as pinned downloads",
 ]
 
 [maintenance-status]
