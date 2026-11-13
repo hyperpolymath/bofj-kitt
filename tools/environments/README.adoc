@@ -34,7 +34,9 @@ environment instance probed, never merged with another instance's.
 `render` block in `environments.kyaml`: `setup.sh` (the setup script, at
 most 100 lines of at most 200 bytes, every download pinned by SHA-256),
 `allowed-hosts.txt` (the Limited-network allowlist: exact host names, at
-most 20) and `env-vars.txt` (variable names only). Never hand-edited:
+most 20), `allowed-hosts-mcp.txt` (the MCP connector endpoints that plugin
+connectors reach directly, kept apart from the toolchain hosts and their
+cap; present when the class lists `mcp-connector-hosts`) and `env-vars.txt` (variable names only). Never hand-edited:
 `provers.sh render --check`, run in CI by `tests/provers_test.sh`, fails
 when a committed file differs from what the manifests render. Render also
 refuses an allowed host that the class's latest `measured` block does not

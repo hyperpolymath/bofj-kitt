@@ -87,6 +87,29 @@
         {host: "alire.ada.dev", why: "Alire, for SPARK and gnatprove"},
         {host: "ghcr.io", why: "estate container images"},
       ],
+      # MCP connector endpoints, not toolchain hosts. The plugin connectors a
+      # session loads (claude.ai plugins) reach these hosts directly, and the
+      # environment's "allow MCP servers" setting does not cover them: under
+      # Limited network each was refused with "Proxy refused to open a tunnel:
+      # 403" in the parent session on 2026-11-13. Rendered to their own file,
+      # allowed-hosts-mcp.txt, so the 20-host cap on the toolchain list is
+      # unchanged; whether the platform accepts both lists together is to be
+      # recorded once they are applied. Exact host names only.
+      #   host       the host in the connector's MCP URL
+      #   connector  the plugin connector that uses it
+      #   source     where the host was verified
+      #   note       anything known to be wrong with it apart from the network
+      mcp-connector-hosts: [
+        {host: "mcp.granola.ai", connector: "granola", source: "parent session plugin config .mcp.json, url https://mcp.granola.ai/mcp; not visible in this session"},
+        {host: "api.githubcopilot.com", connector: "engineering:github", source: "parent session plugin config .mcp.json, url https://api.githubcopilot.com/mcp/; not visible in this session"},
+        {host: "mcp.atlassian.com", connector: "atlassian", source: "parent session plugin config .mcp.json, url https://mcp.atlassian.com/v1/mcp; not visible in this session"},
+        {host: "ai-inc.quickbooks.intuit.com", connector: "intuit-quickbooks", source: "parent session plugin config .mcp.json, url https://ai-inc.quickbooks.intuit.com/v1/mcp; not visible in this session"},
+        {host: "mcp.monday.com", connector: "monday-com", source: "parent session plugin config .mcp.json, url https://mcp.monday.com/mcp; not visible in this session"},
+        {host: "mcp.notion.com", connector: "notion", source: "parent session plugin config .mcp.json, url https://mcp.notion.com/mcp; not visible in this session"},
+        {host: "mcp.slack.com", connector: "slack", source: "parent session plugin config .mcp.json, url https://mcp.slack.com/mcp; not visible in this session"},
+        {host: "setup.shopify.com", connector: "shopify", source: "parent session plugin config .mcp.json, url https://setup.shopify.com/mcp; not visible in this session"},
+        {host: "api.definite.app", connector: "definite", source: "parent session plugin config .mcp.json, url https://api.definite.app/v3/mcp/http; not visible in this session", note: "the endpoint answered not-found in the parent session, so the connector may fail even once the host is allowed"},
+      ],
       env-vars: [
         {name: "CLAUDE_SIGNING_KEY", required: true, why: "commit signing key read by .claude/hooks/session-start.sh; a secret held as a variable, see docs/proposals/short-lived-signing-certificates.adoc"},
         {name: "CLAUDE_SIGNING_NAME", required: true, why: "git user.name for signed commits"},

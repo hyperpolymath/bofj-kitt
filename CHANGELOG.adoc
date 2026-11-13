@@ -10,6 +10,15 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 ==== Added
 
+* `environments.kyaml` gains `mcp-connector-hosts` for `agent-session`:
+  the nine hosts that plugin MCP connectors reach directly (Granola,
+  GitHub Copilot, Atlassian, QuickBooks, monday.com, Notion, Slack, Shopify,
+  Definite). Under Limited network each was refused with a 403 tunnel
+  error, and the "allow MCP servers" setting does not cover them. `render`
+  writes them to their own `allowed-hosts-mcp.txt`, so the 20-host cap on
+  the toolchain allowlist is unchanged; it rejects a wildcard, a host
+  listed twice or also on the toolchain list, and an entry without a
+  source.
 * `.claude/settings.json` and `.claude/hooks/session-start.sh`, ported
   unchanged from `rsr-template-repo` main: in cloud sessions the
   SessionStart hook decodes `CLAUDE_SIGNING_KEY` and sets global git SSH
