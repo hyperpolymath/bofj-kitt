@@ -73,7 +73,7 @@ apt_pin() { # id package version [link-from link-to]
     rep "$id" INSTALLED "$pkg=$ver"
   else rep "$id" FAILED "apt-get install $pkg=$ver"; return 0; fi
   if [[ -n "$to" ]]; then ln -sf "$from" "$to" || rep "$id" FAILED "link $to"; fi; }
-asset() { # id format dest url sha256 [member]
+asset() { # id format(tar.gz|tar.zst|bin) dest url sha256 [member, tar.gz only]
   local id="$1" fmt="$2" dest="$3" url="$4" sha="$5" member="${6:-}" t
   if [[ -e "$R/stamp.$id.$sha" && -e "$dest" ]]; then rep "$id" PRESENT "sha256 $sha"; return 0; fi
   t="$(mktemp -d)"
@@ -83,6 +83,7 @@ asset() { # id format dest url sha256 [member]
   elif case "$fmt" in
       tar.gz) tar -xzf "$t/a" -C "$t" "$member" && install -m 755 "$t/$member" "$dest" ;;
       tar.zst) rm -rf "$dest" && mkdir -p "$dest" && tar --zstd -xf "$t/a" -C "$dest" --strip-components=1 ;;
+      bin) install -m 755 "$t/a" "$dest" ;;
       *) false ;;
     esac; then touch "$R/stamp.$id.$sha"; rep "$id" INSTALLED "sha256 $sha"
   else rep "$id" FAILED "unpack $fmt to $dest"; fi
@@ -155,7 +156,7 @@ fn setup_script(class: &str, r: &Value, manifest_sha: &str) -> Result<String, St
                 );
                 if format == "tar.gz" {
                     line.push_str(&format!(" {}", q(s(item, "member", &ctx)?, &ctx)?));
-                } else if format != "tar.zst" {
+                } else if format != "tar.zst" && format != "bin" {
                     return Err(format!("{ctx}: unsupported format {format}"));
                 }
                 out.push_str(&line);
@@ -439,6 +440,19 @@ mod tests {
         assert!(check_script(&format!("{}\n", "x".repeat(MAX_LINE_BYTES + 1))).is_err());
         assert!(check_script("echo $CLAUDE_SIGNING_KEY\n").is_err());
         assert!(check_script("a\r\n").is_err());
+    }
+
+    #[test]
+    fn bare_binary_asset_renders_without_member() {
+        let sha = "a".repeat(64);
+        let item = serde_json::json!({"id": "tool", "via": "asset", "url": "https://github.com/o/r/releases/download/v1/tool-linux", "sha256": sha, "format": "bin", "dest": "/usr/local/bin/tool"});
+        let r = serde_json::json!({"setup": [item], "allowed-hosts": [{"host": "github.com"}]});
+        let out = setup_script("t", &r, "m").unwrap();
+        assert!(out.contains("  bin) install -m 755"));
+        assert!(out.contains(&format!("asset 'tool' 'bin' '/usr/local/bin/tool' \\\n  'https://github.com/o/r/releases/download/v1/tool-linux' \\\n  {sha}\n")));
+        let mut bad = r.clone();
+        bad["setup"][0]["format"] = "zip".into();
+        assert!(setup_script("t", &bad, "m").is_err());
     }
 
     #[test]
