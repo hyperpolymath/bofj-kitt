@@ -42,6 +42,16 @@ established this baseline.
 * [x] `provers.sh doctor --json`: the environment capability record (proposal E2, 2026-11-12).
 * [x] `provers.sh render`: the agent-session setup script, allowlist and variable names, with a drift test in CI (proposal E3, 2026-11-12).
 * [x] SessionStart hook writes the capability record to `.session/` and names UNAVAILABLE legs, never blocking (proposal E4, 2026-11-12).
+* [x] E1 measured blocks for the agent session under Unrestricted (2026-11-04, 2026-11-12) and the Limited network (2026-11-13).
+* [x] The setup script preinstalls what a session always needs: zstd, just, agda, coq, elan, nickel, yq, lean 4.13.0, julia 1.13.3, z3, cvc5, podman and guix (2026-11-12 to 2026-11-13).
+* [x] MCP connector hosts rendered to their own allowlist, kept apart from the 20-host toolchain cap (2026-11-13).
+* [x] The rendered setup script run as root against real apt: exit 0, 13 items installed, nothing failed, a second run reinstalled nothing (2026-11-13).
+* [x] Proposal for short-lived signing certificates, `docs/proposals/short-lived-signing-certificates.adoc` (not built).
+* [ ] Owner: apply the rendered setup, allowlists and variable names to the real environment (`tools/environments/README.adoc`).
+* [ ] Pin releases of kyq, deed and k9 so the setup can install them; until then they report `UNAVAILABLE`, and the Rust KYAML reader stays.
+* [ ] Isabelle cannot be installed under the Limited network (its host resets the TLS handshake); decide whether to keep it on the allowlist.
+* [ ] Set an elan default for the preinstalled Lean 4.13.0, so a bare `lean` works outside a project.
+* [ ] Install the remaining 36 `UNAVAILABLE` tools (why3, verus, Kani, hol4 and others), each as a pinned, hash-checked download.
 * [ ] Per-capability unit + integration tests; record counts in `.machine_readable/descriptiles/STATE.a2ml`.
 * [ ] Replace the placeholder fuzz README with a real harness.
 * [ ] Replace the generic template proofs under `verification/` with product proofs.
