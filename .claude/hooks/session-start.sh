@@ -8,6 +8,10 @@
 #    CLAUDE_SIGNING_NAME and CLAUDE_SIGNING_EMAIL from the cloud environment.
 #    Writes ~/.ssh/id_ed25519_signing (mode 600) and ~/.ssh/allowed_signers,
 #    then sets signing config in the global git config (~/.gitconfig).
+#    If .claude/signing/mode says "cert", the hook instead makes a session
+#    key in memory-backed storage and asks the owner for a short-lived SSH
+#    certificate (.claude/signing/cert-signing.sh); CLAUDE_SIGNING_KEY is
+#    not read. Until a certificate is installed, commits fail loudly.
 #
 # 2. Capability record (every session; proposal E4). Runs
 #    `tools/proof-toolchain/provers.sh doctor --json` and writes the record to
@@ -92,14 +96,29 @@ configure_signing() {
   echo "Commit signing configured (ssh, key $key, principal from CLAUDE_SIGNING_EMAIL)."
 }
 
+configure_cert_signing() {
+  script="$root/.claude/signing/cert-signing.sh"
+  if ! sh "$script" request; then
+    warn "commit signing NOT configured: certificate mode could not start (see above)"
+    printf '%s\n' "!!! Commits from this session will fail until this is fixed."
+  fi
+}
+
+root="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
+signing_mode=key
+[ ! -r "$root/.claude/signing/mode" ] || signing_mode=$(tr -d '[:space:]' < "$root/.claude/signing/mode")
+
 # Cloud sessions only: on a workstation this would overwrite a real key file.
 if [ "${CLAUDE_CODE_REMOTE:-}" = "true" ]; then
-  configure_signing
+  case "$signing_mode" in
+    cert) configure_cert_signing ;;
+    key|"") configure_signing ;;
+    *) warn "commit signing NOT configured: .claude/signing/mode is '$signing_mode', want 'key' or 'cert'" ;;
+  esac
 fi
 
 # --- 2. Capability record ----------------------------------------------------
 
-root="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 provers="$root/tools/proof-toolchain/provers.sh"
 session_dir="$root/.session"
 record="$session_dir/capability-record.json"

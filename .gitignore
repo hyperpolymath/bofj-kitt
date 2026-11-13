@@ -125,6 +125,7 @@ dist/
 .claude/*
 !.claude/settings.json
 !.claude/hooks/
+!.claude/signing/
 
 # Capability record and doctor output written by the SessionStart hook (E4)
 /.session/
