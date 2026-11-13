@@ -1,16 +1,5 @@
 # This workflow is managed by gh actions-lock.
 # SPDX-License-Identifier: MPL-2.0
-# governance.yml — single wrapper calling the shared estate governance bundle
-# in metadatastician/standards instead of carrying per-repo copies.
-#
-# Replaces the per-repo governance scaffolding removed in the same commit:
-#   quality.yml, guix-guix-policy.yml, npm-bun-blocker.yml, ts-blocker.yml,
-#   security-policy.yml, rsr-antipattern.yml, wellknown-enforcement.yml,
-#   workflow-linter.yml
-#
-# Load-bearing build/security workflows stay standalone in the repo
-# (rust-ci, codeql, dependabot, release, scan/mirror/pages plumbing).
-
 name: Governance
 
 on:
@@ -19,18 +8,66 @@ on:
   pull_request:
   workflow_dispatch:
 
-# Estate guardrail: cancel superseded runs so re-pushes / rebased PR
-# updates do not pile up queued runs against the shared account-wide
-# Actions concurrency pool. Applied only to read-only check workflows
-# (no publish/mutation), so cancelling a superseded run is always safe.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
-  actions: read
   contents: read
 
+# Self-contained execution of the shared estate governance policies pinned to
+# metadatastician/standards@f0b3cd4c464d33e1584f8528c17bce104555e256
+# (replacing the retired runtime-policy.yml workflow per PR #244).
 jobs:
   governance:
-    uses: metadatastician/standards/.github/workflows/governance-reusable.yml@8f2ee50841e216cd8c192eeb68953118190f105c
+    name: Estate Governance Policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      STANDARDS_PIN: 'f0b3cd4c464d33e1584f8528c17bce104555e256'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout pinned standards policy scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: metadatastician/standards
+          ref: f0b3cd4c464d33e1584f8528c17bce104555e256
+          path: .standards-checkout
+          sparse-checkout: |
+            scripts
+            0-canon
+          sparse-checkout-cone-mode: true
+          persist-credentials: false
+
+      - name: Enforce TypeScript and npm/yarn runtime policy
+        run: |
+          set -euo pipefail
+          # The pinned script is the sole TypeScript verdict: it honours the
+          # builtin allowlist, .claude/CLAUDE.md exemptions and
+          # .governance-allowlist. A second inline filter here would disagree
+          # with it. A missing script is a failure, never a silent skip.
+          test -f .standards-checkout/scripts/check-ts-allowlist.sh || {
+            echo "::error::Pinned check-ts-allowlist.sh missing at $STANDARDS_PIN"
+            exit 1
+          }
+          bash .standards-checkout/scripts/check-ts-allowlist.sh
+          rm -rf .standards-checkout
+
+          bad_locks="$(git ls-files 'package-lock.json' '**/package-lock.json' 'yarn.lock' '**/yarn.lock' 'pnpm-lock.yaml' '**/pnpm-lock.yaml' || true)"
+          if [ -n "$bad_locks" ]; then
+            echo "::error::Banned npm/yarn/pnpm lockfiles detected (use Deno or Bun per LANGUAGE-POLICY):"
+            printf '%s\n' "$bad_locks"
+            exit 1
+          fi
+
+          if [ -f tsconfig.json ] || [ -f Makefile ] || [ -f GNUmakefile ]; then
+            echo "::error::Banned root config (tsconfig.json / Makefile) detected"
+            exit 1
+          fi
+          echo "Governance runtime and language anti-pattern checks passed."

@@ -1,31 +1,183 @@
 # This workflow is managed by gh actions-lock.
 # SPDX-License-Identifier: MPL-2.0
-# Thin wrapper around metadatastician/standards hypatia-scan-reusable.yml.
-# See standards#191 for the reusable's purpose and design.
-
+#
+# Self-contained Hypatia neurosymbolic security scan + SARIF upload (`category:
+# hypatia`) satisfying the `Hypatia` code-scanning tool requirement in the
+# `Base` branch ruleset on `main`, as well as push, weekly schedule, and manual
+# dispatch runs.
+#
+# This is the ONLY workflow that runs Hypatia (static-analysis-gate.yml used to
+# run it a second time at the same pin, with a second cache, its own duplicate
+# "fail on critical" gate and a differently-shaped output). See the header of
+# fork-governance.yml for the layering.
+#
+# Two outputs matter downstream:
+#   * the SARIF, for code scanning;
+#   * `hypatia-findings.relativized.json` in the `hypatia-scan-findings`
+#     artifact, which the Fork governance verdict grid reads. The artifact name
+#     matches hypatia-scan-reusable.yml's, so adopting that reusable later needs
+#     no change in fork-governance.yml.
+#
+# `name:` is a cross-workflow EDGE: verdict-grid-publish.yml names "Hypatia
+# Security Scan" in its `workflow_run.workflows`. Renaming this workflow without
+# renaming it there silently stops the grid re-rendering;
+# scripts/check-workflow-edges.sh fails the CICD Squabbler gate when the two
+# disagree.
 name: Hypatia Security Scan
 
 on:
+  pull_request:
   push:
     branches: [main, master, develop]
-  pull_request:
-    branches: [main, master]
   schedule:
     - cron: '0 0 * * 0'
   workflow_dispatch:
 
-# Estate guardrail: cancel superseded runs so re-pushes don't pile up.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
-  actions: read
   contents: read
-  security-events: write
-  pull-requests: write
 
 jobs:
   hypatia:
-    uses: metadatastician/standards/.github/workflows/hypatia-scan-reusable.yml@8f2ee50841e216cd8c192eeb68953118190f105c
-    secrets: inherit
+    name: Hypatia Neurosymbolic Analysis
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      actions: read # upload-sarif calls get-a-workflow-run; private repos need this
+      contents: read
+      security-events: write
+      vulnerability-alerts: read # Dependabot alerts, for Hypatia's DA rules
+    env:
+      HYPATIA_SHA: 'be98f74ce93df200752f3798efa1305bfa3e0e10'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # OTP 28.5.0.8 crashes this job with SIGSEGV (exit 139 in hypatia-cli.sh
+      # scan) on some scanned trees, deterministically per tree
+      # (rsr-template-repo#339: 10 of 10 runs on #338's head, 0 of 10 on
+      # main's); OTP 27.3.4.19 scanned both trees cleanly (0 of 10 each).
+      # Same VM bug as the RSR oracle (#333, #335). Do not move to 28.x until a
+      # pinned 28.x build scans #338's head 7821940 with no crash.
+      - name: Setup Elixir 1.19.4 / OTP 27.3.4.19 for Hypatia scanner
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          elixir-version: '1.19.4'
+          otp-version: '27.3.4.19'
+
+      - name: Cache pinned Hypatia build
+        id: cache-hypatia
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/hypatia
+            ~/.hex
+            ~/.mix
+          key: hypatia-sarif-${{ runner.os }}-otp27.3.4.19-elx1194-${{ env.HYPATIA_SHA }}
+
+      - name: Build pinned Hypatia scanner
+        run: |
+          set -euo pipefail
+          if [ ! -x "$HOME/hypatia/hypatia" ] || [ ! -x "$HOME/hypatia/hypatia-cli.sh" ]; then
+            rm -rf "$HOME/hypatia"
+            git init "$HOME/hypatia"
+            git -C "$HOME/hypatia" remote add origin https://github.com/hyperpolymath/hypatia.git
+            git -C "$HOME/hypatia" fetch --depth=1 origin "$HYPATIA_SHA"
+            git -C "$HOME/hypatia" checkout --detach FETCH_HEAD
+            (
+              cd "$HOME/hypatia"
+              mix local.hex --force
+              mix local.rebar --force
+              mix deps.get
+              MIX_NO_PUBSUB=1 mix escript.build
+            )
+            chmod +x "$HOME/hypatia/hypatia" "$HOME/hypatia/hypatia-cli.sh"
+          fi
+
+      - name: Run Hypatia JSON and SARIF analysis
+        id: scan
+        env:
+          # The API-backed rules (code-scanning, Dependabot, secret-scanning,
+          # branch-protection, baseline-health) return no findings without a
+          # token. Scoped to this step. The job token reaches code-scanning
+          # (security-events) and Dependabot (vulnerability-alerts) alerts;
+          # it cannot read secret-scanning alerts, which need an App or PAT.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          HYPATIA_FORMAT=json "$HOME/hypatia/hypatia-cli.sh" scan . --exit-zero > hypatia-findings.json
+          jq -e 'type == "array"' hypatia-findings.json >/dev/null
+
+          HYPATIA_FORMAT=sarif "$HOME/hypatia/hypatia-cli.sh" scan . --exit-zero > hypatia.sarif
+          jq -e '.runs | type == "array" and length > 0' hypatia.sarif >/dev/null
+
+          # Repo-relative paths, because the verdict grid's delta column compares
+          # findings against `git diff --name-only`, which is repo-relative: an
+          # absolute path would never match, and every finding would be counted
+          # as "standing" instead of "in this change".
+          jq --arg ws "$GITHUB_WORKSPACE/" '
+            map(if (.file | type) == "string" then
+                  .file |= (if startswith($ws) then .[($ws | length):] else . end)
+                else . end)' hypatia-findings.json > hypatia-findings.relativized.json
+
+          # code_scanning_alerts findings are repository-wide historical GitHub
+          # alerts, not properties of this change. Hypatia's own SARIF render
+          # drops them (lib/hypatia/sarif.ex @meta_rule_modules) but its JSON
+          # keeps them, so exclude them from the BLOCKING count only; they stay
+          # in hypatia-findings.json and in the uploaded artifact.
+          CRITICAL="$(jq '[.[] | select(.severity == "critical" and .rule_module != "code_scanning_alerts")] | length' hypatia-findings.json)"
+          HIGH="$(jq '[.[] | select(.severity == "high")] | length' hypatia-findings.json)"
+          TOTAL="$(jq 'length' hypatia-findings.json)"
+          {
+            echo "critical=$CRITICAL"
+            echo "high=$HIGH"
+            echo "total=$TOTAL"
+          } >> "$GITHUB_OUTPUT"
+
+      # Evidence for the verdict grid. Uploaded even when the scan step failed:
+      # a missing artifact and a failed scan are different facts, and the grid
+      # can only say "orange" for the first. `if-no-files-found: warn` because a
+      # scan that never produced a file is already visible as a red step here.
+      - name: Upload Hypatia findings for the verdict grid
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: hypatia-scan-findings
+          path: |
+            hypatia-findings.json
+            hypatia-findings.relativized.json
+            hypatia.sarif
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Upload Hypatia SARIF to GitHub Code Scanning
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          sarif_file: hypatia.sarif
+          category: hypatia
+
+      - name: Enforce zero critical Hypatia findings
+        env:
+          CRITICAL_COUNT: ${{ steps.scan.outputs.critical }}
+          HIGH_COUNT: ${{ steps.scan.outputs.high }}
+          TOTAL_COUNT: ${{ steps.scan.outputs.total }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## Hypatia Neurosymbolic Scan"
+            echo ""
+            echo "- Critical: ${CRITICAL_COUNT}"
+            echo "- High: ${HIGH_COUNT}"
+            echo "- Total findings: ${TOTAL_COUNT}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$CRITICAL_COUNT" != "0" ]; then
+            echo "::error::Hypatia reported ${CRITICAL_COUNT} critical finding(s)"
+            exit 1
+          fi
