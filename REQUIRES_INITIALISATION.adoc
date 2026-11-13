@@ -26,8 +26,6 @@ to make a gate go green; delete it only when no token below remains.
 
 === Needs the owner
 
-* `+{{ONE_PARAGRAPH_ANTI_PURPOSE}}+` in `.machine_readable/INTENT.contractile`:
-  what bofj-kitt is explicitly not.
 * A PGP key for `SECURITY`: none exists in the repo or estate canon, so no
   fingerprint or key URL is stated.
 

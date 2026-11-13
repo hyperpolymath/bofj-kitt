@@ -40,7 +40,7 @@
 
   ; === Anti-Purpose (what this repo is NOT — prevents scope creep) ===
   (anti-purpose
-    "{{ONE_PARAGRAPH_ANTI_PURPOSE}}"
+    "bofj-kitt is NOT the BoJ server: it provisions developer environments and registers them with a BoJ server, it does not implement the server or its cartridges. It is NOT rsr-template-repo or a project scaffolder: it is instantiated from that template, it does not replace it. It is NOT a language, compiler or runtime: the pseudoscript or affinescript identity was removed in M0 (ADR-002). Scope beyond these edges is fixed by the M2 product spec."
     ; Examples:
     ; "This is NOT a general-purpose database — it solves one specific problem."
     ; "This is NOT a framework — it is a library with a focused API."
