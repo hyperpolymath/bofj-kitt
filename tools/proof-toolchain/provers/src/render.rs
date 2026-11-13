@@ -73,20 +73,22 @@ apt_pin() { # id package version [link-from link-to]
     rep "$id" INSTALLED "$pkg=$ver"
   else rep "$id" FAILED "apt-get install $pkg=$ver"; return 0; fi
   if [[ -n "$to" ]]; then ln -sf "$from" "$to" || rep "$id" FAILED "link $to"; fi; }
-asset() { # id format(tar.gz|tar.zst|bin) dest url sha256 [member, tar.gz only]
+asset() { # id format(tar.gz|tar.zst|tar.gz-tree|bin) dest url sha256 [member, tar.gz only]
   local id="$1" fmt="$2" dest="$3" url="$4" sha="$5" member="${6:-}" t
   if [[ -e "$R/stamp.$id.$sha" && -e "$dest" ]]; then rep "$id" PRESENT "sha256 $sha"; return 0; fi
   t="$(mktemp -d)"
   if ! curl -fsSL --retry 3 --max-time 900 -o "$t/a" "$url"; then rep "$id" FAILED "download $url"
   elif ! printf '%s  %s\n' "$sha" "$t/a" | sha256sum -c --status -; then
     rep "$id" FAILED "sha256 mismatch for $url"
-  elif case "$fmt" in
+  elif rm -f "$R/stamp.$id.$sha" && case "$fmt" in
       tar.gz) tar -xzf "$t/a" -C "$t" "$member" && install -m 755 "$t/$member" "$dest" ;;
       tar.zst) rm -rf "$dest" && mkdir -p "$dest" && tar --zstd -xf "$t/a" -C "$dest" --strip-components=1 ;;
+      tar.gz-tree) rm -rf "$dest" && mkdir -p "$dest" && tar -xzf "$t/a" -C "$dest" --strip-components=1 ;;
       bin) install -m 755 "$t/a" "$dest" ;;
       *) false ;;
     esac; then touch "$R/stamp.$id.$sha"; rep "$id" INSTALLED "sha256 $sha"
-  else rep "$id" FAILED "unpack $fmt to $dest"; fi
+  else case "$fmt" in tar.zst|tar.gz-tree) rm -rf "$dest" ;; *) ;; esac
+    rep "$id" FAILED "unpack $fmt to $dest"; fi
   rm -rf "$t"; }
 apt-get update -q >/dev/null 2>&1 || rep apt-index FAILED "apt-get update"
 "#;
@@ -156,7 +158,7 @@ fn setup_script(class: &str, r: &Value, manifest_sha: &str) -> Result<String, St
                 );
                 if format == "tar.gz" {
                     line.push_str(&format!(" {}", q(s(item, "member", &ctx)?, &ctx)?));
-                } else if format != "tar.zst" && format != "bin" {
+                } else if !matches!(format, "tar.zst" | "tar.gz-tree" | "bin") {
                     return Err(format!("{ctx}: unsupported format {format}"));
                 }
                 out.push_str(&line);

@@ -28,6 +28,15 @@ printf '#!/bin/sh\necho tool\n' > "$work/payload/tool"
 chmod +x "$work/payload/tool"
 tar -czf "$work/tool.tgz" -C "$work/payload" tool
 good_sha="$(sha256sum "$work/tool.tgz" | cut -d' ' -f1)"
+# A release-style archive with one top directory, for the tar.gz-tree format.
+mkdir -p "$work/tree/pkg-1.0/bin"
+cp "$work/payload/tool" "$work/tree/pkg-1.0/bin/tool"
+tar -czf "$work/tree.tgz" -C "$work/tree" pkg-1.0
+tree_sha="$(sha256sum "$work/tree.tgz" | cut -d' ' -f1)"
+# A truncated archive: its digest matches, but it will not unpack (gzip hits
+# an unexpected end of file).
+head -c 64 "$work/tree.tgz" > "$work/bad.tgz"
+bad_sha="$(sha256sum "$work/bad.tgz" | cut -d' ' -f1)"
 
 cat > "$work/bin/dpkg-query" <<'SH'
 #!/bin/sh
@@ -44,7 +53,7 @@ cat > "$work/bin/curl" <<SH
 #!/bin/sh
 out=""; prev=""
 for a in "\$@"; do [ "\$prev" = "-o" ] && out="\$a"; prev="\$a"; done
-cp "$work/tool.tgz" "\$out"
+case "\$prev" in *bad*) cp "$work/bad.tgz" "\$out" ;; *tree*) cp "$work/tree.tgz" "\$out" ;; *) cp "$work/tool.tgz" "\$out" ;; esac
 SH
 chmod +x "$work/bin/"*
 
@@ -62,6 +71,7 @@ run asset t tar.gz "$work/out/tool" https://example.invalid/t.tgz "$good_sha" to
 run asset t tar.gz "$work/out/tool" https://example.invalid/t.tgz "$good_sha" tool || fail "asset returned non-zero on rerun"
 run asset w tar.gz "$work/out/wrong" https://example.invalid/t.tgz "$(printf '0%.0s' {1..64})" tool || fail "asset returned non-zero on mismatch"
 run rep kyq UNAVAILABLE "no pinned release" || fail "rep returned non-zero"
+run asset j tar.gz-tree "$work/out/pkg" https://example.invalid/tree.tgz "$tree_sha" || fail "asset returned non-zero on a tree"
 
 r="$(report)"
 grep -qP '^a\tPRESENT\thave=1.0$' <<<"$r" || fail "apt_pin did not report PRESENT: $r"
@@ -75,5 +85,18 @@ grep -qP '^w\tFAILED\tsha256 mismatch' <<<"$r" || fail "asset accepted a wrong d
 [[ ! -e "$work/out/wrong" ]] || fail "asset installed a file whose digest did not match"
 grep -q '!!! bofj-kitt setup: c FAILED' "$work/err" || fail "FAILED was not loud"
 grep -q '!!! bofj-kitt setup: kyq UNAVAILABLE' "$work/err" || fail "UNAVAILABLE was not loud"
+grep -qP '^j\tINSTALLED\tsha256 '"$tree_sha"'$' <<<"$r" || fail "tar.gz-tree asset did not report INSTALLED: $r"
+[[ -x "$work/out/pkg/bin/tool" ]] || fail "tar.gz-tree did not unpack the tree with its top directory stripped"
+
+# A failed unpack must not leave a stamp (or a half-made tree) that a later
+# run reads as installed: plant a stale stamp for an archive that will not
+# unpack, then run the item twice.
+touch "$work/report/stamp.b.$bad_sha"
+run asset b tar.gz-tree "$work/out/broken" https://example.invalid/bad.tgz "$bad_sha" || fail "asset returned non-zero on a failed unpack"
+[[ ! -e "$work/report/stamp.b.$bad_sha" ]] || fail "a failed unpack left the stamp in place"
+[[ ! -e "$work/out/broken" ]] || fail "a failed unpack left a half-made tree"
+run asset b tar.gz-tree "$work/out/broken" https://example.invalid/bad.tgz "$bad_sha" || fail "asset returned non-zero on a second failed unpack"
+[[ "$(grep -cP '^b\tFAILED\tunpack tar.gz-tree' "$work/report/setup-report.tsv")" -eq 2 ]] || fail "the second run did not fail again: $(report)"
+grep -qP '^b\tPRESENT' "$work/report/setup-report.tsv" && fail "a failed unpack was later reported PRESENT"
 
 echo "PASS: setup helpers report PRESENT/INSTALLED/FAILED/UNAVAILABLE, verify SHA-256 before installing, and never fail the script"
