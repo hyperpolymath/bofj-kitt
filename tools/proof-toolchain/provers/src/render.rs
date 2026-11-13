@@ -80,13 +80,14 @@ asset() { # id format dest url sha256 [member]
   if ! curl -fsSL --retry 3 --max-time 900 -o "$t/a" "$url"; then rep "$id" FAILED "download $url"
   elif ! printf '%s  %s\n' "$sha" "$t/a" | sha256sum -c --status -; then
     rep "$id" FAILED "sha256 mismatch for $url"
-  elif case "$fmt" in
+  elif rm -f "$R/stamp.$id.$sha" && case "$fmt" in
       tar.gz) tar -xzf "$t/a" -C "$t" "$member" && install -m 755 "$t/$member" "$dest" ;;
       tar.zst) rm -rf "$dest" && mkdir -p "$dest" && tar --zstd -xf "$t/a" -C "$dest" --strip-components=1 ;;
       tar.gz-tree) rm -rf "$dest" && mkdir -p "$dest" && tar -xzf "$t/a" -C "$dest" --strip-components=1 ;;
       *) false ;;
     esac; then touch "$R/stamp.$id.$sha"; rep "$id" INSTALLED "sha256 $sha"
-  else rep "$id" FAILED "unpack $fmt to $dest"; fi
+  else case "$fmt" in tar.zst|tar.gz-tree) rm -rf "$dest" ;; *) ;; esac
+    rep "$id" FAILED "unpack $fmt to $dest"; fi
   rm -rf "$t"; }
 apt-get update -q >/dev/null 2>&1 || rep apt-index FAILED "apt-get update"
 "#;

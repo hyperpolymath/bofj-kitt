@@ -18,10 +18,15 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   `julialang-s3.julialang.org` joins the toolchain allowlist (18 hosts).
 * A third dated `measured` block for `agent-session` (2026-11-13), the
   first under the Limited network. Every allowed toolchain host answered
-  except Isabelle, whose TLS handshake was reset on all 6 tries; it keeps
-  its place on the allowlist with that recorded. The `releases.lean-lang.org`
+  except two. Isabelle reset the TLS handshake on all 6 tries, and
+  api.github.com refused the unauthenticated probe path with HTTP 403 (the
+  proxy's answer under every policy so far; authenticated gh calls work).
+  Both keep their places on the allowlist with that recorded. The `releases.lean-lang.org`
   root redirects to `lean-lang.org`, which is not allowed, so `hosts.txt`
   now also probes the Lean asset path, which answers.
+* The rendered setup script's `asset` removes an item's stamp before
+  unpacking and, for tree formats, the half-made destination when
+  unpacking fails, so a failed install is never later reported PRESENT.
 * `environments.kyaml` gains `mcp-connector-hosts` for `agent-session`:
   the nine hosts that plugin MCP connectors reach directly (Granola,
   GitHub Copilot, Atlassian, QuickBooks, monday.com, Notion, Slack, Shopify,
