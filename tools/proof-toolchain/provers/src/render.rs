@@ -276,8 +276,12 @@ fn allowlist(class: &str, r: &Value, env: &Value) -> Result<String, String> {
 /// listed once, absent from the toolchain list, and say where it was
 /// verified. None when the class declares no connector hosts.
 fn mcp_allowlist(class: &str, r: &Value) -> Result<Option<String>, String> {
-    let Some(list) = r["mcp-connector-hosts"].as_array() else {
+    let declared = &r["mcp-connector-hosts"];
+    if declared.is_null() {
         return Ok(None);
+    }
+    let Some(list) = declared.as_array() else {
+        return Err(format!("{class}: mcp-connector-hosts must be a list"));
     };
     if list.len() > MAX_HOSTS {
         return Err(format!(
@@ -404,6 +408,8 @@ mod tests {
             json!({"mcp-connector-hosts": [{"host": "a.com", "connector": "n", "source": "s"}, {"host": "a.com", "connector": "n", "source": "s"}]}),
             json!({"mcp-connector-hosts": [{"host": "a.com", "connector": "n", "source": ""}]}),
             json!({"mcp-connector-hosts": [{"host": "a.com", "connector": "n"}]}),
+            json!({"mcp-connector-hosts": {"host": "a.com"}}),
+            json!({"mcp-connector-hosts": "a.com"}),
         ] {
             assert!(mcp_allowlist("c", &bad).is_err(), "accepted {bad}");
         }
