@@ -28,10 +28,17 @@ https://index.crates.io/ju/st/just
 # /{crate}/{version}/download, which is the route Cargo requests.
 https://static.crates.io/crates/just/1.56.0/download
 https://releases.lean-lang.org/
+# The path elan and the setup actually fetch from (the root redirects to
+# lean-lang.org, which is not an allowed host)
+https://releases.lean-lang.org/lean4/v4.13.0/lean-4.13.0-linux.tar.zst
 https://ftp.gnu.org/gnu/guix/
 # Guix substitute servers (binary caches)
 https://bordeaux.guix.gnu.org/nix-cache-info
 https://ci.guix.gnu.org/nix-cache-info
+
+# Julia release binaries (the julia toolchain entry); the concrete asset the
+# agent-session setup pins
+https://julialang-s3.julialang.org/bin/linux/x64/1.13/julia-1.13.3-linux-x86_64.tar.gz
 
 # Prover homes with their own downloads
 https://isabelle.in.tum.de/
