@@ -6,7 +6,7 @@ CC-BY-SA-4.0]]
 == bofj-kitt
 
 *Shared Developer Environment Extension Kit* — the "`SuperChainsaw`" for
-the *BoJ (Box of Justice) server*.
+the *BoJ (Bundle of Joy) server*.
 
 ____
 *Status: pre-alpha scaffold.* This repository has its identity,
