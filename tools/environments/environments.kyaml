@@ -93,8 +93,12 @@
       # Limited network each was refused with "Proxy refused to open a tunnel:
       # 403" in the parent session on 2026-11-13. Rendered to their own file,
       # allowed-hosts-mcp.txt, so the 20-host cap on the toolchain list is
-      # unchanged; whether the platform accepts both lists together is to be
-      # recorded once they are applied. Exact host names only.
+      # unchanged. Observed 2026-11-13: the Default environment accepted both
+      # lists together through update_environment, 27 allowed hosts in all
+      # (with julialang-s3.julialang.org, added by another session and not
+      # declared here), so the platform takes more than 20; no upper limit
+      # was found. The 20 cap stays on the toolchain list as specified.
+      # Exact host names only.
       #   host       the host in the connector's MCP URL
       #   connector  the plugin connector that uses it
       #   source     where the host was verified
