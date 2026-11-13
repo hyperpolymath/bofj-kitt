@@ -22,8 +22,8 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 * `provers.sh render --check` now also fails on a file in a rendered
   class directory that the manifests no longer render, and `render`
   removes such files, so a retired allowlist cannot linger and be applied.
-  A malformed `mcp-connector-hosts` (not a list) is rejected rather than
-  treated as absent.
+  A malformed `mcp-connector-hosts` (null, or not a list) is rejected
+  rather than treated as absent.
 * `.claude/settings.json` and `.claude/hooks/session-start.sh`, ported
   unchanged from `rsr-template-repo` main: in cloud sessions the
   SessionStart hook decodes `CLAUDE_SIGNING_KEY` and sets global git SSH
