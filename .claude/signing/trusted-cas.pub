@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MPL-2.0
+# Trust anchors for session signing certificates: one SSH CA public key per
+# line (as printed by `ssh-keygen -y` or the CA's .pub file). Each becomes
+#   <CLAUDE_SIGNING_EMAIL> cert-authority,namespaces="git" <key>
+# in the session's allowed_signers. Empty until the owner's key ceremony
+# (docs/practice/session-signing-certificates.adoc): list the TPM CA and the
+# offline recovery CA from day one. Remove a stolen CA's line outright; do not
+# rely on valid-before (see the proposal, "Revocation after theft").
