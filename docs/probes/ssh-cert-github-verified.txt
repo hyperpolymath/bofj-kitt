@@ -1,0 +1,3 @@
+Throwaway probe, 2026-11-13: is a commit signed with an SSH certificate
+(throwaway ECDSA P-256 CA, ephemeral ed25519 key) shown as Verified on
+GitHub? This branch is deleted after the result is read.
