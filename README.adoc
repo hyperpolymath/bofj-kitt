@@ -15,6 +15,13 @@ will do is specified in link:docs/status/ROADMAP.adoc[the roadmap]; how
 it got to this honest baseline is recorded in the
 link:docs/reports/audit/repo-assessment-2026-07-16.adoc[repo
 assessment].
+
+What does exist is the *environment tooling* under
+link:tools/[`+tools/+`]: it measures what a cloud agent session can reach,
+records what it actually has installed, and renders the settings an owner
+applies to the environment (a setup script, a network allowlist and
+variable names) instead of anyone hand-writing them. See
+link:tools/environments/README.adoc[tools/environments].
 ____
 
 '''''
@@ -101,6 +108,15 @@ holds this repo’s registry identity).
 * link:.github/workflows/[`+.github/workflows/+`] — estate governance CI
 (root-shape, OpenSSF compliance, dogfood gate, Hypatia scan, Scorecard,
 secret scanner, BoJ build trigger, multi-forge mirror).
+* link:tools/[`+tools/+`] — the environment tooling:
+`+tools/proof-toolchain/+` (the prover manifest and `+provers.sh+`, whose
+`+doctor+` reports what an environment really has and whose `+render+`
+writes the environment settings) and `+tools/environments/+` (the
+environment classes, measured reachability, and the rendered files).
+* link:.claude/[`+.claude/+`] — the SessionStart hook: configures commit
+signing and writes `+.session/capability-record.json+`, naming every
+`+UNAVAILABLE+` tool loudly. It never blocks a session and never
+installs anything.
 * link:docs/[`+docs/+`] — governance, status, onboarding, and reports
 (AsciiDoc; the estate does not permit `+.md+` under `+docs/+`).
 * link:verification/[`+verification/+`] — a five-prover verification
@@ -114,6 +130,22 @@ M3. The link:Justfile[`+Justfile+`] exposes the estate’s task surface
 (session commands, CRG grading, changelog, governance checks); product
 `+build+`/`+test+`/`+run+` recipes are wired once the kit’s first
 capability lands (M2–M3).
+
+The environment tooling is runnable today, in POSIX shell with a small Rust
+engine that `+provers.sh+` builds on first use:
+
+[source,sh]
+----
+tools/proof-toolchain/provers.sh doctor          # what this environment has: PRESENT / DRIFT / UNAVAILABLE
+tools/proof-toolchain/provers.sh doctor --json   # the same, as the JCS capability record
+tools/proof-toolchain/provers.sh render          # regenerate tools/environments/rendered/
+tools/proof-toolchain/provers.sh render --check  # fail if a rendered file drifted from the manifests
+----
+
+`+doctor+` exits 0 when everything is present, 1 on drift, 3 when something
+is unavailable and 2 on error. Applying the rendered setup to a real
+environment is the owner's step; it is described in
+link:tools/environments/README.adoc[tools/environments/README.adoc].
 
 === Contributing
 

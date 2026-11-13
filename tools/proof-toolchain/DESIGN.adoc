@@ -11,7 +11,9 @@ which of them it has.
 
 Status: partly built. The core smoke-fixture installer exists; `provers.sh
 doctor` and `provers.sh render` (environment settings) were built on
-2026-11-12; tool installation and the bundle build remain planned in
+2026-11-12, and the rendered agent-session setup script was run as root
+against real apt on 2026-11-13 (`../environments/README.adoc`); the
+remaining tool installation and the bundle build remain planned in
 <<plan>>.
 
 See also `../environments/` and
