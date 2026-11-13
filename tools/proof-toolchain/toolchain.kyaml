@@ -61,5 +61,6 @@
     {id: "alt-ergo", role: "backend", method: "opam", pin: "resolve", verify: "alt-ergo --version"},
     {id: "eprover", role: "backend", method: "source build", pin: "resolve", verify: "eprover --version"},
     {id: "vampire", role: "backend", method: "release asset (vprover/vampire)", pin: "v4.9casc2024", verify: "vampire --version"},
+    {id: "julia", role: "runtime", method: "release asset (the official binaries from julialang-s3.julialang.org; the concrete URL and SHA-256 are pinned in environments.kyaml, never discovered through versions.json or an API at install time), unpacked at $PREFIX/julia", pin: "1.13.3", verify: "$PREFIX/julia/bin/julia --version", notes: "added 2026-11-13 by owner decision, to declare the julialang-s3.julialang.org host the agent-session environment already allowed. Not a prover under PROOF-POLICY: the runtime for the estate's Julia packages. 1.13.3 was the newest stable release in versions.json on 2026-11-13"},
   ],
 }

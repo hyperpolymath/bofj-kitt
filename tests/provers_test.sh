@@ -28,6 +28,16 @@ rc=0; "$provers" render --check --out "$work/rendered" >/dev/null 2>"$work/err" 
 [[ "$rc" -eq 1 ]] || fail "render --check on an edited file exited $rc, expected 1"
 grep -q "DRIFT .*setup.sh" "$work/err" || fail "render --check did not name the drifted file"
 
+# A rendered file the manifests no longer declare must be caught, then removed.
+rm -rf "$work/rendered" && cp -R "$repo_root/tools/environments/rendered" "$work/rendered"
+printf 'stale.example.com\n' > "$work/rendered/agent-session/allowed-hosts-retired.txt"
+rc=0; "$provers" render --check --out "$work/rendered" >/dev/null 2>"$work/err" || rc=$?
+[[ "$rc" -eq 1 ]] || fail "render --check with a stale file exited $rc, expected 1"
+grep -q "STALE .*allowed-hosts-retired.txt" "$work/err" || fail "render --check did not name the stale file"
+"$provers" render --out "$work/rendered" >/dev/null || fail "render failed"
+[[ ! -e "$work/rendered/agent-session/allowed-hosts-retired.txt" ]] || fail "render left the stale file in place"
+"$provers" render --check --out "$work/rendered" >/dev/null || fail "render --check failed after render removed the stale file"
+
 # A self-contained root with a three-entry toolchain and stub tools.
 root="$work/root"
 mkdir -p "$root/tools/proof-toolchain" "$root/tools/environments" "$work/bin"
@@ -79,4 +89,4 @@ rc=0; doctor >/dev/null || rc=$?
 rc=0; "$provers" install 2>/dev/null || rc=$?
 [[ "$rc" -eq 2 ]] || fail "install exited $rc, expected 2 (not built by decision)"
 
-echo "PASS: render drift caught both ways; doctor PRESENT/DRIFT/UNAVAILABLE and exit codes; canonical record; install refused"
+echo "PASS: render drift and stale files caught both ways; doctor PRESENT/DRIFT/UNAVAILABLE and exit codes; canonical record; install refused"

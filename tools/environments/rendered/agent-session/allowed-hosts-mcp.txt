@@ -1,0 +1,9 @@
+mcp.granola.ai
+api.githubcopilot.com
+mcp.atlassian.com
+ai-inc.quickbooks.intuit.com
+mcp.monday.com
+mcp.notion.com
+mcp.slack.com
+setup.shopify.com
+api.definite.app

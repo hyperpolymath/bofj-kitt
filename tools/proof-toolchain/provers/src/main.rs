@@ -152,6 +152,29 @@ fn write_rendered(p: &Path, body: &str) -> Result<(), String> {
     std::fs::write(p, body).map_err(|e| format!("{}: {e}", p.display()))
 }
 
+/// Files in a rendered class directory that the manifests no longer render:
+/// left behind, they would be applied as if they were still declared.
+fn stale_files(out: &Path, files: &render::Files) -> Vec<PathBuf> {
+    let dirs: std::collections::BTreeSet<&str> = files
+        .keys()
+        .filter_map(|rel| rel.split_once('/').map(|(d, _)| d))
+        .collect();
+    let mut stale = Vec::new();
+    for d in dirs {
+        let Ok(entries) = std::fs::read_dir(out.join(d)) else {
+            continue;
+        };
+        for e in entries.flatten() {
+            let rel = format!("{d}/{}", e.file_name().to_string_lossy());
+            if e.path().is_file() && !files.contains_key(&rel) {
+                stale.push(e.path());
+            }
+        }
+    }
+    stale.sort();
+    stale
+}
+
 fn cmd_render(ctx: &Ctx, rest: &[String]) -> ExitCode {
     let mut check = false;
     let mut out = ctx.root.join("tools/environments/rendered");
@@ -170,6 +193,7 @@ fn cmd_render(ctx: &Ctx, rest: &[String]) -> ExitCode {
         Ok(f) => f,
         Err(e) => return fail("provers render", e),
     };
+    let stale = stale_files(&out, &files);
     if !check {
         for (rel, body) in &files {
             let p = out.join(rel);
@@ -177,6 +201,12 @@ fn cmd_render(ctx: &Ctx, rest: &[String]) -> ExitCode {
                 return fail("provers render", e);
             }
             println!("rendered {}", p.display());
+        }
+        for p in &stale {
+            if let Err(e) = std::fs::remove_file(p) {
+                return fail("provers render", format!("{}: {e}", p.display()));
+            }
+            println!("removed {} (no longer rendered)", p.display());
         }
         return ExitCode::SUCCESS;
     }
@@ -192,7 +222,13 @@ fn cmd_render(ctx: &Ctx, rest: &[String]) -> ExitCode {
             p.display()
         );
     }
-    if !drifted.is_empty() {
+    for p in &stale {
+        eprintln!(
+            "STALE {}: the manifests no longer render it; run provers.sh render",
+            p.display()
+        );
+    }
+    if !drifted.is_empty() || !stale.is_empty() {
         return ExitCode::from(1);
     }
     println!("render --check: {} files match the manifests", files.len());

@@ -73,19 +73,22 @@ apt_pin() { # id package version [link-from link-to]
     rep "$id" INSTALLED "$pkg=$ver"
   else rep "$id" FAILED "apt-get install $pkg=$ver"; return 0; fi
   if [[ -n "$to" ]]; then ln -sf "$from" "$to" || rep "$id" FAILED "link $to"; fi; }
-asset() { # id format dest url sha256 [member]
+asset() { # id format(tar.gz|tar.zst|tar.gz-tree|bin) dest url sha256 [member, tar.gz only]
   local id="$1" fmt="$2" dest="$3" url="$4" sha="$5" member="${6:-}" t
   if [[ -e "$R/stamp.$id.$sha" && -e "$dest" ]]; then rep "$id" PRESENT "sha256 $sha"; return 0; fi
   t="$(mktemp -d)"
   if ! curl -fsSL --retry 3 --max-time 900 -o "$t/a" "$url"; then rep "$id" FAILED "download $url"
   elif ! printf '%s  %s\n' "$sha" "$t/a" | sha256sum -c --status -; then
     rep "$id" FAILED "sha256 mismatch for $url"
-  elif case "$fmt" in
+  elif rm -f "$R/stamp.$id.$sha" && case "$fmt" in
       tar.gz) tar -xzf "$t/a" -C "$t" "$member" && install -m 755 "$t/$member" "$dest" ;;
       tar.zst) rm -rf "$dest" && mkdir -p "$dest" && tar --zstd -xf "$t/a" -C "$dest" --strip-components=1 ;;
+      tar.gz-tree) rm -rf "$dest" && mkdir -p "$dest" && tar -xzf "$t/a" -C "$dest" --strip-components=1 ;;
+      bin) install -m 755 "$t/a" "$dest" ;;
       *) false ;;
     esac; then touch "$R/stamp.$id.$sha"; rep "$id" INSTALLED "sha256 $sha"
-  else rep "$id" FAILED "unpack $fmt to $dest"; fi
+  else case "$fmt" in tar.zst|tar.gz-tree) rm -rf "$dest" ;; *) ;; esac
+    rep "$id" FAILED "unpack $fmt to $dest"; fi
   rm -rf "$t"; }
 apt-get update -q >/dev/null 2>&1 || rep apt-index FAILED "apt-get update"
 "#;
@@ -155,7 +158,7 @@ fn setup_script(class: &str, r: &Value, manifest_sha: &str) -> Result<String, St
                 );
                 if format == "tar.gz" {
                     line.push_str(&format!(" {}", q(s(item, "member", &ctx)?, &ctx)?));
-                } else if format != "tar.zst" {
+                } else if !matches!(format, "tar.zst" | "tar.gz-tree" | "bin") {
                     return Err(format!("{ctx}: unsupported format {format}"));
                 }
                 out.push_str(&line);
@@ -270,6 +273,56 @@ fn allowlist(class: &str, r: &Value, env: &Value) -> Result<String, String> {
     Ok(out)
 }
 
+/// MCP connector endpoints: hosts that plugin connectors reach directly and
+/// that the environment's "allow MCP servers" setting does not cover. Kept
+/// apart from the toolchain allowlist and its cap. Each host must be exact,
+/// listed once, absent from the toolchain list, and say where it was
+/// verified. None when the class declares no connector hosts.
+fn mcp_allowlist(class: &str, r: &Value) -> Result<Option<String>, String> {
+    let Some(declared) = r.get("mcp-connector-hosts") else {
+        return Ok(None);
+    };
+    let Some(list) = declared.as_array() else {
+        return Err(format!("{class}: mcp-connector-hosts must be a list"));
+    };
+    if list.len() > MAX_HOSTS {
+        return Err(format!(
+            "{class}: {} MCP connector hosts; the limit is {MAX_HOSTS}",
+            list.len()
+        ));
+    }
+    let toolchain: Vec<&str> = r["allowed-hosts"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|h| h["host"].as_str())
+        .collect();
+    let mut seen = Vec::new();
+    let mut out = String::new();
+    for h in list {
+        let host = s(h, "host", class)?;
+        if !is_hostname(host) {
+            return Err(format!(
+                "{class}: MCP connector host '{host}' is not an exact lowercase host name"
+            ));
+        }
+        if seen.contains(&host) || toolchain.contains(&host) {
+            return Err(format!(
+                "{class}: MCP connector host {host} is listed twice"
+            ));
+        }
+        if s(h, "connector", class)?.is_empty() || s(h, "source", class)?.is_empty() {
+            return Err(format!(
+                "{class}: MCP connector host {host} needs a connector and a source"
+            ));
+        }
+        seen.push(host);
+        out.push_str(host);
+        out.push('\n');
+    }
+    Ok(Some(out))
+}
+
 fn env_vars(class: &str, r: &Value) -> Result<String, String> {
     let mut out = String::new();
     for v in r["env-vars"]
@@ -321,8 +374,13 @@ pub fn render_all(ctx: &Ctx) -> Result<Files, String> {
             allowlist(class, r, env)?,
         );
         files.insert(format!("{class}/env-vars.txt"), env_vars(class, r)?);
+        let mut lists = vec!["allowed-hosts.txt", "env-vars.txt"];
+        if let Some(body) = mcp_allowlist(class, r)? {
+            files.insert(format!("{class}/allowed-hosts-mcp.txt"), body);
+            lists.push("allowed-hosts-mcp.txt");
+        }
         // REUSE sidecars, so the pasteable lists carry no header lines.
-        for f in ["allowed-hosts.txt", "env-vars.txt"] {
+        for f in lists {
             files.insert(
                 format!("{class}/{f}.license"),
                 "SPDX-License-Identifier: MPL-2.0\nGenerated by tools/proof-toolchain/provers.sh render; do not edit.\n".into(),
@@ -335,6 +393,30 @@ pub fn render_all(ctx: &Ctx) -> Result<Files, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn mcp_connector_hosts_are_checked() {
+        use serde_json::json;
+        let ok = json!({"allowed-hosts": [{"host": "github.com"}],
+            "mcp-connector-hosts": [{"host": "mcp.notion.com", "connector": "notion", "source": "config"}]});
+        assert_eq!(
+            mcp_allowlist("c", &ok).unwrap().as_deref(),
+            Some("mcp.notion.com\n")
+        );
+        assert_eq!(mcp_allowlist("c", &json!({})).unwrap(), None);
+        for bad in [
+            json!({"mcp-connector-hosts": [{"host": "*.notion.com", "connector": "n", "source": "s"}]}),
+            json!({"allowed-hosts": [{"host": "github.com"}], "mcp-connector-hosts": [{"host": "github.com", "connector": "n", "source": "s"}]}),
+            json!({"mcp-connector-hosts": [{"host": "a.com", "connector": "n", "source": "s"}, {"host": "a.com", "connector": "n", "source": "s"}]}),
+            json!({"mcp-connector-hosts": [{"host": "a.com", "connector": "n", "source": ""}]}),
+            json!({"mcp-connector-hosts": [{"host": "a.com", "connector": "n"}]}),
+            json!({"mcp-connector-hosts": {"host": "a.com"}}),
+            json!({"mcp-connector-hosts": "a.com"}),
+            json!({"mcp-connector-hosts": null}),
+        ] {
+            assert!(mcp_allowlist("c", &bad).is_err(), "accepted {bad}");
+        }
+    }
 
     #[test]
     fn hostnames_are_exact() {
@@ -360,6 +442,19 @@ mod tests {
         assert!(check_script(&format!("{}\n", "x".repeat(MAX_LINE_BYTES + 1))).is_err());
         assert!(check_script("echo $CLAUDE_SIGNING_KEY\n").is_err());
         assert!(check_script("a\r\n").is_err());
+    }
+
+    #[test]
+    fn bare_binary_asset_renders_without_member() {
+        let sha = "a".repeat(64);
+        let item = serde_json::json!({"id": "tool", "via": "asset", "url": "https://github.com/o/r/releases/download/v1/tool-linux", "sha256": sha, "format": "bin", "dest": "/usr/local/bin/tool"});
+        let r = serde_json::json!({"setup": [item], "allowed-hosts": [{"host": "github.com"}]});
+        let out = setup_script("t", &r, "m").unwrap();
+        assert!(out.contains("  bin) install -m 755"));
+        assert!(out.contains(&format!("asset 'tool' 'bin' '/usr/local/bin/tool' \\\n  'https://github.com/o/r/releases/download/v1/tool-linux' \\\n  {sha}\n")));
+        let mut bad = r.clone();
+        bad["setup"][0]["format"] = "zip".into();
+        assert!(setup_script("t", &bad, "m").is_err());
     }
 
     #[test]

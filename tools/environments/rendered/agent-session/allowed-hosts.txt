@@ -8,6 +8,7 @@ hackage.haskell.org
 releases.lean-lang.org
 static.rust-lang.org
 ftp.gnu.org
+julialang-s3.julialang.org
 bordeaux.guix.gnu.org
 ci.guix.gnu.org
 isabelle.in.tum.de
