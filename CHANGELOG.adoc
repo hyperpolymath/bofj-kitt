@@ -10,6 +10,53 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 ==== Added
 
+* `.claude/settings.json` and `.claude/hooks/session-start.sh`, ported
+  unchanged from `rsr-template-repo` main: in cloud sessions the
+  SessionStart hook decodes `CLAUDE_SIGNING_KEY` and sets global git SSH
+  signing, so commits verify locally as `G`. `.gitignore` now ignores
+  `.claude/*` except these two paths, as the template does.
+* `tools/environments/environments.kyaml` — a second dated `measured`
+  block for `agent-session` (2026-11-12, an instance with Unrestricted
+  network; X1). `measured` is now a list of blocks, one per instance.
+  The agent proxy refused the same three discovery paths as on 2026-11-04,
+  so those refusals belong to the proxy, not to the network policy.
+  `hosts.txt` gains the two Guix substitute servers.
+* `tools/proof-toolchain/provers.sh` with its Rust engine
+  (`tools/proof-toolchain/provers/`; owner decision 2026-11-12). It has two
+  commands. `doctor [--json]` runs every toolchain entry's own check and
+  reports PRESENT, DRIFT or UNAVAILABLE with a reason; `--json` prints the
+  capability record (E2, specified in `CAPABILITY-RECORD.adoc`) as
+  JCS-canonical I-JSON through `hyperpolymath/ijson-jcs`. `render`
+  projects the agent-session class's setup script, Limited-network
+  allowlist and variable names into `tools/environments/rendered/` (E3),
+  and `render --check` fails on drift. `install` is refused: by owner
+  decision, sessions never install, and their setup script preinstalls
+  what they always need.
+* `environments.kyaml` gains a `render` block for `agent-session`. Its
+  setup preinstalls openssh-client, zstd, just 1.56.0, Agda 2.6.3,
+  Rocq 8.18, elan with Lean 4.13.0, Z3, CVC5, Podman and Guix, each pinned
+  by apt version or SHA-256. It lists 17 allowed hosts and the four
+  variable names sessions use. kyq, deed and k9 are reported UNAVAILABLE:
+  none has a pinned release.
+* `tests/provers_test.sh`, plus `estate-rules.yml` steps that run it, the
+  engine's unit tests and the reachability probe test in CI.
+* `.claude/hooks/session-start.sh` (E4) now also runs `provers.sh doctor
+  --json` in every session, within a 50 s budget. It writes the record to
+  `.session/capability-record.json` (gitignored) and names every
+  UNAVAILABLE leg. Signing problems, a failing or slow doctor, and output
+  that is not a record are each reported loudly, and the hook still exits
+  0. Signing still runs only in cloud sessions. `tests/session_hook_test.sh`
+  covers these cases and runs in CI.
+* `docs/proposals/short-lived-signing-certificates.adoc` — replace the
+  permanent `CLAUDE_SIGNING_KEY` with an offline SSH CA and an issuer
+  (OpenBao) that grants each session a certificate valid for minutes.
+  It includes measured git behaviour with certificates (expiry makes a
+  signature untrusted but does not stop signing) and compares the design
+  with gitsign, a TPM key, FROST and the status quo. Covers the authority
+  key: TPM binding with a PIN, recovery without the old TPM, and
+  revocation after theft. A key retired with `valid-before` still verifies
+  a backdated commit (measured), so a stolen key must be removed. Design
+  only.
 * `docs/proposals/environment-of-environments.adoc` — how the kit becomes
   the environment of environments: an environment manifest beside the
   toolchain manifest, one capability record, rendered projections, the

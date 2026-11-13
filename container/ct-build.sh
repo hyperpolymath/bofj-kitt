@@ -18,8 +18,8 @@
 #   CT_KEY_ID=my-key ./ct-build.sh # Use specific signing key
 #
 # Environment variables:
-#   CT_KEY_ID       — Signing key identifier (default: {{SERVICE_NAME}}-release)
-#   CT_REGISTRY     — OCI registry to push to (default: {{REGISTRY}})
+#   CT_KEY_ID       — Signing key identifier (default: bofj-kitt-release)
+#   CT_REGISTRY     — OCI registry to push to (default: ghcr.io/hyperpolymath)
 #   CT_TAG          — Image tag (default: latest)
 
 set -euo pipefail
@@ -38,11 +38,11 @@ for arg in "$@"; do
     fi
 done
 
-CT_KEY_ID="${CT_KEY_ID:-{{SERVICE_NAME}}-release}"
-CT_REGISTRY="${CT_REGISTRY:-{{REGISTRY}}}"
+CT_KEY_ID="${CT_KEY_ID:-bofj-kitt-release}"
+CT_REGISTRY="${CT_REGISTRY:-ghcr.io/hyperpolymath}"
 CT_TAG="${CT_TAG:-latest}"
 
-IMAGE_NAME="{{SERVICE_NAME}}"
+IMAGE_NAME="bofj-kitt"
 FULL_IMAGE="${CT_REGISTRY}/${IMAGE_NAME}:${CT_TAG}"
 CTP_FILE="${SCRIPT_DIR}/${IMAGE_NAME}-${CT_TAG}.ctp"
 

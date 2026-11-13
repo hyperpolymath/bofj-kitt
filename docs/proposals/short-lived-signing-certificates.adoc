@@ -1,0 +1,311 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Short-lived signing certificates for agent sessions
+:toc:
+:toclevels: 2
+:sectnums:
+
+Status: proposal, 2026-11-12. Design only; nothing here is built.
+
+== The problem
+
+Cloud agent sessions sign commits with `CLAUDE_SIGNING_KEY`: a permanent
+ed25519 private key, base64-encoded in a plain environment variable. The
+session hook (`.claude/hooks/session-start.sh`, from `rsr-template-repo`)
+decodes it into `~/.ssh` at start. So the key is:
+
+* readable by every session on the environment, and by anything those
+  sessions run;
+* usable at any time, for anything, with no expiry and no record of use;
+* revocable only by rotating it everywhere it is trusted.
+
+The owner wants signing authority that is *bounded* (a hard ceiling on
+what it can do) and *expires*: locked by default, and usable only inside
+a short window opened when stated conditions hold.
+
+== Measured facts
+
+Taken 2026-11-12 with OpenSSH 9.6p1 and git 2.43.0 on Ubuntu 24.04, with
+a throwaway CA, a throwaway session key and a scratch repository. The
+`allowed_signers` file trusts the CA, not the key:
+`<principal> cert-authority,namespaces="git" <ca.pub>`. The parent session
+took the same four cases first; this session reproduced them with the same
+results.
+
+[cols="3,1,3",options="header"]
+|===
+|Case |`%G?` |Reading
+
+|Certificate valid for 6 minutes, commit made inside the window |`G`
+|Git verifies a signature made with a CA-issued certificate.
+
+|Same certificate, commit dated 2020 (outside the window) |`U`
+|Verification checks the certificate's validity against the commit's own
+date.
+
+|Certificate that expired before signing |`U`
+|*Signing still succeeded.* `ssh-keygen -Y sign` does not refuse an
+expired certificate; only verification marks the result untrusted.
+
+|Certificate issued for a different principal |`U`
+|The principal in `allowed_signers` binds the CA to one identity.
+|===
+
+So expiry makes a late signature untrusted. It does not stop anyone
+signing. Signing can only be blocked by withholding the certificate (the
+issuer refuses) or by keeping the key in hardware that enforces the
+policy.
+
+== Proposed design: an offline CA and an issuer with a policy
+
+This is the most elegant option of those compared below.
+
+. *An SSH certificate authority* whose private key never leaves the
+  workstation (or a hardware token there).
+. *An ephemeral key per session.* The session hook generates an ed25519
+  key in memory-backed storage at start. That key exists only for the
+  life of the session container.
+. *An issuer signs a certificate for it*: a fixed principal (the signing
+  identity), the `git` namespace, a validity of minutes, and no other
+  extensions. The issuer is an OpenBao SSH secrets engine whose role
+  holds the policy: maximum TTL, the allowed principals, and whatever
+  issuance limits OpenBao offers (see <<open>>).
+. *Verifiers trust the CA*, not any session key:
+  `cert-authority,namespaces="git"` in `allowed_signers`.
+. *The session hook requests a certificate* instead of decoding a
+  permanent key, and re-requests when the window closes. When the issuer
+  refuses, the hook says so loudly and the session runs unsigned, with
+  `%G?` showing `N` rather than a forged `G`.
+
+The environment then holds *only an OpenBao credential that can obtain
+short certificates*, never a signing key. Stealing that credential gets
+an attacker certificates within the role's limits, for as long as the
+credential lives, and every issuance is in OpenBao's audit log. Stealing
+a session's key gets minutes at most.
+
+=== What each part bounds
+
+[cols="1,3",options="header"]
+|===
+|Limit |Enforced by
+
+|Who the signature claims to be |The certificate's principal, checked against `allowed_signers`
+|What the key may sign |The `git` namespace in the certificate and in `allowed_signers`
+|How long a signature is trusted |The certificate's validity window, checked against the commit date
+|Whether a session can sign at all |The issuer: no certificate, no trusted signature
+|How often |The issuer's role and quota configuration
+|Who used it, when |OpenBao's audit log of issuances
+|===
+
+== Alternatives compared
+
+[cols="1,2,1,1,1",options="header"]
+|===
+|Option |Shape |Elegance |Dependability |Security
+
+|*A. Offline CA + OpenBao issuer* (proposed)
+|As above.
+|High. Uses OpenSSH and git as they are; trust moves from keys to one CA.
+|Medium. A new service to run (OpenBao) and a network path from sessions
+to it.
+|High. No long-lived key in sessions; issuance is policed and audited.
+Expiry alone does not stop signing (measured), so the issuer is the gate.
+
+|*B. Sigstore keyless (gitsign)*
+|Short-lived Fulcio certificates bound to an OIDC identity; signatures
+logged in Rekor.
+|High in principle.
+|Low here: needs an OIDC identity token inside the session, which this
+cloud container appears not to have (not confirmed).
+|High, with a public transparency log. Commit metadata becomes public in
+Rekor.
+
+|*C. TPM key with policy sessions*
+|The key lives in a TPM; `PolicyCounterTimer` bounds time and
+`PolicySigned` requires a second authority's signature to unlock use.
+|High: the policy is enforced by hardware.
+|Workstation only. Cloud containers have no TPM, so it cannot serve
+sessions.
+|Highest where it applies: the key never leaves the chip.
+
+|*D. FROST threshold signing (RFC 9591)*
+|Several parties hold shares; a signature needs a quorum.
+|Closest match to "another authority must agree".
+|Not usable: git cannot verify or produce FROST signatures.
+|High in theory.
+
+|*E. Status quo*
+|Permanent key in an environment variable.
+|Simple.
+|High: nothing to run.
+|Low: unbounded, unexpiring, readable by every session.
+|===
+
+Recommendation: A, with the authority key in the workstation's TPM as set
+out in <<authority>>. C is not an alternative to A but where A's CA key
+lives.
+
+[[authority]]
+== The authority key: TPM, recovery and revocation
+
+Owner input, 2026-11-12: the authority key must be offline, ideally bound
+to the workstation's TPM; it must be possible to cut it off fast after
+theft and to recover after a hardware failure without the old TPM.
+
+Each claim below is marked *checked* (run in this session, 2026-11-12,
+OpenSSH 9.6p1 and git 2.43.0, with software keys only) or *unchecked*
+(from documentation or published research, not run here). This session
+has no TPM and no FIDO device, so nothing TPM- or token-specific was run.
+
+=== Owner's preferred direction
+
+*TPM + PIN for daily use, plus an offline recovery authority listed from
+day one.* The CA key is generated inside the workstation's TPM and cannot
+be exported. Using it needs the TPM authorisation value (a PIN), and the
+TPM's dictionary-attack lockout limits PIN guessing, so the key is
+something the owner has (that machine) and something the owner knows.
+A second, offline authority, on a hardware key kept in a safe or on
+paper, is trusted alongside it so that losing the workstation does not
+lose the ability to sign.
+
+=== TPM binding
+
+* *Key type.* TPM 2.0 parts commonly implement RSA and ECC NIST P-256.
+  Ed25519 is rare on shipped TPMs, so the CA key would be
+  `ecdsa-sha2-nistp256`. *Unchecked* for any particular TPM. *Checked*:
+  an ECDSA P-256 CA works end to end with git. A session certificate
+  signed by a software P-256 CA verified as `G` under
+  `cert-authority,namespaces="git"`, so the key type is no obstacle.
+* *How ssh-keygen reaches it.* Either through an agent that holds TPM
+  keys (for example `ssh-tpm-agent`), with `ssh-keygen -s ca.pub -U`, or
+  through a TPM 2.0 PKCS#11 module (`tpm2-pkcs11`), with
+  `ssh-keygen -s ca.pub -D <module>`. *Unchecked*: neither was run.
+* *PIN and lockout.* The TPM authValue and its dictionary-attack lockout
+  are TPM 2.0 features. *Unchecked*, and the lockout thresholds are set
+  per TPM.
+* *Discrete versus firmware TPM.* Firmware TPMs share the CPU and have had
+  practical key-extraction attacks: TPM-Fail (2019, timing leaks in ECDSA
+  on Intel fTPM and one discrete part) and faulTPM (2023, voltage fault
+  injection on AMD fTPM, needing physical access). A discrete TPM on
+  current firmware, or a firmware TPM with the vendor's fixes applied, is
+  the stronger choice. *Unchecked*: from published research, not
+  reproduced; check the workstation's TPM model and firmware before
+  relying on it.
+
+=== Where a touch-required security key is stronger
+
+A TPM key has no user-presence step. Malware running on the unlocked
+workstation, once the PIN has been entered or cached by an agent, can ask
+the TPM to sign whatever it likes. A FIDO security key (`ed25519-sk` or
+`ecdsa-sk`) needs a physical touch for each signature, and optionally its
+own PIN, so malware cannot sign silently. *Checked*: OpenSSH 9.6p1 lists
+`sk-ssh-ed25519@openssh.com` and `sk-ecdsa-sha2-nistp256@openssh.com`
+among its CA signing algorithms (`ssh -Q key-ca-sign`). *Unchecked*:
+signing a certificate with a real token, which needs the device. The
+trade: a token can be lost or left in the machine, and a touch per
+certificate means the owner is present for every session window. That
+presence is the condition-gated window the owner asked for.
+
+The preferred direction stands, with this stated plainly. A touch-required
+key is stronger against malware on the workstation. The TPM is more
+convenient and is stronger against theft of a portable token.
+
+=== Who holds the issuing key
+
+SSH certificates have no intermediate CAs. A verifier trusts exactly the
+keys listed with `cert-authority` in `allowed_signers`, and each
+certificate is signed directly by one of them.
+
+[cols="1,3,3",options="header"]
+|===
+|Option |Shape |Fit
+
+|*(a) The TPM key is the CA*
+|The workstation signs each session certificate. A session asks, and the
+owner approves on the workstation with the PIN (or a touch).
+|Fits "offline authority": the only trusted key never leaves the TPM.
+Short session certificates work, but only while the workstation is on
+and the owner responds, so it is a gate, not a service. OpenBao is not
+needed.
+
+|*(b) OpenBao holds the issuing CA; the TPM key approves issuance*
+|OpenBao's SSH engine signs certificates; it releases one only for a
+request authenticated with the TPM key (for example TLS client
+certificate auth, or a signed request).
+|Does not fit "offline authority": the key verifiers trust lives in
+OpenBao, online. The TPM only guards the door. It is a service that does
+not need the owner present for each issuance.
+|===
+
+For the owner's stated requirement, (a). Option (b) is the one to choose
+if sessions must obtain certificates while the owner is away, and it
+should then be described as an online CA with an offline approver, not an
+offline authority.
+
+=== Recovery without the old TPM
+
+. *Day one:* generate the recovery authority offline (a FIDO key kept in a
+  safe, or an ed25519 key printed on paper and never stored online). List
+  it in `allowed_signers` with `cert-authority,namespaces="git"` beside
+  the TPM CA, in every repository and on every verifier.
+. *If the TPM dies:* on new hardware, generate a new TPM CA. With the
+  recovery authority, sign a certificate for the owner and use it to sign
+  the commit that adds the new TPM CA to `allowed_signers`. The old TPM
+  CA gets a `valid-before` set to the failure date if it was not stolen
+  (see below if it might have been).
+. *GitHub:* account recovery must not depend on that workstation. Keep
+  GitHub's recovery codes offline and register a second security key, and
+  update any SSH signing key registered on the account.
+. *Unchecked*: the whole procedure; it should be rehearsed once with
+  throwaway keys before it is relied on.
+
+=== Revocation after theft
+
+`valid-before` on an `allowed_signers` entry looks like a clean cut-off:
+old history keeps verifying, new signatures stop. It is not, because the
+commit date is chosen by whoever signs. *Checked*: a key with
+`valid-before="20260101"` gave `U` for a commit dated now, but a commit
+made today with the same key and backdated to 2025-06-01 verified as `G`.
+Removing the key from `allowed_signers` turned that commit to `U`.
+
+So after a theft:
+
+* *Remove* the stolen authority from `allowed_signers` entirely; do not
+  rely on `valid-before`.
+* Every past signature by that authority then reads `U` locally. Treat
+  the history already pushed before the theft as the record. The remote
+  holds the commits as they were before the thief had the key, and GitHub
+  keeps its own verification state for commits it has already seen
+  (*unchecked*: GitHub's persistence of verification after a key is
+  removed).
+* *Option:* bind signatures to time independently of the signer, with an
+  RFC 3161 timestamp or a transparency log (Rekor, as gitsign uses), so
+  a backdated signature can be told apart from a genuine old one. That
+  restores the meaning of `valid-before`. *Unchecked*.
+
+[[open]]
+== Open questions
+
+These are listed, not decided.
+
+. Does GitHub show *Verified* for commits signed with an SSH certificate?
+  Unconfirmed. The estate's rule checks the local status `G`, which the
+  measurement above shows works.
+. Where OpenBao runs, and how a session authenticates to it (a
+  short-lived token in the environment, an OIDC-style workload identity
+  if the platform gains one, or a credential the network proxy injects).
+. Certificate TTL: minutes per commit burst, or one session-length
+  certificate.
+. Whether a second authority must approve each issuance. Vault's control
+  groups are an Enterprise feature; check what OpenBao offers before
+  relying on any of it, and likewise for rate-limit quotas.
+. How `rsr-template-repo`'s hook changes, and whether the change lands
+  there first and is ported here, as the current hook was.
+. Revocation: short validity makes a revocation list mostly unnecessary,
+  but a compromised CA still needs a documented rotation.
+
+== What this proposal does not change
+
+Nothing in the cloud environment, and no repository other than this one.
+`CLAUDE_SIGNING_KEY` stays in use until the owner decides on this
+proposal.

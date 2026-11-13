@@ -41,6 +41,8 @@ coordination.k9            # repo-local session binding (template-mandated)
 
 # ─── Directories ─────────────────────────────────────────────────────────────
 .devcontainer/             # VS Code dev container spec; tool-required at root
+.claude/                   # Claude Code project settings and the SessionStart signing hook; tool-required at root
+.session/                  # runtime output of the SessionStart hook (capability record); gitignored, never tracked
 .git/
 .github/                   # CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, workflows/
 REQUIRES_INITIALISATION.adoc # minting marker: lists the tokens the estate top-up pass deliberately left unfilled; stays until those answers exist (owner ruling, 2026-09-18)

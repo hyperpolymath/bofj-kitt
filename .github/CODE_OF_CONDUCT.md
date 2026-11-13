@@ -1,25 +1,5 @@
 # Code of Conduct
 
-<!-- 
-============================================================================
-TEMPLATE INSTRUCTIONS (delete this block before publishing)
-============================================================================
-Replace all {{PLACEHOLDER}} values:
-  bofj-kitt     - Your project name
-  hyperpolymath            - GitHub/GitLab username or org
-  bofj-kitt             - Repository name
-  j.d.a.jewell@open.ac.uk    - Email for conduct reports
-  {{CONDUCT_TEAM}}     - Name of conduct team/committee
-  {{RESPONSE_TIME}}    - Initial response SLA (e.g., 48 hours)
-  2026     - Current year
-
-Review and customise:
-- Adjust enforcement ladder for your community size
-- Add/remove examples based on your context
-- Ensure contact methods work for your team
-============================================================================
--->
-
 ## Our Pledge
 
 We as members, contributors, and leaders pledge to make participation in bofj-kitt a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, caste, colour, religion, or sexual identity and orientation.
@@ -152,8 +132,8 @@ If you experience or witness unacceptable behaviour, or have any other concerns,
 
 **What Happens Next**
 
-1. You will receive acknowledgment within **{{RESPONSE_TIME}}**
-2. The {{CONDUCT_TEAM}} will review the report
+1. You will receive acknowledgment within **48 hours**
+2. The repository owner (@hyperpolymath) will review the report, except where it concerns the owner (see Conflicts of Interest)
 3. We may ask for additional information
 4. We will determine appropriate action
 5. We will inform you of the outcome (respecting others' privacy)
@@ -169,17 +149,17 @@ All reports will be handled with discretion:
 
 ### Conflicts of Interest
 
-If a {{CONDUCT_TEAM}} member is involved in an incident:
+If a report concerns the maintainer (@hyperpolymath), it must not be handled by the maintainer. Send it instead to the independent contact designated by the owner:
 
-- They will recuse themselves from the process
-- Another maintainer or external party will handle the report
+- George Booden, Cyber Incident Response Lead, The Open University: george.booden@open.ac.uk
+- If that route is unavailable, report the conduct to GitHub (https://github.com/contact/report-abuse), which is independent of this project
 - We will disclose any potential conflicts
 
 ---
 
 ## Enforcement Guidelines
 
-The {{CONDUCT_TEAM}} will follow these guidelines in determining consequences:
+The repository owner (@hyperpolymath) will follow these guidelines in determining consequences:
 
 ### 1. Correction
 
@@ -237,7 +217,7 @@ If you believe an enforcement decision was made in error:
 
 **Appeals Process**
 
-- Appeals are reviewed by a different {{CONDUCT_TEAM}} member than the original
+- Appeals about the maintainer are reviewed by the independent contact named under Conflicts of Interest (George Booden, george.booden@open.ac.uk); all other appeals are reviewed by a different person than the original reviewer
 - You will receive a response within 14 days
 - The appeals decision is final
 - You may only appeal once per incident

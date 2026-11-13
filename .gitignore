@@ -119,5 +119,12 @@ dist/
 !/build/
 !/build/**
 
-# Claude Code local session artifacts (permission grants, not repo content)
-.claude/
+# Claude Code local session artifacts (permission grants, not repo content).
+# The SessionStart hook and its settings are repo content (ported from
+# rsr-template-repo, which narrows this rule the same way).
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+
+# Capability record and doctor output written by the SessionStart hook (E4)
+/.session/

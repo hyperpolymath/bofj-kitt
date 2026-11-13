@@ -2,9 +2,9 @@
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # Containerfile for bofj-kitt
-# Build: podman build -t {{project}}:latest -f Containerfile .
-# Run:   podman run --rm -it {{project}}:latest
-# Seal:  selur seal {{project}}:latest
+# Build: podman build -t bofj-kitt:latest -f Containerfile .
+# Run:   podman run --rm -it bofj-kitt:latest
+# Seal:  selur seal bofj-kitt:latest
 
 # --- Build stage ---
 FROM cgr.dev/chainguard/wolfi-base:latest AS build
@@ -28,11 +28,11 @@ FROM cgr.dev/chainguard/static:latest
 # Copy built artifact from build stage
 # TODO: Replace with your binary/artifact path
 # Examples:
-#   COPY --from=build /build/target/release/{{project}} /usr/local/bin/
-#   COPY --from=build /build/_build/prod/rel/{{project}} /app/
+#   COPY --from=build /build/target/release/bofj-kitt /usr/local/bin/
+#   COPY --from=build /build/_build/prod/rel/bofj-kitt /app/
 
 # Non-root user (chainguard images default to nonroot)
 USER nonroot
 
 # TODO: Replace with your entrypoint
-# ENTRYPOINT ["/usr/local/bin/{{project}}"]
+# ENTRYPOINT ["/usr/local/bin/bofj-kitt"]
