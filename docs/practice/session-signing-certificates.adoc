@@ -1,0 +1,151 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Session signing certificates: runbook
+:toc:
+:toclevels: 2
+:sectnums:
+
+How cloud sessions sign commits with short-lived SSH certificates issued by
+a CA held in the owner's workstation TPM. Design and measurements:
+link:../proposals/short-lived-signing-certificates.adoc[the proposal]
+(option (a): the TPM key is the CA; no OpenBao).
+
+Every step marked *OWNER* is a hardware or key-ceremony step for the owner
+alone. Sessions never attempt them, never hold a CA key, and never change,
+rotate or generate the owner's signing keys.
+
+== How it works
+
+. `.claude/signing/mode` selects the signing path. `key` (the default) is
+  the existing `CLAUDE_SIGNING_KEY` path, unchanged. `cert` is this one.
+. In `cert` mode the SessionStart hook runs
+  `.claude/signing/cert-signing.sh request`. It makes an ed25519 key in
+  `/dev/shm` (memory only; it dies with the container), points git at a
+  certificate file that does not exist yet, and prints a request: the
+  session public key and the exact issuing command.
+  `CLAUDE_SIGNING_KEY` is not read.
+. Until a certificate is installed, `git commit` *fails* with a clear
+  message. Nothing is committed unsigned or wrongly signed.
+. The owner issues a certificate on the workstation (below) and pastes it
+  back. The session runs `cert-signing.sh install <file>` (or `install -`
+  and pastes it on stdin). It refuses unless *all* of these hold:
+  ** it certifies this session's key;
+  ** its only principal is `CLAUDE_SIGNING_EMAIL`;
+  ** it carries no critical options and no extensions (`-O clear`);
+  ** its CA is listed in `.claude/signing/trusted-cas.pub`;
+  ** its window is open now, is not "forever", and is no longer than 24
+     hours;
+  ** a test signature made with it verifies against the session's
+     `allowed_signers`.
+. git signs through a guard (`gpg.ssh.program`) that refuses to sign once
+  the certificate has expired. On its own, `ssh-keygen` signs with an
+  expired certificate and the result reads `U`, so without the guard
+  nothing would say so. When the window closes, run
+  `cert-signing.sh request` again and ask for a new certificate.
+. `cert-signing.sh status` shows the key, the certificate and its expiry.
+
+The check for every commit is local: `git log --format='%G? %ce'` must
+show `G` and `CLAUDE_SIGNING_EMAIL`. Do not rely on GitHub's
+"Verified" badge for certificate-signed commits. It does not reflect
+this CA's trust, so it is no evidence either way.
+
+== OWNER: before the ceremony
+
+. *Check the TPM.* Model and firmware version
+  (`sudo tpm2_getcap properties-fixed` or the firmware setup). Prefer a
+  discrete TPM, or a firmware TPM with the vendor's fixes for TPM-Fail
+  and faulTPM applied (see the proposal).
+. *Check the key type.* The TPM must support ECC NIST P-256
+  (`tpm2_getcap ecc-curves`). The CA will be `ecdsa-sha2-nistp256`,
+  which the proposal measured to work with git.
+. *Install a TPM path for ssh-keygen*: `ssh-tpm-agent` (signs through
+  the agent, `ssh-keygen -U`) or `tpm2-pkcs11` (`ssh-keygen -D
+  <module>`). Neither has been run by a session; both are *unchecked*.
+. *Rehearse once with throwaway keys*, end to end, including the
+  recovery steps below, before relying on any of it.
+
+== OWNER: key ceremony
+
+. *TPM CA.* Generate the CA inside the TPM with a PIN, for example with
+  ssh-tpm-agent: `ssh-tpm-keygen -t ecdsa -C session-ca-tpm`, choosing a
+  PIN when asked. The private part cannot leave the TPM. Keep the public
+  part (`.pub`).
+. *Recovery CA, offline, on day one.* Either a FIDO key kept in a safe
+  (`ssh-keygen -t ed25519-sk -O resident -O verify-required -C
+  session-ca-recovery`) or an ed25519 key generated on an offline machine
+  and kept only on paper (`ssh-keygen -t ed25519 -C session-ca-recovery`,
+  print it, destroy the file). Keep the public part.
+. *GitHub account recovery* must not depend on the workstation: store
+  the recovery codes offline and register a second security key.
+. *Publish the trust anchors.* Put both public keys, one per line, in
+  `.claude/signing/trusted-cas.pub` and commit (a signed commit from the
+  current key path is fine). Sessions write them as
+  `<CLAUDE_SIGNING_EMAIL> cert-authority,namespaces="git" <key>`.
+. *Switch on.* Change `.claude/signing/mode` from `key` to `cert`.
+  From the next session on, sessions ask for a certificate.
+  `CLAUDE_SIGNING_KEY` can stay in the environment until you decide to
+  remove it; this change does not touch it.
+
+== OWNER: issuing a certificate for a session
+
+The session prints its public key and the command. On the workstation,
+with the TPM CA available through the agent:
+
+[source,sh]
+----
+# save the session's one-line public key as session.pub, then:
+ssh-keygen -s session-ca-tpm.pub -U \
+  -I "<session id or date>" \
+  -n '<CLAUDE_SIGNING_EMAIL>' \
+  -O clear \
+  -V -5m:+8h \
+  session.pub
+# paste the contents of session-cert.pub back to the session
+----
+
+* `-n` must be exactly the signing email; the session refuses anything
+  else.
+* `-O clear` removes every extension; the session refuses certificates
+  with extensions (they are login permissions, not needed for signing).
+* `-V -5m:+8h` gives a window that tolerates small clock differences and
+  ends the same working day. The session refuses more than 24 hours.
+* The certificate is public data, so pasting it into the chat is fine.
+  Never paste a private key.
+* Check the session key's fingerprint against the one the session
+  printed (`ssh-keygen -lf session.pub`) before issuing.
+
+== OWNER: after a hardware failure (TPM lost, not stolen)
+
+. On new hardware, generate a new TPM CA (ceremony step 1).
+. With the recovery CA, issue a certificate for a session as above, and
+  have that session commit the new TPM CA's public key to
+  `trusted-cas.pub`, removing the dead one.
+. The old TPM CA's past signatures then read `U` locally; the pushed
+  history is the record.
+
+== OWNER: after theft or suspected compromise of a CA
+
+. *Remove* the CA's line from `trusted-cas.pub` and commit, using a
+  certificate from the other CA. Do not rely on `valid-before`: a
+  signer chooses the commit date, so a backdated commit would still read
+  `G` (measured; see the proposal).
+. Every past signature by that CA then reads `U` locally (checked by
+  `tests/session_signing_cert_test.sh`).
+. Generate a replacement CA and publish it as in the ceremony.
+
+== What a session does and does not do
+
+Does: generate and hold its own ephemeral key; check and install a
+certificate you issued; refuse to commit without a valid one; report
+expiry loudly.
+
+Does not: hold, generate, rotate or touch any CA key or your signing
+keys; change the cloud environment's variables or secrets; switch
+`mode` to `cert` (that is your commit).
+
+== Tests
+
+`tests/session_signing_cert_test.sh` runs the whole flow with throwaway
+software CAs in a scratch HOME: refusals for every bad certificate, `G`
+with the TPM-role and recovery CAs, the expiry guard, local revocation by
+removing a CA, and the hook's `cert` mode.
