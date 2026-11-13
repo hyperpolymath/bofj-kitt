@@ -6,8 +6,8 @@
 bofj-kitt is the shared Developer Environment Extension Kit for the BoJ (Box of
 Justice) server. This file explains how its key infrastructure claims map to
 real files. The kit's product surfaces are not built yet (see
-`docs/status/ROADMAP.adoc`); what is described below is the estate governance
-and session machinery that is genuinely present.
+`docs/status/ROADMAP.adoc`); what is described below is the estate governance,
+session machinery and environment tooling that is genuinely present.
 
 == Central Session Protocol Authority
 
@@ -75,3 +75,61 @@ Caveat:
 
 * Uninitialized placeholders in the M1 backlog must not be treated as
   project-specific truth until filled.
+
+== Environment Settings Are Rendered, Not Hand-Written
+
+Claim:
+The setup script, network allowlist and variable names for a cloud agent
+session are generated from two manifests and checked for drift, so no one
+maintains them by hand.
+
+How this is implemented:
+
+* `tools/proof-toolchain/toolchain.kyaml` says which tools the estate uses;
+  `tools/environments/environments.kyaml` says which environment classes get
+  them and records what each was measured to reach.
+* `tools/proof-toolchain/provers.sh render` writes
+  `tools/environments/rendered/agent-session/` (`setup.sh`,
+  `allowed-hosts.txt`, `allowed-hosts-mcp.txt`, `env-vars.txt`).
+  `render --check`, run in CI, fails when a committed file differs from what
+  the manifests render, or when a file is left over that they no longer
+  render.
+* The script is bash, at most 100 lines of at most 200 bytes, idempotent and
+  non-interactive. Every download is pinned by SHA-256 and checked before it
+  is unpacked, and it never exits non-zero.
+* On 2026-11-13 it was run as root against real apt: 13 items installed,
+  nothing failed, and a second run reinstalled nothing
+  (`tools/environments/README.adoc`).
+
+Caveat:
+
+* The kit renders these files; it does not apply them. The owner pastes the
+  script into the cloud environment's settings and sets the allowlist.
+* `kyq`, `deed` and `k9` have no pinned release, so they are reported
+  `UNAVAILABLE`, not installed. Isabelle's host resets the TLS handshake
+  under the Limited network.
+
+== Honest Capability Reporting
+
+Claim:
+A session says what it has and what it lacks, and never presents a missing
+tool or an unrun check as a pass.
+
+How this is implemented:
+
+* `tools/proof-toolchain/provers.sh doctor --json` emits one JCS-canonical
+  capability record (`tools/proof-toolchain/CAPABILITY-RECORD.adoc`) with
+  `PRESENT`, `DRIFT` or `UNAVAILABLE` and a reason for each tool.
+* The SessionStart hook (`.claude/hooks/session-start.sh`) runs it in every
+  Claude Code session, writes `.session/capability-record.json`, and prints
+  `!!!` lines naming each `UNAVAILABLE` or drifted tool. It also sets up
+  commit signing from `CLAUDE_SIGNING_KEY`, `CLAUDE_SIGNING_NAME` and
+  `CLAUDE_SIGNING_EMAIL`.
+
+Caveat:
+
+* The hook always exits 0 and never installs anything, so a session with
+  missing tools still starts; the `!!!` lines and the record are the signal.
+* The signing key is a long-lived secret held in an environment variable.
+  `docs/proposals/short-lived-signing-certificates.adoc` proposes replacing
+  it; that is not built.
