@@ -83,6 +83,7 @@ asset() { # id format dest url sha256 [member]
   elif case "$fmt" in
       tar.gz) tar -xzf "$t/a" -C "$t" "$member" && install -m 755 "$t/$member" "$dest" ;;
       tar.zst) rm -rf "$dest" && mkdir -p "$dest" && tar --zstd -xf "$t/a" -C "$dest" --strip-components=1 ;;
+      tar.gz-tree) rm -rf "$dest" && mkdir -p "$dest" && tar -xzf "$t/a" -C "$dest" --strip-components=1 ;;
       *) false ;;
     esac; then touch "$R/stamp.$id.$sha"; rep "$id" INSTALLED "sha256 $sha"
   else rep "$id" FAILED "unpack $fmt to $dest"; fi
@@ -155,7 +156,7 @@ fn setup_script(class: &str, r: &Value, manifest_sha: &str) -> Result<String, St
                 );
                 if format == "tar.gz" {
                     line.push_str(&format!(" {}", q(s(item, "member", &ctx)?, &ctx)?));
-                } else if format != "tar.zst" {
+                } else if format != "tar.zst" && format != "tar.gz-tree" {
                     return Err(format!("{ctx}: unsupported format {format}"));
                 }
                 out.push_str(&line);
