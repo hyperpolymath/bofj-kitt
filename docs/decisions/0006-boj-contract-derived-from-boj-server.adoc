@@ -1,0 +1,60 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Architecture Decision Record: 0006-boj-contract-derived-from-boj-server
+
+== 6. The BoJ integration contract is derived from boj-server, and unratified parts are labelled
+
+Date: 2026-11-14
+
+=== Status
+
+Proposed. The owner chose where the contract comes from (read the real
+boj-server and standards repositories) on 2026-11-14. The contract itself is not
+accepted, because parts of it could not be established from any source.
+
+=== Context
+
+Roadmap M2 asks for a BoJ integration contract: the cartridge shape and the
+Groove manifest fields. Writing them from memory would invent them. The owner
+approved reading `hyperpolymath/boj-server` and `hyperpolymath/standards`,
+read-only.
+
+Reading them found:
+
+* A cartridge manifest schema, `schemas/cartridge-v1.json`, and a template.
+* A server router listing its routes, and a published
+  `.well-known/groove/manifest.json`.
+* No normative specification of the Groove manifest. The standards repository's
+  only Groove document covers teardown, and names discovery, admissibility,
+  schema and framing as separate documents that were not found.
+* No endpoint for registering an environment with a server.
+* Four discrepancies in this repository's own files (D1 to D4 in the spec).
+
+=== Decision
+
+. The contract in the product spec is built only from named files at named
+  commits, and each claim is labelled SOURCE, NOT FOUND, PROPOSED or BLOCKED.
+. Anything not found is not filled in. Registration and the Groove manifest's
+  normative fields stay BLOCKED until the boj-server owners answer.
+. Until then S4 is limited to publishing a correct manifest, and only once the
+  manifest fields are confirmed as the intended contract.
+. The discrepancies are reported, not fixed, by the specification. Each needs an
+  owner-chosen resolution.
+
+=== Consequences
+
+==== Positive
+
+* The kit does not claim a contract nobody has agreed.
+* The discrepancies are visible before M3 builds on them, including a workflow
+  whose request path does not match the server's routes.
+
+==== Negative
+
+* Roadmap M2's contract item cannot be closed from this repository alone.
+* S4 may stall until someone outside this repository answers.
+
+==== Neutral
+
+* If the boj-server owners publish a manifest specification, this ADR is
+  superseded by one that cites it.

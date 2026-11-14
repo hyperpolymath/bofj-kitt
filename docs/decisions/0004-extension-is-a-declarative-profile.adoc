@@ -1,0 +1,57 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Architecture Decision Record: 0004-extension-is-a-declarative-profile
+
+== 4. An extension is a declarative profile
+
+Date: 2026-11-14
+
+=== Status
+
+Accepted. The owner chose this option through the question selector on
+2026-11-14, from three offered: declarative profile, runtime plugin, BoJ
+cartridge.
+
+=== Context
+
+Roadmap M2 asks what a developer-environment "extension" is for this kit. The
+README and INTENT leave it open, and INTENT says scope beyond its anti-purpose is
+fixed by the M2 product spec. Meanwhile the kit already contains a working
+mechanism: `tools/environments/environments.kyaml` declares environment classes,
+and `provers.sh render` and `provers.sh doctor --json` project them into a setup
+script, an allowlist, variable names and a capability record.
+
+=== Decision
+
+An extension is a declarative profile: one record that names an environment class
+and declares its identity, install route, tools (by reference into
+`toolchain.kyaml`), network reach, variable names, download policy and reporting.
+Every environment-specific file is rendered from it. Extending the kit means
+adding or changing a profile.
+
+Two options were not chosen. A runtime plugin would need a plugin interface,
+loading rules and trust rules, and conflicts with the SessionStart hook, which
+never installs anything. A BoJ cartridge would tie the kit to the server and blur
+the boundary INTENT draws (the kit is not the BoJ server or its cartridges).
+
+=== Consequences
+
+==== Positive
+
+* The decision matches what is already built, so S1 needs no new design.
+* One declaration with many projections removes per-environment hand edits.
+* The existing rules carry over unchanged: no hand-edited rendered files, no
+  secret values in a profile, an unavailable tool is reported as unavailable.
+
+==== Negative
+
+* A capability that needs code running inside an environment cannot be an
+  extension. It must be a separate tool, or a different decision.
+* The profile schema becomes a contract. Changing `environments.kyaml`'s fields
+  affects every renderer, and that file is owned by the environment tooling.
+
+==== Neutral
+
+* A BoJ cartridge about the kit may still exist elsewhere. It would not be an
+  extension in this sense.
+* The implementation language is still open (M3).
