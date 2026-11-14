@@ -5,7 +5,7 @@
 :toclevels: 2
 :sectnums:
 
-Status: proposal, 2026-11-12. Design only; nothing here is built.
+Status: proposal, 2026-11-12; option (a) built since, off by default (#120). The SessionStart hook has a `cert` mode, backed by `.claude/signing/cert-signing.sh`, the runbook `docs/practice/session-signing-certificates.adoc` and `tests/session_signing_cert_test.sh`. `.claude/signing/mode` still says `key`, so sessions sign with `CLAUDE_SIGNING_KEY` until the owner switches it. The owner's CA ceremony and the switch are the owner's steps, and neither was verified when this status was written.
 
 == The problem
 

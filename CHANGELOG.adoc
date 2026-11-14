@@ -10,6 +10,12 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 ==== Added
 
+* Documentation corrected after the short-lived signing certificates landed
+  (#120; documentation only). The proposal, the roadmap, `EXPLAINME.adoc`
+  and `CLAUDE.md` said the `cert` signing mode was not built. It is built
+  and off by default (`.claude/signing/mode` is `key`); switching to it
+  needs the owner's CA ceremony, which is now an open owner item in the
+  roadmap.
 * Documentation brought up to date with the environment tooling
   (documentation only; no manifest, script or rendered file changed):
   `tools/environments/README.adoc` now says how the owner applies the

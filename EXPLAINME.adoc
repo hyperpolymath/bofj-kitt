@@ -130,6 +130,9 @@ Caveat:
 
 * The hook always exits 0 and never installs anything, so a session with
   missing tools still starts; the `!!!` lines and the record are the signal.
-* The signing key is a long-lived secret held in an environment variable.
-  `docs/proposals/short-lived-signing-certificates.adoc` proposes replacing
-  it; that is not built.
+* By default (`.claude/signing/mode` is `key`) the signing key is a
+  long-lived secret held in an environment variable. A `cert` mode that uses
+  short-lived SSH certificates is built and off by default
+  (`docs/proposals/short-lived-signing-certificates.adoc`, runbook
+  `docs/practice/session-signing-certificates.adoc`). Switching to it needs
+  the owner's CA ceremony, which is the owner's step.
