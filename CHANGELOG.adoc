@@ -15,7 +15,12 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   and `CLAUDE.md` said the `cert` signing mode was not built. It is built
   and off by default (`.claude/signing/mode` is `key`); switching to it
   needs the owner's CA ceremony, which is now an open owner item in the
-  roadmap.
+  roadmap. A review of this change found, and the code confirms, a gap in
+  `cert-signing.sh request`: with no CA key listed it exits before setting
+  the fail-closed git settings. It is latent while the mode is `key`; it is
+  recorded in the roadmap and in `CLAUDE.md` and is not fixed here. The
+  proposal's OpenBao section is marked superseded by option (a), and
+  `CLAUDE.md` now says the hook configures signing in cloud sessions only.
 * Documentation brought up to date with the environment tooling
   (documentation only; no manifest, script or rendered file changed):
   `tools/environments/README.adoc` now says how the owner applies the

@@ -135,4 +135,7 @@ Caveat:
   short-lived SSH certificates is built and off by default
   (`docs/proposals/short-lived-signing-certificates.adoc`, runbook
   `docs/practice/session-signing-certificates.adoc`). Switching to it needs
-  the owner's CA ceremony, which is the owner's step.
+  the owner's CA ceremony, which is the owner's step. Known gap: while no CA
+  key is listed in `.claude/signing/trusted-cas.pub`, `cert-signing.sh
+  request` exits before it makes git refuse unsigned commits, so do not
+  switch the mode until that is fixed (see the roadmap).
