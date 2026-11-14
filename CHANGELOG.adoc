@@ -10,6 +10,8 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 ==== Fixed
 
+* `.github/workflows/mirror.yml`: the Radicle mirror is split into `build-radicle` (runs `cargo install radicle-cli`, no secrets, uploads the `rad` binary) and `mirror-radicle` (downloads it, holds `RADICLE_KEY`). No job now holds a secret next to fetched code, which is what Hypatia RE001 flags. Uses `actions/upload-artifact` and `actions/download-artifact`, already recorded in `actions.lock`. Not run on a runner yet.
+
 * `.claude/signing/cert-signing.sh request` could exit (no CA key listed in
   `trusted-cas.pub`, or no signing identity) before it set the fail-closed
   git settings, leaving git on whatever signing configuration it already
