@@ -12,6 +12,7 @@ julialang-s3.julialang.org
 bordeaux.guix.gnu.org
 ci.guix.gnu.org
 isabelle.in.tum.de
+dists.isabelle.cit.tum.de
 mizar.uwb.edu.pl
 pvs.csl.sri.com
 alire.ada.dev

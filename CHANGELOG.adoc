@@ -21,6 +21,17 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   recorded in the roadmap and in `CLAUDE.md` and is not fixed here. The
   proposal's OpenBao section is marked superseded by option (a), and
   `CLAUDE.md` now says the hook configures signing in cloud sessions only.
+* Isabelle2026 in the agent-session setup (pinned `Isabelle2026_linux.tar.gz`,
+  SHA-256 `858c995b...e48d`, unpacked at `$PREFIX/isabelle`), so `doctor`
+  reports `isabelle` PRESENT. The pin is the https URL on
+  `dists.isabelle.cit.tum.de` with `?token=Isabelle`: the documented
+  `isabelle.in.tum.de` URL redirects to plain http, which the agent proxy
+  cannot reach. Isabelle publishes no checksum, so the hash is from two
+  identical full downloads. 1.41 GB download, 2.7 GB unpacked. A fourth
+  `measured` block (2026-11-14, Unrestricted) records it, `dists.isabelle.cit.tum.de` joins
+  the allowlist (19 hosts), and `tests/setup_script_test.sh` checks the pin.
+  The `isabelle` toolchain entry now pins `Isabelle2026` with a `$PREFIX`
+  verify command.
 * Documentation brought up to date with the environment tooling
   (documentation only; no manifest, script or rendered file changed):
   `tools/environments/README.adoc` now says how the owner applies the
