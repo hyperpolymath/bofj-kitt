@@ -167,9 +167,10 @@ required fields are `$schema`, `spdx`, `copyright`, `name`, `version`,
 * `ports` carries `allowed` and `denied` lists; `source` optionally names a
   registry, a path and a SHA-256.
 
-`templates/cartridge-template/cartridge.json` is the starting shape. ADR 0003 in
-boj-server says the Idris2 sources under `src/abi/Boj/` are the machine-authoritative
-definition and that the prose specification is
+In boj-server, `templates/cartridge-template/cartridge.json` is the starting
+shape. Its ADR 0003 says the Idris2 files `Catalogue.idr`, `Protocol.idr` and
+`Domain.idr` in its `Boj` ABI module are the machine-authoritative definition,
+and that the prose specification is boj-server's
 `docs/specification/cartridges/README.md`. The ADR describes a Nickel manifest
 while the schema above is JSON. This draft did not establish which form is
 canonical today.
