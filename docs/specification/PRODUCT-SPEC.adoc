@@ -250,7 +250,10 @@ would still be refused: the server's invoke handler requires a `tool` field (or
 `operation`) and answers 400 `missing-tool-field` without one, and the workflow
 sends only `repo`, `branch` and `engine`. The `ssg-mcp` fixture lists the tools
 `ssg_load_content`, `ssg_build`, `ssg_preview`, `ssg_deploy` and `ssg_clean`.
-Which tool and arguments the workflow should call is not decided.
+Which tool and arguments the workflow should call is not decided. By the owner's
+choice (2026-11-14) the workflow now stays optional and non-fatal but reports the
+real HTTP status and the server's reply, so a refused request is visible in the
+log and no longer reads as an unreachable server.
 
 |D4
 |`.machine_readable/descriptiles/META.a2ml` records ADR-001 to ADR-003 with no

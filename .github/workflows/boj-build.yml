@@ -3,7 +3,9 @@
 #
 # OPTIONAL: BoJ Server Build Trigger
 # This workflow notifies a BoJ Server instance when code is pushed.
-# It is a no-op if BOJ_SERVER_URL is not set or the server is unreachable.
+# It is a no-op if BOJ_SERVER_URL is not set. If the server cannot be reached, or
+# refuses the request, it logs a warning with the HTTP status and the server's
+# reply and does not fail the build.
 # To enable: set BOJ_SERVER_URL as a repository secret or variable.
 # To disable: delete this file or leave BOJ_SERVER_URL unset.
 name: BoJ Server Build Trigger
@@ -42,7 +44,28 @@ jobs:
             --arg engine "casket" \
             '{repo:$repo, branch:$branch, engine:$engine}')"
 
-          curl -sf -X POST "${BOJ_URL}/cartridge/ssg-mcp/invoke" \
-            -H "Content-Type: application/json" \
-            --data "$payload" \
-            || echo "BoJ server unreachable - skipping (non-fatal)"
+          # Optional and non-fatal, but never silent: say which of "could not
+          # connect" and "the server refused it" happened, with the HTTP status
+          # and the server's reply. -S is left off and the URL is never printed,
+          # because BOJ_URL may be a secret and curl's error text names the host.
+          resp="$(mktemp)"
+          trap 'rm -f "$resp"' EXIT
+          if ! status="$(curl -s -o "$resp" -w '%{http_code}' -X POST \
+              "${BOJ_URL}/cartridge/ssg-mcp/invoke" \
+              -H "Content-Type: application/json" \
+              --data "$payload")"; then
+            echo "::warning::BoJ server could not be reached (no HTTP response) - skipping (non-fatal)"
+            exit 0
+          fi
+
+          case "$status" in
+            2??)
+              echo "BoJ server accepted the request (HTTP $status)"
+              ;;
+            *)
+              echo "::warning::BoJ server answered HTTP $status - the request was not accepted (non-fatal)"
+              echo "Server reply (first 1000 bytes):"
+              head -c 1000 "$resp"
+              echo
+              ;;
+          esac
