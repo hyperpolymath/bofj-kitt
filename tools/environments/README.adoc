@@ -175,9 +175,10 @@ network that session had:
   `INSTALLED`; `openssh-client` was already `PRESENT`; `kyq`, `deed` and
   `k9` were `UNAVAILABLE` as declared. Nothing reported `FAILED`.
 * *Second run:* exit 0 in about 1 s, 14 `PRESENT` and 3 `UNAVAILABLE`.
-* *Doctor afterwards:* 15 present, 0 drift, 36 unavailable. The 36 are
-  tools the script does not install (why3, verus, Kani, Isabelle, hol4 and
-  others).
+* *Doctor afterwards:* 15 present, 0 drift, 36 unavailable. Three of
+  the 36 (kyq, deed and k9) the script declares `UNAVAILABLE` on purpose;
+  the other 33 are tools it does not install (why3, verus, Kani, Isabelle,
+  hol4 and others). Isabelle has since been added (see above).
 
 Known gaps from that run:
 
