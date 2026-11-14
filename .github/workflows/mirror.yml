@@ -120,14 +120,14 @@ jobs:
           git remote add gitea git@${{ vars.GITEA_HOST }}:${{ vars.GITEA_ORG || vars.MIRROR_ORG || github.repository_owner }}/${{ github.event.repository.name }}.git || true
           git push --force gitea main
 
-  mirror-radicle:
+  # Split in two so no job holds a secret next to fetched code (Hypatia RE001):
+  # build-radicle runs `cargo install` (dependency build scripts) and has no
+  # secret; mirror-radicle holds RADICLE_KEY and only runs the finished binary.
+  build-radicle:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: vars.RADICLE_MIRROR_ENABLED == 'true'
     steps:
-      - uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
-
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@master
         with:
@@ -137,7 +137,36 @@ jobs:
         run: |
           # Install via cargo (safer than curl|sh)
           cargo install radicle-cli --locked
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Keep the rad binary
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: rad
+          path: ${{ env.CARGO_HOME }}/bin/rad
+          if-no-files-found: error
+          retention-days: 1
+
+  mirror-radicle:
+    needs: build-radicle
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: vars.RADICLE_MIRROR_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Fetch the rad binary
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: rad
+          path: ${{ runner.temp }}/rad-bin
+
+      - name: Put rad on PATH
+        run: |
+          # Artifacts do not keep the executable bit.
+          chmod +x "$RUNNER_TEMP/rad-bin/rad"
+          echo "$RUNNER_TEMP/rad-bin" >> "$GITHUB_PATH"
 
       - name: Mirror to Radicle
         env:
@@ -149,8 +178,7 @@ jobs:
             echo "::error::The RADICLE_KEY secret is not configured"
             exit 1
           fi
-          # The directory does not exist on a fresh runner; creating it is what
-          # was missing (the step used to fail here even with the secret set).
+          # The directory does not exist on a fresh runner.
           mkdir -p ~/.radicle/keys
           (umask 077 && printf '%s\n' "$RADICLE_KEY" > ~/.radicle/keys/radicle)
           chmod 600 ~/.radicle/keys/radicle
