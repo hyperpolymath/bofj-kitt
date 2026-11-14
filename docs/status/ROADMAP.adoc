@@ -51,9 +51,10 @@ established this baseline.
 * [x] Proposal for short-lived signing certificates, `docs/proposals/short-lived-signing-certificates.adoc` (not built).
 * [ ] Owner: apply the rendered setup, allowlists and variable names to the real environment (`tools/environments/README.adoc`).
 * [ ] Pin releases of kyq, deed and k9 so the setup can install them; until then they report `UNAVAILABLE`, and the Rust KYAML reader stays.
-* [ ] Isabelle cannot be installed under the Limited network (its host resets the TLS handshake); decide whether to keep it on the allowlist.
+* [x] Isabelle2026 preinstalled by the setup script from a pinned SHA-256 (2026-11-14): 1.41 GB download, 2.7 GB unpacked, about 1 m 34 s added to a build in a measured container. Both Isabelle hosts are on the allowlist for a Limited fallback, which was not tested.
+* [ ] Owner: decide whether a 2.7 GB, roughly 2-minute Isabelle install belongs in every fresh container build.
 * [ ] Set an elan default for the preinstalled Lean 4.13.0, so a bare `lean` works outside a project.
-* [ ] Install the remaining 36 `UNAVAILABLE` tools (why3, verus, Kani, hol4 and others), each as a pinned, hash-checked download.
+* [ ] Install the remaining 32 tools the script does not install (why3, verus, Kani, hol4 and others; kyq, deed and k9 are the other 3 of the 35 `UNAVAILABLE`, declared on purpose), each as a pinned, hash-checked download.
 * [ ] Per-capability unit + integration tests; record counts in `.machine_readable/descriptiles/STATE.a2ml`.
 * [ ] Replace the placeholder fuzz README with a real harness.
 * [ ] Replace the generic template proofs under `verification/` with product proofs.
