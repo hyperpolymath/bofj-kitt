@@ -147,7 +147,7 @@ scan() {
   local rc=0
   # NOT piped — see trap 2 in the header.
   "$TH" git "file://$REPO_ROOT" "$@" "${VERIFY_ARGS[@]}" "${DETECTOR_ARGS[@]}" \
-      --fail --no-update >"$out" 2>&1 || rc=$?
+      --fail --fail-on-scan-errors --no-update >"$out" 2>&1 || rc=$?
   scanned=$((scanned + 1))
   if [ "$rc" -eq 183 ]; then
     echo "[scan-secrets] FINDINGS while scanning $label:" >&2
@@ -168,6 +168,21 @@ if [ -n "${K9_PUSH_RANGES:-}" ]; then
     [ -z "${local_sha:-}" ] && continue
     [ "$local_sha" = "$ZERO" ] && continue                 # branch deletion
     if [ "${remote_sha:-$ZERO}" = "$ZERO" ]; then
+      # A new branch publishes every commit no remote ref has yet. TruffleHog's
+      # --max-depth keeps only the NEWEST $MAX_DEPTH commits, but git would
+      # still publish the older ones, so a secret added in an early commit and
+      # removed in a later one would go out unscanned. Block rather than
+      # approve a partial scan; raise K9_SECRETS_MAX_DEPTH to scan the lot.
+      new_commits="$(git -C "$REPO_ROOT" rev-list --count "$local_sha" --not --remotes 2>/dev/null || echo "")"
+      if [[ -z "$new_commits" || "$new_commits" -gt "$MAX_DEPTH" ]]; then
+        echo "[scan-secrets] SCANNER ERROR while scanning new branch ${local_ref:-HEAD} —" >&2
+        echo "[scan-secrets] it publishes ${new_commits:-an unknown number of} commits, more than K9_SECRETS_MAX_DEPTH=$MAX_DEPTH;" >&2
+        echo "[scan-secrets] a partial scan would approve unscanned history. Raise K9_SECRETS_MAX_DEPTH to at least the count." >&2
+        scanned=$((scanned + 1))
+        errored=1
+        status=1
+        continue
+      fi
       scan "new branch ${local_ref:-HEAD} (last $MAX_DEPTH commits)" \
            --branch "$local_sha" --max-depth "$MAX_DEPTH"
     else
@@ -181,7 +196,7 @@ fi
 # HEAD rather than reporting a pass over nothing. A gate that reports success
 # having examined zero commits is the vacuity this estate keeps re-learning.
 if [ "$scanned" -eq 0 ]; then
-  scan "HEAD (no push ranges; last $MAX_DEPTH commits)" --max-depth "$MAX_DEPTH"
+  scan "HEAD (no push ranges; last $MAX_DEPTH commits)" --branch HEAD --max-depth "$MAX_DEPTH"
 fi
 
 if [ "$found" -ne 0 ]; then
