@@ -32,7 +32,7 @@ established this baseline.
 * [x] Enumerate the first surfaces: all four (agent-session environment, devcontainer/Guix provisioning, session-protocol bootstrap, BoJ/Groove registration), for estate agent sessions and CI first (owner decision 2026-11-14; ADR 0005).
 * [ ] Write the BoJ integration contract (MCP cartridge shape, Groove manifest fields). Drafted from the real boj-server and standards files in the spec's section 6. Not closed: no normative Groove manifest specification and no registration endpoint were found, so those parts are BLOCKED on the boj-server owners.
 * [ ] Record the decisions as ADRs under `docs/decisions/`. ADRs 0004 and 0005 are written (Accepted); 0006 is written but Proposed. META's ADR-001 to ADR-003 still have no files and collide with `0001-adopt-rsr-standard`.
-* [ ] Resolve the four discrepancies the spec found (D1 to D4: the Groove manifest shape, wrong standards links, the `boj-build.yml` request path, the ADR numbering). Each needs an owner-chosen resolution; none is changed yet.
+* [ ] Resolve the four discrepancies the spec found (D1 to D4: the Groove manifest shape, wrong standards links, the `boj-build.yml` request path, the ADR numbering). Each needs an owner-chosen resolution. D3's path is fixed (2026-11-14), but its request body still has no `tool` field, so the server would answer 400; D1, D2 and D4 are not changed yet.
 
 === M3 — Language & scaffolding
 * [ ] Choose the implementation language from the allowed set in `.machine_readable/anchors/ANCHOR.a2ml`.
