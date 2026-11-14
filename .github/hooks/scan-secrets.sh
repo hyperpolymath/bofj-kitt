@@ -79,8 +79,19 @@ DETECTOR_ARGS=(--exclude-detectors SonarCloud)
 # `command -v` is not enough: a mise shim with no pinned global version sits on
 # PATH, answers `command -v` happily, and fails every actual invocation with
 # "No version is set for shim". Installed is not invokable. Each candidate is
-# therefore probed with `--version` and only accepted on exit 0.
-probe() { [ -n "${1:-}" ] && [ -x "$1" ] && "$1" --version >/dev/null 2>&1; }
+# therefore probed (see probe() below) and only accepted when it answers.
+# A binary is also rejected when it lacks --fail-on-scan-errors (added after
+# v3.90): the hook passes it on every scan, so an older binary would be
+# "installed" yet fail every push on an unknown flag. Output is captured, not
+# piped into grep -q, because under pipefail grep's early exit can SIGPIPE the
+# producer and turn a match into a failure.
+probe() {
+  local bin="${1:-}" help_text
+  [[ -n "$bin" && -x "$bin" ]] || return 1
+  "$bin" --version >/dev/null 2>&1 || return 1
+  help_text="$("$bin" --help 2>&1 || true)"
+  [[ "$help_text" == *"--fail-on-scan-errors"* ]]
+}
 
 TH=""
 if probe "${TRUFFLEHOG:-}"; then
@@ -99,7 +110,7 @@ fi
 
 if [ -z "$TH" ]; then
   cat >&2 <<'HINT'
-[scan-secrets] BLOCKED: TruffleHog is not installed, or is a dead shim.
+[scan-secrets] BLOCKED: TruffleHog is not installed, is a dead shim, or is too old (it must support --fail-on-scan-errors; use 3.96.0 or newer).
 
   This gate fails closed on purpose — a secret scanner that skips silently is
   indistinguishable from one that found nothing.
@@ -128,7 +139,11 @@ fi
 # they must be REPORTED apart. Measured here: a stale remote ref pointing at
 # 0000…0 made every scan exit 1 with "upload-pack: not our ref", and a handler
 # that said "Secrets detected" for any non-zero told the developer to go hunting
-# for a credential that did not exist. A gate that misnames its own failure
+# for a credential that did not exist. NOTE the converse: TruffleHog checks for
+# scan errors BEFORE it applies --fail, so a run that finds a secret AND hits a
+# scan error exits non-zero but not 183. rc != 183 therefore never proves "no
+# secret", and the error path below says the output may ALSO contain a finding.
+# A gate that misnames its own failure
 # sends people looking in the wrong place, which is how gates get switched off.
 status=0
 scanned=0
@@ -147,7 +162,7 @@ scan() {
   local rc=0
   # NOT piped — see trap 2 in the header.
   "$TH" git "file://$REPO_ROOT" "$@" "${VERIFY_ARGS[@]}" "${DETECTOR_ARGS[@]}" \
-      --fail --no-update >"$out" 2>&1 || rc=$?
+      --fail --fail-on-scan-errors --no-update >"$out" 2>&1 || rc=$?
   scanned=$((scanned + 1))
   if [ "$rc" -eq 183 ]; then
     echo "[scan-secrets] FINDINGS while scanning $label:" >&2
@@ -156,7 +171,7 @@ scan() {
     status=1
   elif [ "$rc" -ne 0 ]; then
     echo "[scan-secrets] SCANNER ERROR (exit $rc) while scanning $label —" >&2
-    echo "[scan-secrets] this is a failure to scan, NOT a detected secret:" >&2
+    echo "[scan-secrets] this is a failure to scan; the output below may ALSO contain a detected secret:" >&2
     cat "$out" >&2
     errored=1
     status=1
@@ -168,7 +183,25 @@ if [ -n "${K9_PUSH_RANGES:-}" ]; then
     [ -z "${local_sha:-}" ] && continue
     [ "$local_sha" = "$ZERO" ] && continue                 # branch deletion
     if [ "${remote_sha:-$ZERO}" = "$ZERO" ]; then
-      scan "new branch ${local_ref:-HEAD} (last $MAX_DEPTH commits)" \
+      # TruffleHog's --max-depth bounds the WHOLE history it walks from
+      # $local_sha, not just the commits no remote has yet, and at the limit it
+      # can stop partway through the oldest commit it reaches. So a count that
+      # excludes remote history (--not --remotes) undercounts what is walked,
+      # and a count equal to the limit is already too small. Count the same
+      # traversal and require it to be strictly below the limit; otherwise
+      # block rather than approve a partial scan. Set K9_SECRETS_MAX_DEPTH
+      # above the count to scan the whole history.
+      new_commits="$(git -C "$REPO_ROOT" rev-list --count "$local_sha" 2>/dev/null || echo "")"
+      if [[ -z "$new_commits" || "$new_commits" -ge "$MAX_DEPTH" ]]; then
+        echo "[scan-secrets] SCANNER ERROR while scanning new branch ${local_ref:-HEAD} —" >&2
+        echo "[scan-secrets] its history is ${new_commits:-of unknown length} commits, not below K9_SECRETS_MAX_DEPTH=$MAX_DEPTH;" >&2
+        echo "[scan-secrets] the depth limit would leave part of it unscanned. Set K9_SECRETS_MAX_DEPTH above that count." >&2
+        scanned=$((scanned + 1))
+        errored=1
+        status=1
+        continue
+      fi
+      scan "new branch ${local_ref:-HEAD} (full history, $new_commits commits)" \
            --branch "$local_sha" --max-depth "$MAX_DEPTH"
     else
       scan "${local_ref:-HEAD} since ${remote_sha:0:12}" \
@@ -181,7 +214,7 @@ fi
 # HEAD rather than reporting a pass over nothing. A gate that reports success
 # having examined zero commits is the vacuity this estate keeps re-learning.
 if [ "$scanned" -eq 0 ]; then
-  scan "HEAD (no push ranges; last $MAX_DEPTH commits)" --max-depth "$MAX_DEPTH"
+  scan "HEAD (no push ranges; last $MAX_DEPTH commits)" --branch HEAD --max-depth "$MAX_DEPTH"
 fi
 
 if [ "$found" -ne 0 ]; then

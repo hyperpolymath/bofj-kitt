@@ -99,4 +99,17 @@ run asset b tar.gz-tree "$work/out/broken" https://example.invalid/bad.tgz "$bad
 [[ "$(grep -cP '^b\tFAILED\tunpack tar.gz-tree' "$work/report/setup-report.tsv")" -eq 2 ]] || fail "the second run did not fail again: $(report)"
 grep -qP '^b\tPRESENT' "$work/report/setup-report.tsv" && fail "a failed unpack was later reported PRESENT"
 
+# The Isabelle install line: a pinned https URL on the host the owner's
+# allowlist carries, a 64-hex SHA-256, and a tree unpack into the provers
+# prefix. isabelle.in.tum.de's own redirect goes to plain http, which the
+# agent proxy cannot reach (measured 2026-11-14), so a plain-http or
+# redirecting URL here is a regression.
+isa_line="$(grep -A2 "^asset 'isabelle' " "$script" | tr -d '\\\n')" || fail "no isabelle asset line in $script"
+grep -qE "^asset 'isabelle' 'tar\.gz-tree' '/opt/hyperpolymath/provers/isabelle'" <<<"$isa_line" || fail "isabelle is not unpacked as a tree into the provers prefix: $isa_line"
+grep -qE "'https://dists\.isabelle\.cit\.tum\.de/dist/Isabelle[0-9]+_linux\.tar\.gz\?token=Isabelle' +[0-9a-f]{64}\$" <<<"$isa_line" || fail "isabelle is not pinned to an https dists URL with a 64-hex SHA-256: $isa_line"
+for h in isabelle.in.tum.de dists.isabelle.cit.tum.de; do
+    grep -qx "$h" "$repo_root/tools/environments/rendered/agent-session/allowed-hosts.txt" || fail "$h is missing from the rendered allowlist"
+done
+[[ "$(wc -l <"$repo_root/tools/environments/rendered/agent-session/allowed-hosts.txt")" -le 20 ]] || fail "the allowlist exceeds 20 hosts"
+
 echo "PASS: setup helpers report PRESENT/INSTALLED/FAILED/UNAVAILABLE, verify SHA-256 before installing, and never fail the script"
