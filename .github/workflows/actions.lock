@@ -32,6 +32,7 @@ workflows:
     '.github/workflows/mirror.yml':
         - 'actions/checkout@v7.0.1'
         - 'dtolnay/rust-toolchain@master'
+        - 'step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a'
         - 'webfactory/ssh-agent@v0.10.0'
     '.github/workflows/openssf-compliance.yml':
         - 'actions/checkout@v7.0.1'
