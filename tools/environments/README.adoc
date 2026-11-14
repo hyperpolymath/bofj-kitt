@@ -139,7 +139,9 @@ The setup pins `Isabelle2026_linux.tar.gz` by SHA-256 and unpacks it at
 `$PREFIX/isabelle` (`tar.gz-tree`; the archive has one top directory).
 
 * *URL.* `https://isabelle.in.tum.de/dist/...` answers 301 to
-  `http://dists.isabelle.cit.tum.de/...?token=Isabelle` (plain http). The
+  the same path with `?token=Isabelle` on `dists.isabelle.cit.tum.de`, over
+  plain http (port 80, not https; the exact target is in the 2026-11-14
+  `measured` block). The
   agent proxy cannot reach port 80 on that host and answers a bare 503, so
   a `curl -L` of the documented URL fails. The setup pins the https form on
   `dists.isabelle.cit.tum.de` directly; it needs `?token=Isabelle` (403
