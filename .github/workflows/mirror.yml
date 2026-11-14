@@ -125,6 +125,7 @@ jobs:
   # secret; mirror-radicle holds RADICLE_KEY and only runs the finished binary.
   build-radicle:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: vars.RADICLE_MIRROR_ENABLED == 'true'
     steps:
       - name: Setup Rust
@@ -148,6 +149,7 @@ jobs:
   mirror-radicle:
     needs: build-radicle
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: vars.RADICLE_MIRROR_ENABLED == 'true'
     steps:
       - uses: actions/checkout@v7.0.1
