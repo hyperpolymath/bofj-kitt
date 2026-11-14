@@ -5,7 +5,7 @@
 :toclevels: 2
 :sectnums:
 
-Status: proposal, 2026-11-12. Design only; nothing here is built.
+Status: proposal, 2026-11-12; option (a) built since, off by default (#120). The SessionStart hook has a `cert` mode, backed by `.claude/signing/cert-signing.sh`, the runbook `docs/practice/session-signing-certificates.adoc` and `tests/session_signing_cert_test.sh`. `.claude/signing/mode` still says `key`, so sessions sign with `CLAUDE_SIGNING_KEY` until the owner switches it. The owner's CA ceremony and the switch are the owner's steps, and neither was verified when this status was written.
 
 == The problem
 
@@ -57,6 +57,13 @@ issuer refuses) or by keeping the key in hardware that enforces the
 policy.
 
 == Proposed design: an offline CA and an issuer with a policy
+
+NOTE: *Superseded in part by the built option (a)* (see "Who holds the
+issuing key" below). The built design has no OpenBao issuer: the issuer is
+the owner's workstation, with the CA key in its TPM. And when a certificate
+cannot be had, commits are meant to *fail*, not run unsigned; the
+"session runs unsigned" fallback in the list below is not what was built.
+This section is kept as the record of the design that was proposed.
 
 This is the most elegant option of those compared below.
 
