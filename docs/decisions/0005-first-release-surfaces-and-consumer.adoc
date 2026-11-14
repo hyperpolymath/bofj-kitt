@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Architecture Decision Record: 0005-first-release-surfaces-and-consumer
+
+== 5. The first release covers four surfaces, for estate sessions and CI
+
+Date: 2026-11-14
+
+=== Status
+
+Accepted. The owner chose both parts through the question selector on 2026-11-14.
+
+=== Context
+
+The roadmap names three first surfaces: devcontainer and Guix provisioning,
+session-protocol bootstrap, and BoJ and Groove registration. The environment
+tooling already built is a fourth: the agent-session environment. The roadmap does
+not say who the first consumer is, and "done" depends on it.
+
+=== Decision
+
+. All four surfaces are in the first release: S1 agent-session environment, S2
+  devcontainer and Guix provisioning, S3 session-protocol bootstrap, S4 BoJ and
+  Groove registration.
+. The first consumers are estate agent sessions and CI runners. Human developers
+  on workstations and BoJ server operators follow.
+
+"Done" for an extension is defined in `docs/specification/PRODUCT-SPEC.adoc`
+(profile present, render clean, capability record honest, owner has applied it).
+
+=== Consequences
+
+==== Positive
+
+* S1 already works, so the first release has at least one surface with evidence.
+* The consumer with the most working code is served first.
+
+==== Negative
+
+* Four surfaces are a wide first release. S2 is unproven, S3 needs a standards
+  repository the kit does not own, and S4 is partly blocked on the BoJ contract
+  (ADR 0006). The release is not complete until each of those moves.
+* Choosing agent sessions first leaves workstation users with the least built.
+
+==== Neutral
+
+* The spec proposes an order (S1, S3, S2, S4) by dependency. That is a sequence,
+  not a reduction of scope.

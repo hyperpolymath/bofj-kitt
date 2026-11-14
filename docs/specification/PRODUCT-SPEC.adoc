@@ -1,0 +1,310 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= bofj-kitt product specification (roadmap M2)
+:toc:
+:toclevels: 2
+:sectnums:
+
+Status: draft for owner review, 2026-11-14. It records four owner decisions
+(sections 3 to 5) and states plainly where the BoJ contract could not be
+established from a source (section 6). Nothing here is implemented by this
+document; it fixes what M3 and M4 build.
+
+== How to read the labels
+
+Every factual claim carries one of these labels, so that a reader can tell what
+is known from what is wanted.
+
+[cols="1,4",options="header"]
+|===
+|Label |Meaning
+
+|DECIDED |The owner chose it through the question selector on 2026-11-14.
+|BUILT |Code or a rendered file exists in this repository. The path is given. It
+does not mean the thing has been applied to a real environment.
+|SOURCE |Read from a named file at a named commit in another repository
+(section 10 lists the commits). Not re-verified by running anything.
+|PROPOSED |This specification's suggestion. Not agreed with anyone.
+|NOT FOUND |Searched for and absent. It does not prove the thing does not exist
+elsewhere; the search is described.
+|BLOCKED |Needs a person or repository outside this one.
+|===
+
+== What the product is
+
+bofj-kitt is the estate's shared developer-environment layer for the BoJ (Bundle
+of Joy) server (`README.adoc`). It does three things: provision an
+estate-compliant environment, wire in the estate session protocols, and register
+the environment with a BoJ server.
+
+It is not the BoJ server, not rsr-template-repo or a project scaffolder, and not
+a language, compiler or runtime (`.machine_readable/INTENT.contractile`,
+anti-purpose). The INTENT file says scope beyond those edges "is fixed by the M2
+product spec"; the sections below are that fixing.
+
+== What an "extension" is (DECIDED)
+
+An extension is a *declarative profile*: one record that names an environment
+class and declares, in one place, everything that class needs. Rendered files are
+projections of it, never the source.
+
+A profile declares:
+
+* identity: a stable `id` and a `kind`;
+* how tools get in, in order of preference;
+* which tools it carries, by reference into the one tool manifest
+  (`tools/proof-toolchain/toolchain.kyaml`), never by copying their versions;
+* what the class may reach on the network;
+* the names of the variables it needs. Values, and above all secrets, never live
+  in a profile;
+* whether the class may run a binary it downloaded;
+* how the class reports what it really holds.
+
+*BUILT.* `tools/environments/environments.kyaml` already holds seven such
+profiles (`workstation`, `agent-session`, `ci-runner`, `devcontainer`,
+`guix-shell`, `sealed-container`, `boj-registered`). `provers.sh render` turns a
+profile into a setup script, an allowlist and variable names under
+`tools/environments/rendered/agent-session/`. `provers.sh doctor --json` writes
+the capability record, using the closed status words `PRESENT`, `DRIFT` and
+`UNAVAILABLE`.
+
+Rules that follow from the decision, all already enforced for the agent-session
+class:
+
+. A rendered file is never hand-edited. The profile is edited and the file is
+  re-rendered; CI fails on drift.
+. A profile never lists a secret value.
+. A tool with no pinned release stays `UNAVAILABLE`. The kit never presents it as
+  present and never installs it silently.
+
+*What an extension is not.* It is not a runtime plugin that loads code into a
+running environment, and it is not a BoJ cartridge. A cartridge is a unit the BoJ
+server hosts and invokes (section 6). The kit's INTENT forbids implementing the
+server or its cartridges. Adding to the kit means adding or changing a profile,
+not writing a plugin. See `docs/decisions/0004-extension-is-a-declarative-profile.adoc`.
+
+== First consumer and what "done" means (DECIDED)
+
+The first consumers are *estate agent sessions and CI runners*. Human developers
+on workstations and BoJ server operators come later.
+
+For the first release an extension is done for a consumer when:
+
+. its profile exists in `environments.kyaml`;
+. its settings render with no drift (`provers.sh render --check`);
+. its capability record is produced and reads `PRESENT` for every tool the
+  profile promises, or names each `UNAVAILABLE` tool with a reason;
+. an owner has applied the rendered settings to the real environment. This last
+  step is the owner's (`tools/environments/README.adoc`); the kit does not change
+  the cloud environment.
+
+== First surfaces (DECIDED: all four)
+
+The owner chose all four surfaces for the first release. Status today:
+
+[cols="1,2,2,2",options="header"]
+|===
+|Surface |Status today |Evidence |Gap
+
+|S1 Agent-session environment
+|BUILT, not applied
+|`tools/environments/`, `tools/proof-toolchain/provers.sh`, the SessionStart hook
+(`.claude/hooks/session-start.sh`)
+|The owner has not applied the rendered settings to the real environment
+(`docs/status/ROADMAP.adoc`, M4).
+
+|S2 Devcontainer and Guix provisioning
+|Scaffolding present; not built or run during this specification
+|`.devcontainer/`, `container/`, `build/Containerfile`, `build/guix.scm`;
+profiles `devcontainer`, `guix-shell`, `sealed-container` in `environments.kyaml`
+|No evidence the images build or that doctor reports from inside them. Their
+`measured` blocks were not checked for this draft.
+
+|S3 Session-protocol bootstrap
+|Thin local bindings only
+|`session/dispatch.sh`, `session/custom-checks.k9`, `session/local-hooks.sh`
+|The authoritative protocols are outside this repository
+(`session/README.adoc` points at `../standards/session-management-standards` or
+`$SESSION_STANDARDS_DIR`; in the standards repository it is
+`3-practice/session-management-standards`). What bootstrapping a new environment
+must do with them is not yet written down.
+
+|S4 BoJ and Groove registration
+|Partly BLOCKED
+|`.machine_readable/integrations/groove.a2ml`, `.github/workflows/boj-build.yml`
+|See section 6: the contract cannot be fully established from sources.
+|===
+
+*PROPOSED order of work*, by what each depends on: S1 first (it already works),
+then S3 (it only needs the standards repository), then S2 (needs image builds),
+then S4 (needs answers from outside). The owner chose all four for the first
+release, so this is an order, not a cut.
+
+== The BoJ integration contract
+
+This section is built only from files read in `hyperpolymath/boj-server` and
+`hyperpolymath/standards` (commits in section 10). Where a source could not be
+found, it says so.
+
+=== What a cartridge is (SOURCE)
+
+`schemas/cartridge-v1.json` is titled "BoJ Cartridge Manifest (canonical)". Its
+required fields are `$schema`, `spdx`, `copyright`, `name`, `version`,
+`description`, `domain`, `category`, `tier`, `protocols`, `auth`, `api` and
+`tools`.
+
+* `name` is lowercase kebab-case ending in a role suffix: `mcp`, `lsp`, `dap`,
+  `bsp`, `debug`, `format`, `lint`, `build`, `nesy`, `agentic` or `fleet`.
+* `category` is `domain`, `cross-cutting` or `template`. `tier` is `Teranga`
+  (core), `Shield` (security-critical) or `Ayo` (community).
+* `protocols` is a non-empty list drawn from `MCP`, `LSP`, `DAP`, `BSP`, `REST`,
+  `GraphQL`, `gRPC`, `NeSy`, `Agentic`, `Fleet`, `Format`, `Lint`, `Build`,
+  `Debug`.
+* `auth.method` is `none`, `api-key`, `oauth2` or `vault`.
+* `api.base_url` is a loopback address, `local://<cartridge-name>` or
+  `http://127.0.0.1:<port>`.
+* `tools` entries carry `name`, `description` and `inputSchema`.
+* `ports` carries `allowed` and `denied` lists; `source` optionally names a
+  registry, a path and a SHA-256.
+
+`templates/cartridge-template/cartridge.json` is the starting shape. ADR 0003 in
+boj-server says the Idris2 sources under `src/abi/Boj/` are the machine-authoritative
+definition and that the prose specification is
+`docs/specification/cartridges/README.md`. The ADR describes a Nickel manifest
+while the schema above is JSON. This draft did not establish which form is
+canonical today.
+
+=== What the server exposes (SOURCE)
+
+`elixir/lib/boj_rest/router.ex` serves `GET /health`, `GET /menu`,
+`GET /cartridges`, `GET /cartridge/:name`, `POST /cartridge/:name/invoke`,
+`POST /cartridge/:name/sse` and `GET /.well-known/boj-node-pubkey`. Anything else
+returns a 404 with `route-not-found`.
+
+=== The Groove manifest (SOURCE for one instance, NOT FOUND for a specification)
+
+boj-server publishes `.well-known/groove/manifest.json`. Its fields are
+`groove_version` (`"1"`), `service_id`, `service_version`, `capabilities` (a map
+whose entries carry `type`, `protocol`, `endpoint`, `requires_auth` and
+`panel_compatible`), `consumes`, `endpoints` (`health`, `groove`, `mcp`, `sse`),
+`health` and `applicability`.
+
+That is one published instance, not a specification. The only Groove document in
+the standards repository is `2-protocols/groove/spec/GROOVE-RANKED-OWNERSHIP-CLEAVE-SPEC.adoc`.
+It covers teardown discipline only, and states that discovery (A), admissibility
+(B1), logical schema (C1) and framing (C2) are "separate documents". Searching
+the standards and boj-server trees for `groove_version` found only the manifest
+itself and one mention in a testing taxonomy. So the manifest's fields are *NOT
+FOUND* as a normative text.
+
+The manifest also lists `/api/cartridges` and `/api/run` as capability endpoints,
+which the router above does not serve. This draft did not determine which
+implementation serves the manifest.
+
+=== How an environment registers with a server (NOT FOUND)
+
+No endpoint for registering an environment or service with a BoJ server was
+found. The `post "/register"` route in boj-server's
+`docs/specification/cartridge-tools/README.adoc` is an illustrative code sketch
+for a panel harness, not a route of the server. The kit's own
+`environments.kyaml` says `boj-registered` is "the view a BoJ server holds of any
+of the above after registration (groove.a2ml capabilities)", which describes the
+intent but not the mechanism.
+
+*BLOCKED:* the registration mechanism is a question for the boj-server owners.
+*PROPOSED:* until it is answered, S4 is limited to the kit publishing a correct
+manifest, which in turn needs the manifest fields above to be confirmed as the
+intended contract. See `docs/decisions/0006-boj-contract-derived-from-boj-server.adoc`.
+
+=== Discrepancies found while reading the sources (SOURCE)
+
+[cols="1,4",options="header"]
+|===
+|# |Finding
+
+|D1
+|`.machine_readable/integrations/groove.a2ml` uses a different shape
+(`groove-manifest`, `version "1.0"`, `api-surfaces`) from the JSON manifest
+boj-server publishes (`groove_version "1"`, `capabilities`, `endpoints`). With no
+specification, neither can be called right. The file is also a legacy `.a2ml`
+file; conversion belongs to kyX (ruling D313).
+
+|D2
+|The same file's comments point at `standards/tree/main/groove-protocol` and
+`PORT-REGISTRY.md`. In the standards repository the groove material is at
+`2-protocols/groove` and the registry is `0-canon/PORT-REGISTRY.adoc`, which says
+port assignments "are being migrated". Its `(port 0)` is unassigned.
+
+|D3
+|`.github/workflows/boj-build.yml` posts to `${BOJ_URL}/cartridges/ssg-mcp/invoke`.
+The server's route is `/cartridge/:name/invoke` (singular), so the request would
+reach the router's 404. The workflow ends the request with
+`|| echo "BoJ server unreachable - skipping (non-fatal)"`, so a wrong path would be
+reported as an unreachable server. `ssg-mcp` appears in boj-server only as a test
+fixture (`tests/fixtures/cartridges/ssg-mcp`); the separate
+`boj-server-cartridges` registry was not inspected. The workflow does nothing
+unless `BOJ_SERVER_URL` is set, so this has had no effect so far. It is not
+changed by this draft.
+
+|D4
+|`.machine_readable/descriptiles/META.a2ml` records ADR-001 to ADR-003 with no
+files in `docs/decisions/`, and `docs/decisions/0001-adopt-rsr-standard.adoc` is a
+different decision from META's ADR-001. The numbers collide. This draft's ADRs
+therefore start at 0004.
+|===
+
+== Non-goals for the first release
+
+* Implementing the BoJ server, its cartridges or its registry.
+* Runtime plugins loaded into a running environment.
+* Replacing rsr-template-repo or scaffolding new projects.
+* Choosing the implementation language. That is M3 (ADR-003 in META). The
+  allowed set is in `.machine_readable/anchors/ANCHOR.a2ml`, and this
+  repository's rule is POSIX shell or Rust.
+* Environment classes beyond the seven declared (a profile library is "beyond
+  M5" in the roadmap).
+
+== Acceptance for M2
+
+M2 is done when each of these is true. None is true today.
+
+. The owner has read this draft and either accepted or changed the three ADRs.
+. The boj-server owners have answered the registration and manifest questions in
+  section 9, or the owner has recorded that S4 stays blocked.
+. D1 to D4 each have an owner-chosen resolution, recorded in a decision or a
+  roadmap item.
+. The roadmap's M3 items can be started without a further product question.
+
+== Open questions
+
+For the owner:
+
+. Which of D1 to D4 should be fixed first, and by whom? D3 is a one-line path
+  fix but needs the right cartridge name.
+. Who are the boj-server owners to ask about registration, and is this document
+  the right way to ask?
+. META's ADR-001 to ADR-003 have no files. Should they be written up under
+  `docs/decisions/`, renumbered, or left as META entries only?
+
+For the boj-server owners (*BLOCKED*, not yet asked):
+
+. How does a service or environment register with a server?
+. Is `.well-known/groove/manifest.json` the intended manifest contract, and where
+  is it specified?
+. Which cartridge form is canonical today, the JSON schema or the Nickel manifest?
+
+== Provenance
+
+Read on 2026-11-14 from shallow clones of the default branch.
+
+[cols="1,2",options="header"]
+|===
+|Repository |Commit
+
+|`hyperpolymath/bofj-kitt` |`426da06`
+|`hyperpolymath/boj-server` |`ad5bcdb`
+|`hyperpolymath/standards` |`5594f02`
+|===
+
+Nothing in the other two repositories was run. The cartridge and manifest
+descriptions are what the files say, not what a running server does.
