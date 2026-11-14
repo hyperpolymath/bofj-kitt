@@ -68,12 +68,14 @@ write_signers() {
   chmod 644 "$signers"
 }
 
-# Point git at the (possibly not yet existing) certificate. Global scope, as
-# the key-based hook does; gpg.ssh.program is reset because the harness
-# points it at its own signer.
-configure_git() {
-  git config --global user.name "$CLAUDE_SIGNING_NAME"
-  git config --global user.email "$CLAUDE_SIGNING_EMAIL"
+# Make git refuse to commit until a valid certificate is installed: sign every
+# commit, with the (possibly not yet existing) certificate, through the guard.
+# It needs no identity, trust anchor or key, so `request` runs it first, before
+# any check that can exit: a refused request must still leave git failing
+# closed, never committing unsigned. Global scope, as the key-based hook does;
+# gpg.ssh.program is reset because the harness points it at its own signer.
+lock_git() {
+  ( umask 077; mkdir -p "$dir" ) && chmod 700 "$dir" || die "could not create $dir"
   git config --global user.signingkey "$cert"
   git config --global gpg.format ssh
   # git calls this script (copied beside the key) instead of ssh-keygen; in
@@ -81,13 +83,22 @@ configure_git() {
   # ssh-keygen itself would do silently (measured in the proposal).
   cp "$0" "$dir/guard.sh.tmp" && chmod 755 "$dir/guard.sh.tmp" && mv -f "$dir/guard.sh.tmp" "$dir/guard.sh"
   git config --global gpg.ssh.program "$dir/guard.sh"
-  git config --global gpg.ssh.allowedSignersFile "$signers"
   git config --global commit.gpgsign true
+}
+
+# The rest of the git configuration, which does need the identity and the
+# allowed-signers file, so it follows their checks.
+configure_git() {
+  lock_git
+  git config --global user.name "$CLAUDE_SIGNING_NAME"
+  git config --global user.email "$CLAUDE_SIGNING_EMAIL"
+  git config --global gpg.ssh.allowedSignersFile "$signers"
 }
 
 fingerprint() { ssh-keygen -l -f "$1" | awk '{print $2}'; }
 
 cmd_request() {
+  lock_git
   need_identity
   old_umask=$(umask); umask 077
   mkdir -p "$dir"; chmod 700 "$dir"

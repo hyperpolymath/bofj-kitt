@@ -6,7 +6,8 @@
 # throwaway software CAs (the real CA lives in the owner's TPM and is never
 # touched here). HOME, the session key directory and the trust-anchor file
 # are all scratch, so the real git config and keys are never read or written.
-# Checks: no CA -> loud refusal; before a certificate, commits fail; install
+# Checks: no CA -> loud refusal, and a refused request still leaves commits
+# failing (no CA, no identity); before a certificate, commits fail; install
 # refuses wrong key, wrong principal, extra principal, untrusted CA, expired,
 # not-yet-valid, never-expiring, over-long and extension-bearing
 # certificates; a good certificate gives %G? = G with the right committer;
@@ -45,6 +46,39 @@ refused() { # refused CERT EXPECTED-TEXT
 printf '# none yet\n' > "$SESSION_SIGNING_CAS"
 out="$(sh "$script" request 2>&1)" && fail "request succeeded with no CA"
 grep -q "lists no CA key" <<<"$out" || fail "no-CA refusal unclear: $out"
+
+# 1b. A refused request must still leave git failing closed: a commit made
+# afterwards has to fail, loudly, not go through unsigned. Each case runs in a
+# fresh HOME and session directory so no earlier configuration can hide a gap.
+# The commit identity comes from the environment, so a missing identity cannot
+# be what stops the commit.
+commit_must_fail() { # commit_must_fail LABEL (run in the calling shell's HOME)
+    local label="$1"
+    local repo="$work/repo-$label" err="$work/err-$label"
+    git init -q "$repo"
+    (
+        cd "$repo"
+        echo a > a; git add a
+        export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@example.invalid
+        export GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@example.invalid
+        git commit -q -m "should fail" 2>"$err" && exit 3
+        grep -q "no session certificate installed" "$err" || exit 4
+    ) || fail "after a refused request ($label) a commit did not fail loudly (status $?): $(cat "$err" 2>/dev/null)"
+}
+for case_name in no-ca no-identity; do
+    (
+        export HOME="$work/home-$case_name" SESSION_SIGNING_DIR="$work/shm-$case_name"
+        mkdir -p "$HOME"
+        case "$case_name" in
+            no-ca) printf '# none yet\n' > "$work/cas-$case_name.pub" ;;
+            no-identity) cat "$work/tpm-ca.pub" > "$work/cas-$case_name.pub"; unset CLAUDE_SIGNING_EMAIL ;;
+            *) echo "FAIL: unknown refused-request case $case_name" >&2; exit 6 ;;
+        esac
+        export SESSION_SIGNING_CAS="$work/cas-$case_name.pub"
+        sh "$script" request >"$work/req-$case_name" 2>&1 && exit 5
+        commit_must_fail "$case_name"
+    ) || fail "refused-request case $case_name failed (status $?)"
+done
 
 # 2. With the TPM and recovery CAs: key made, request printed, commits fail.
 cat "$work/tpm-ca.pub" "$work/recovery-ca.pub" > "$SESSION_SIGNING_CAS"

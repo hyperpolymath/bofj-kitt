@@ -293,21 +293,28 @@ So after a theft:
 [[open]]
 == Open questions
 
-These are listed, not decided.
+These are listed, not decided, except where marked *Resolved* or
+*Superseded*: built option (a) (see "Who holds the issuing key") has no
+OpenBao issuer, so the OpenBao questions no longer drive any work.
 
 . Does GitHub show *Verified* for commits signed with an SSH certificate?
   Unconfirmed. The estate's rule checks the local status `G`, which the
   measurement above shows works.
-. Where OpenBao runs, and how a session authenticates to it (a
-  short-lived token in the environment, an OIDC-style workload identity
-  if the platform gains one, or a credential the network proxy injects).
+. *Superseded by option (a).* Where OpenBao runs, and how a session
+  authenticates to it (a short-lived token in the environment, an
+  OIDC-style workload identity if the platform gains one, or a credential
+  the network proxy injects).
 . Certificate TTL: minutes per commit burst, or one session-length
   certificate.
-. Whether a second authority must approve each issuance. Vault's control
-  groups are an Enterprise feature; check what OpenBao offers before
-  relying on any of it, and likewise for rate-limit quotas.
+. *Superseded by option (a).* Whether a second authority must approve each
+  issuance. Vault's control groups are an Enterprise feature; check what
+  OpenBao offers before relying on any of it, and likewise for rate-limit
+  quotas. (In option (a) the owner's approval at the workstation is the
+  gate.)
 . How `rsr-template-repo`'s hook changes, and whether the change lands
-  there first and is ported here, as the current hook was.
+  there first and is ported here, as the current hook was. *Partly
+  resolved:* this repository's hook already has the `cert` mode (#120); what
+  stays open is whether `rsr-template-repo` adopts it.
 . Revocation: short validity makes a revocation list mostly unnecessary,
   but a compromised CA still needs a documented rotation.
 
