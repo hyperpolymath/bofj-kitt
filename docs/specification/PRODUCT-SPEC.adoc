@@ -244,8 +244,13 @@ reach the router's 404. The workflow ends the request with
 reported as an unreachable server. `ssg-mcp` appears in boj-server only as a test
 fixture (`tests/fixtures/cartridges/ssg-mcp`); the separate
 `boj-server-cartridges` registry was not inspected. The workflow does nothing
-unless `BOJ_SERVER_URL` is set, so this has had no effect so far. It is not
-changed by this draft.
+unless `BOJ_SERVER_URL` is set, so this has had no effect so far.
+*Status 2026-11-14:* the path is fixed (`/cartridge/ssg-mcp/invoke`). The request
+would still be refused: the server's invoke handler requires a `tool` field (or
+`operation`) and answers 400 `missing-tool-field` without one, and the workflow
+sends only `repo`, `branch` and `engine`. The `ssg-mcp` fixture lists the tools
+`ssg_load_content`, `ssg_build`, `ssg_preview`, `ssg_deploy` and `ssg_clean`.
+Which tool and arguments the workflow should call is not decided.
 
 |D4
 |`.machine_readable/descriptiles/META.a2ml` records ADR-001 to ADR-003 with no
@@ -280,8 +285,9 @@ M2 is done when each of these is true. None is true today.
 
 For the owner:
 
-. Which of D1 to D4 should be fixed first, and by whom? D3 is a one-line path
-  fix but needs the right cartridge name.
+. Which of D1 to D4 should be fixed first, and by whom? D3's path is now fixed,
+  but its request body still needs a `tool` field, and which tool and arguments is
+  the owner's call.
 . Who are the boj-server owners to ask about registration, and is this document
   the right way to ask?
 . META's ADR-001 to ADR-003 have no files. Should they be written up under
