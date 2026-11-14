@@ -8,6 +8,20 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 === [Unreleased]
 
+==== Fixed
+
+* `.claude/signing/cert-signing.sh request` could exit (no CA key listed in
+  `trusted-cas.pub`, or no signing identity) before it set the fail-closed
+  git settings, leaving git on whatever signing configuration it already
+  had, so commits could go through unsigned while the hook said they would
+  fail. It now locks git first (signs every commit through the guard), then
+  checks identity, trust anchors and the key. A new case in
+  `tests/session_signing_cert_test.sh` runs a refused `request` for each of
+  the two exits in a fresh HOME and requires the next commit to fail
+  loudly; it fails against the previous script (the commit goes through
+  unsigned) and passes now. Latent while `.claude/signing/mode` is `key`,
+  the default. Found in review of #126.
+
 ==== Added
 
 * Documentation corrected after the short-lived signing certificates landed
@@ -15,12 +29,9 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   and `CLAUDE.md` said the `cert` signing mode was not built. It is built
   and off by default (`.claude/signing/mode` is `key`); switching to it
   needs the owner's CA ceremony, which is now an open owner item in the
-  roadmap. A review of this change found, and the code confirms, a gap in
-  `cert-signing.sh request`: with no CA key listed it exits before setting
-  the fail-closed git settings. It is latent while the mode is `key`; it is
-  recorded in the roadmap and in `CLAUDE.md` and is not fixed here. The
-  proposal's OpenBao section is marked superseded by option (a), and
-  `CLAUDE.md` now says the hook configures signing in cloud sessions only.
+  roadmap. The proposal's OpenBao section is marked superseded by option
+  (a), and `CLAUDE.md` now says the hook configures signing in cloud
+  sessions only.
 * Documentation brought up to date with the environment tooling
   (documentation only; no manifest, script or rendered file changed):
   `tools/environments/README.adoc` now says how the owner applies the
