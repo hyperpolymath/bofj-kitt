@@ -24,6 +24,8 @@ established this baseline.
 * [x] Fill the placeholder tokens that have a true value; the rest are listed as blocked in `REQUIRES_INITIALISATION.adoc` (M2/M3/owner).
 * [ ] Restore a full SECURITY policy once PGP material exists (none in repo or estate canon; owner to generate a key; the root SECURITY policy carries the real contact).
 * [x] Curate template-authored docs (live guidance retargeted; historical records kept; onboarding quickstarts wait on M3).
+* [x] Independent conduct contact (George Booden, Open University) named in `.github/CODE_OF_CONDUCT.md`; the owner confirmed on 2026-11-13 that he agreed.
+* [x] Local hooks: `install.sh`, `pre-push` and the fail-closed `scan-secrets.sh` ported from rsr-template-repo. Deferred, not done: the template's `validate-deed.sh` and canonical-validator `validate-k9.sh`. They need a matching `dogfood-gate.yml` (otherwise the K9 lane would skip silently in CI) and a decision on the shrink-only A2ML legacy ledger for the 106 `.a2ml` files (kyX, ruling D313).
 
 === M2 — Product spec
 * [ ] Define precisely what a developer-environment "extension" is for this kit.
