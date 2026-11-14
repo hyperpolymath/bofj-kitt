@@ -140,7 +140,18 @@ jobs:
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Mirror to Radicle
+        env:
+          RADICLE_KEY: ${{ secrets.RADICLE_KEY }}
         run: |
-          echo "${{ secrets.RADICLE_KEY }}" > ~/.radicle/keys/radicle
+          # Fail loudly when the secret is not configured, as the SSH forge
+          # jobs do, instead of writing an empty key.
+          if [ -z "$RADICLE_KEY" ]; then
+            echo "::error::The RADICLE_KEY secret is not configured"
+            exit 1
+          fi
+          # The directory does not exist on a fresh runner; creating it is what
+          # was missing (the step used to fail here even with the secret set).
+          mkdir -p ~/.radicle/keys
+          (umask 077 && printf '%s\n' "$RADICLE_KEY" > ~/.radicle/keys/radicle)
           chmod 600 ~/.radicle/keys/radicle
           rad sync --announce || echo "Radicle sync attempted"
