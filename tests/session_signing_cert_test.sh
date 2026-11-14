@@ -53,7 +53,8 @@ grep -q "lists no CA key" <<<"$out" || fail "no-CA refusal unclear: $out"
 # The commit identity comes from the environment, so a missing identity cannot
 # be what stops the commit.
 commit_must_fail() { # commit_must_fail LABEL (run in the calling shell's HOME)
-    local repo="$work/repo-$1" err="$work/err-$1"
+    local label="$1"
+    local repo="$work/repo-$label" err="$work/err-$label"
     git init -q "$repo"
     (
         cd "$repo"
@@ -62,7 +63,7 @@ commit_must_fail() { # commit_must_fail LABEL (run in the calling shell's HOME)
         export GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@example.invalid
         git commit -q -m "should fail" 2>"$err" && exit 3
         grep -q "no session certificate installed" "$err" || exit 4
-    ) || fail "after a refused request ($1) a commit did not fail loudly (status $?): $(cat "$err" 2>/dev/null)"
+    ) || fail "after a refused request ($label) a commit did not fail loudly (status $?): $(cat "$err" 2>/dev/null)"
 }
 for case_name in no-ca no-identity; do
     (
@@ -71,6 +72,7 @@ for case_name in no-ca no-identity; do
         case "$case_name" in
             no-ca) printf '# none yet\n' > "$work/cas-$case_name.pub" ;;
             no-identity) cat "$work/tpm-ca.pub" > "$work/cas-$case_name.pub"; unset CLAUDE_SIGNING_EMAIL ;;
+            *) echo "FAIL: unknown refused-request case $case_name" >&2; exit 6 ;;
         esac
         export SESSION_SIGNING_CAS="$work/cas-$case_name.pub"
         sh "$script" request >"$work/req-$case_name" 2>&1 && exit 5
