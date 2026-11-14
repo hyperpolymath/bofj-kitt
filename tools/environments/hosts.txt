@@ -42,6 +42,11 @@ https://julialang-s3.julialang.org/bin/linux/x64/1.13/julia-1.13.3-linux-x86_64.
 
 # Prover homes with their own downloads
 https://isabelle.in.tum.de/
+# The Isabelle2026 asset the agent-session setup pins. isabelle.in.tum.de answers
+# it with a 301 to plain http://dists.isabelle.cit.tum.de, which the proxy cannot
+# reach (measured 2026-11-14), so the pin is the https form on that host; it
+# needs the ?token=Isabelle query (403 without).
+https://dists.isabelle.cit.tum.de/dist/Isabelle2026_linux.tar.gz?token=Isabelle
 https://mizar.uwb.edu.pl/
 https://pvs.csl.sri.com/
 https://www.cs.utexas.edu/~moore/acl2/

@@ -187,7 +187,7 @@ plus the supporting tools the mapped provers need.
 |`policy:recheck` |Rocq (`coqc`), Lean (elan with pinned toolchains; no Mathlib)
 |`transport` |agda2dedukti, Dedukti (`dkcheck`), Lambdapi. agda2dedukti tracks particular Agda versions; the manifest records which Agda it accepts.
 |`exception:rust` |Kani; Aeneas with Charon (PROOF-POLICY §4.1)
-|`exception:recorded` |TLA+ (`tlc`); Isabelle, HOL Light, HOL4, ACL2, Mizar and PVS (supplementary only). The last five were added 2026-10-27 so a kit-provisioned environment can serve every backend in echidna's default core set. PVS is built from its BSD-3-Clause sources on the bundled SBCL; SRI's click-through licence covers only its Allegro build, which the bundle does not use.
+|`exception:recorded` |TLA+ (`tlc`); Isabelle (preinstalled in the agent-session setup since 2026-11-14), HOL Light, HOL4, ACL2, Mizar and PVS (supplementary only). The last five were added 2026-10-27 so a kit-provisioned environment can serve every backend in echidna's default core set. PVS is built from its BSD-3-Clause sources on the bundled SBCL; SRI's click-through licence covers only its Allegro build, which the bundle does not use.
 |`runtime` |Rust toolchains (rustup, the toolchains Creusot, Kani and Verus pin), a Java runtime for the `tlc` launcher, the OCaml switch HOL Light runs in, Poly/ML for HOL4 and SBCL for ACL2 and PVS, bundled rather than taken from the host. Julia, for the estate's Julia packages rather than for a prover (owner decision 2026-11-13)
 |`backend` |Z3, CVC5, Yices, Alt-Ergo, E prover, Vampire
 |===

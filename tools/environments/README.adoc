@@ -133,6 +133,36 @@ Two places print `!!!` lines, both on purpose:
 that tool, and the record says why. `kyq`, `deed` and `k9` are
 `UNAVAILABLE` on purpose until a pinned release of each exists.
 
+== Isabelle (measured 2026-11-14)
+
+The setup pins `Isabelle2026_linux.tar.gz` by SHA-256 and unpacks it at
+`$PREFIX/isabelle` (`tar.gz-tree`; the archive has one top directory).
+
+* *URL.* `https://isabelle.in.tum.de/dist/...` answers 301 to
+  `http://dists.isabelle.cit.tum.de/...?token=Isabelle` (plain http). The
+  agent proxy cannot reach port 80 on that host and answers a bare 503, so
+  a `curl -L` of the documented URL fails. The setup pins the https form on
+  `dists.isabelle.cit.tum.de` directly; it needs `?token=Isabelle` (403
+  without). That bypasses the site's redirect. Because the host may change
+  how it serves this, a failure shows up as `FAILED download` in the report.
+* *Integrity.* Isabelle publishes no checksum or signature (`.sha256`,
+  `.asc`, `.sig`, `SHA256SUMS` all 404). The hash `858c995b...e48d` is from
+  two identical full downloads on 2026-11-14, so it proves the bytes did not
+  change since, not that they are the authors'. The SHA-256 pin is what
+  protects the install.
+* *Size and time.* 1,412,134,191 bytes; downloads took 77 s and 101 s;
+  unpack 23 s; 2.7 GB on disk. The measured setup run added Isabelle to a
+  container that already had the other items: 1 m 34 s in all. One
+  download run in parallel with another was reset by the peer after 437 MB,
+  so a slow or reset download is possible; the script's `--retry 3` and
+  `--max-time 900` apply, and the transfer would need to stay above about
+  1.6 MB/s to finish within 900 s (measured 14 to 18 MB/s).
+* *Runs.* `isabelle version` printed `Isabelle2026` in 7.7 s on the first run
+  (`execute-downloaded` true). Doctor reports `isabelle PRESENT`.
+* *Allowlist.* `isabelle.in.tum.de` and `dists.isabelle.cit.tum.de` are
+  both on the allowlist (19 hosts). The owner's Default environment is
+  Unrestricted, so the allowlist matters only for a Limited fallback.
+
 == Verified against real apt (2026-11-13)
 
 `rendered/agent-session/setup.sh` from commit `6aebb6b` was run as root in
@@ -155,8 +185,10 @@ Known gaps from that run:
   configured". The script unpacks the 4.13.0 toolchain and elan lists it,
   but no elan default is set. Whether a project whose `lean-toolchain`
   names v4.13.0 resolves it was not tested.
-* Isabelle's host resets the TLS handshake under the Limited network (see
-  its `measured` entry), so Isabelle cannot be installed there until that
-  changes. The script does not install it today.
+* Isabelle was not installable on 2026-11-13: under Limited its host reset
+  the TLS handshake on 6 of 6 tries. On 2026-11-14, under Unrestricted, it
+  answered every try, and the setup now installs Isabelle2026 (see
+  "Isabelle" below). Limited was not re-tested, so whether the reset
+  returns under Limited is unmeasured.
 * The network policy was not re-recorded for the run itself. The host
   probe taken earlier that day recorded Limited.
