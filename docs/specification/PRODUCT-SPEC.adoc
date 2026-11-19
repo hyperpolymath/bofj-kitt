@@ -250,10 +250,19 @@ would still be refused: the server's invoke handler requires a `tool` field (or
 `operation`) and answers 400 `missing-tool-field` without one, and the workflow
 sends only `repo`, `branch` and `engine`. The `ssg-mcp` fixture lists the tools
 `ssg_load_content`, `ssg_build`, `ssg_preview`, `ssg_deploy` and `ssg_clean`.
-Which tool and arguments the workflow should call is not decided. By the owner's
-choice (2026-11-14) the workflow now stays optional and non-fatal but reports the
-real HTTP status and the server's reply, so a refused request is visible in the
-log and no longer reads as an unreachable server.
+By the owner's choice (2026-11-14) the workflow stays optional and non-fatal but
+reports the real HTTP status and the server's reply, so a refused request is
+visible in the log and no longer reads as an unreachable server.
+*Status 2026-11-19:* the owner chose `ssg_build`. The workflow now sends
+`{"tool":"ssg_build","arguments":{"session_id":N}}`, with `N` taken from the
+`BOJ_SSG_SESSION_ID` repository variable, and skips with a warning when that
+variable is not an integer. It never invents a value, because `ssg_build`
+requires an integer `session_id` (the fixture's input schema, which calls it a
+"session index") and the boj-server files read here do not say how a session is
+created. `ssg_load_content` takes `path` and `engine`, but whether its reply
+carries a `session_id`, and what `path` means for a runner's checkout, was not
+established. So a working call needs a session that already exists on the server,
+and none of this has been run against a real server.
 
 |D4
 |`.machine_readable/descriptiles/META.a2ml` records ADR-001 to ADR-003 with no
@@ -288,9 +297,9 @@ M2 is done when each of these is true. None is true today.
 
 For the owner:
 
-. Which of D1 to D4 should be fixed first, and by whom? D3's path is now fixed,
-  but its request body still needs a `tool` field, and which tool and arguments is
-  the owner's call.
+. Which of D1, D2 and D4 should be fixed first, and by whom? D3 now calls
+  `ssg_build`, but it needs the boj-server owners to say how an ssg-mcp
+  `session_id` is created, and an owner to set `BOJ_SSG_SESSION_ID`.
 . Who are the boj-server owners to ask about registration, and is this document
   the right way to ask?
 . META's ADR-001 to ADR-003 have no files. Should they be written up under

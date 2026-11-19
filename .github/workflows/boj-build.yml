@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: MPL-2.0
 #
 # OPTIONAL: BoJ Server Build Trigger
-# This workflow notifies a BoJ Server instance when code is pushed.
-# It is a no-op if BOJ_SERVER_URL is not set. If the server cannot be reached, or
+# This workflow asks a BoJ Server instance to run the ssg-mcp cartridge's
+# ssg_build tool when code is pushed.
+# It is a no-op if BOJ_SERVER_URL is not set, and is skipped with a warning if
+# BOJ_SSG_SESSION_ID is not an integer. If the server cannot be reached, or
 # refuses the request, it logs a warning with the HTTP status and the server's
 # reply and does not fail the build.
-# To enable: set BOJ_SERVER_URL as a repository secret or variable.
+# To enable: set BOJ_SERVER_URL as a repository secret or variable, and
+# BOJ_SSG_SESSION_ID as a repository variable (an existing ssg-mcp session index).
 # To disable: delete this file or leave BOJ_SERVER_URL unset.
 name: BoJ Server Build Trigger
 
@@ -25,11 +28,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
 
-      - name: Trigger BoJ Server (Casket/ssg-mcp)
+      - name: Trigger BoJ Server (ssg-mcp ssg_build)
         env:
           BOJ_URL: ${{ secrets.BOJ_SERVER_URL || vars.BOJ_SERVER_URL }}
-          REPO_NAME: ${{ github.repository }}
-          BRANCH_NAME: ${{ github.ref_name }}
+          SESSION_ID: ${{ vars.BOJ_SSG_SESSION_ID }}
         run: |
           set -euo pipefail
 
@@ -38,11 +40,24 @@ jobs:
             exit 0
           fi
 
-          payload="$(jq -cn \
-            --arg repo "$REPO_NAME" \
-            --arg branch "$BRANCH_NAME" \
-            --arg engine "casket" \
-            '{repo:$repo, branch:$branch, engine:$engine}')"
+          # ssg_build requires an integer session_id (ssg-mcp's input schema).
+          # Nothing in this repository can supply one, so it comes from the
+          # BOJ_SSG_SESSION_ID repository variable. Never guess a value.
+          case "$SESSION_ID" in
+            '' | *[!0-9]*)
+              echo "::warning::BOJ_SSG_SESSION_ID is not set to an integer - skipping ssg_build (non-fatal)"
+              exit 0
+              ;;
+            *)
+              : # digits only: a plausible session index, carry on
+              ;;
+          esac
+
+          if ! payload="$(jq -cn --argjson session_id "$SESSION_ID" \
+              '{tool:"ssg_build", arguments:{session_id:$session_id}}')"; then
+            echo "::warning::could not build the ssg_build request from BOJ_SSG_SESSION_ID - skipping (non-fatal)"
+            exit 0
+          fi
 
           # Optional and non-fatal, but never silent: say which of "could not
           # connect" and "the server refused it" happened, with the HTTP status
