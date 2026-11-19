@@ -147,9 +147,11 @@ question by selector. It is a `via: "note"` item, rendered to the
 * The file is appended to, never rewritten, so text the owner already put in
   `~/.claude/CLAUDE.md` is kept. A write it cannot make is reported `FAILED`
   loudly; the script still exits 0.
-* *The URL is a placeholder.* It points at `STANDING-RULES.adoc` on `main` of
-  `metadatastician/standards`, but the final raw URL has not been issued.
-  Change `lines` in `environments.kyaml` when it is, and render again. The
+* *The URL is final but may not resolve yet.* It points at `STANDING-RULES.adoc`
+  on `main` of `metadatastician/standards`. The hub of hubs confirmed on
+  2026-11-19 that this is the final raw URL; it resolves once standards#1677
+  merges, and until then it will not answer. If the URL ever changes, change
+  `lines` in `environments.kyaml` and render again. The
   owner ruled on 2026-11-15 that every new session must see these rules (the
   hub of hubs relayed it; the owner confirmed this change through the
   selector on 2026-11-19).

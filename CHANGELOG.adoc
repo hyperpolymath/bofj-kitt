@@ -30,8 +30,9 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   (`via: "note"`, new `note_block` helper), appends a marked block to
   `/root/.claude/CLAUDE.md` pointing every new session at the estate
   standing rules and the ask-by-selector rule. It appends only, once, and
-  keeps any existing text. The URL is a placeholder until the final raw URL
-  is issued. `tests/setup_script_test.sh` covers new file, rerun, existing
+  keeps any existing text. The URL is final (confirmed by the hub on
+  2026-11-19) but resolves only once standards#1677 merges.
+  `tests/setup_script_test.sh` covers new file, rerun, existing
   file, unwritable path and the rendered line (it fails if the helper
   overwrites). A new `render.rs` unit test covers the item's validation. The
   setup script is now 84 lines (limit 100); the owner pastes it to apply.
