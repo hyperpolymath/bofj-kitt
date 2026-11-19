@@ -133,6 +133,44 @@ Two places print `!!!` lines, both on purpose:
 that tool, and the record says why. `kyq`, `deed` and `k9` are
 `UNAVAILABLE` on purpose until a pinned release of each exists.
 
+== The standing-rules pointer
+
+The setup script's first item, `standing-rules`, appends a marked block to
+`/root/.claude/CLAUDE.md` (root's home) that tells every new cloud session
+to read the estate standing rules before any work, and to ask the owner every
+question by selector. It is a `via: "note"` item, rendered to the
+`note_block` helper:
+
+* The block sits between `<!-- estate-standing-rules begin -->` and
+  `<!-- estate-standing-rules end -->`, written in one `printf`. The item
+  reports `PRESENT` only when *both* markers are in the file, and writes
+  nothing.
+* A begin marker with no end marker is an incomplete block (for example, a
+  write that was cut short). It is *not* read as installed: the item reports
+  `FAILED` loudly and leaves the file untouched. The owner removes the
+  incomplete block (from its begin marker line on) and the next run appends a
+  whole one.
+* The file is appended to, never rewritten, so text the owner already put in
+  `~/.claude/CLAUDE.md` is kept. A write it cannot make is reported `FAILED`
+  loudly; the script still exits 0.
+* *Changing the pointer after it is installed.* Because the item never
+  rewrites the file, editing `lines` in `environments.kyaml` and rendering
+  again changes the URL only in a file that has no block yet (a new
+  session's container). A container that already has the block keeps the old
+  text, and the item reports `PRESENT`. To update one, either the owner
+  deletes the block (begin marker line to end marker line) so the next run
+  appends the new one, or you change `marker` to a new id (for example
+  `estate-standing-rules-2`), which appends a second block and leaves the old
+  one in place for the owner to delete.
+* *The URL is final but may not resolve yet.* It points at `STANDING-RULES.adoc`
+  on `main` of `metadatastician/standards`. The hub of hubs confirmed on
+  2026-11-19 that this is the final raw URL; it resolves once standards#1677
+  merges, and until then it will not answer. The owner ruled on 2026-11-15
+  that every new session must see these rules (the hub of hubs relayed it;
+  the owner confirmed this change through the selector on 2026-11-19).
+* Because this is a setup-script change, the saved setup rebuilds on the
+  first session after the owner pastes the new script.
+
 == Isabelle (measured 2026-11-14)
 
 The setup pins `Isabelle2026_linux.tar.gz` by SHA-256 and unpacks it at
