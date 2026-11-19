@@ -48,6 +48,9 @@ jobs:
               echo "::warning::BOJ_SSG_SESSION_ID is not set to an integer - skipping ssg_build (non-fatal)"
               exit 0
               ;;
+            *)
+              : # digits only: a plausible session index, carry on
+              ;;
           esac
 
           if ! payload="$(jq -cn --argjson session_id "$SESSION_ID" \
