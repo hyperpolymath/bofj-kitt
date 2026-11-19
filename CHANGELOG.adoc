@@ -33,9 +33,10 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   keeps any existing text. The URL is final (confirmed by the hub on
   2026-11-19) but resolves only once standards#1677 merges.
   `tests/setup_script_test.sh` covers new file, rerun, existing
-  file, unwritable path and the rendered line (it fails if the helper
+  file, unwritable path, an incomplete block (reported FAILED, file left
+  untouched) and the rendered line (it fails if the helper
   overwrites). A new `render.rs` unit test covers the item's validation. The
-  setup script is now 84 lines (limit 100); the owner pastes it to apply.
+  setup script is now 86 lines (limit 100); the owner pastes it to apply.
 * Documentation corrected after the short-lived signing certificates landed
   (#120; documentation only). The proposal, the roadmap, `EXPLAINME.adoc`
   and `CLAUDE.md` said the `cert` signing mode was not built. It is built

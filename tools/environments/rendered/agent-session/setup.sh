@@ -41,10 +41,12 @@ asset() { # id format(tar.gz|tar.zst|tar.gz-tree|bin) dest url sha256 [member, t
     rep "$id" FAILED "unpack $fmt to $dest"; fi
   rm -rf "$t"; }
 note_block() { # id file marker line...: append a marked block once; never rewrite the file
-  local id="$1" f="$2" m="$3"; shift 3
-  if grep -qsFx "<!-- $m begin -->" "$f"; then rep "$id" PRESENT "$m block in $f"
-  elif mkdir -p "$(dirname "$f")" && { printf '\n<!-- %s begin -->\n' "$m"; printf '%s\n' "$@"
-    printf '<!-- %s end -->\n' "$m"; } >> "$f"; then rep "$id" INSTALLED "$m block in $f"
+  local id="$1" f="$2" m="$3" b e; shift 3; b="<!-- $m begin -->"; e="<!-- $m end -->"
+  if grep -qsFx "$b" "$f"; then
+    if grep -qsFx "$e" "$f"; then rep "$id" PRESENT "$m block in $f"
+    else rep "$id" FAILED "incomplete $m block in $f (no end marker): remove it and rerun"; fi
+  elif mkdir -p "$(dirname "$f")" && printf '\n%s\n%s\n%s\n' "$b" "$(printf '%s\n' "$@")" "$e" >> "$f"; then
+    rep "$id" INSTALLED "$m block in $f"
   else rep "$id" FAILED "write $f"; fi; }
 apt-get update -q >/dev/null 2>&1 || rep apt-index FAILED "apt-get update"
 note_block 'standing-rules' '/root/.claude/CLAUDE.md' 'estate-standing-rules' \

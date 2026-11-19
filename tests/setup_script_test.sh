@@ -127,6 +127,18 @@ printf 'owner text\nmore owner text\n' > "$work/out/existing.md"
 run note_block rules2 "$work/out/existing.md" estate-rules 'added' || fail "note_block returned non-zero on an existing file"
 [[ "$(head -n 2 "$work/out/existing.md")" == $'owner text\nmore owner text' ]] || fail "note_block rewrote the text the file already held"
 grep -qx 'added' "$work/out/existing.md" || fail "note_block did not append to an existing file"
+# An interrupted append: a begin marker with no end marker must not be read
+# as installed. It is reported FAILED, loudly, and the file is left exactly
+# as it was (no rewrite of anything the file already held).
+printf 'owner text\n<!-- estate-rules begin -->\nhalf a block\n' > "$work/out/cut.md"
+cp "$work/out/cut.md" "$work/out/cut.before"
+run note_block cut "$work/out/cut.md" estate-rules 'x' || fail "note_block returned non-zero on an incomplete block"
+grep -qP '^cut\tFAILED\tincomplete estate-rules block' <<<"$(report)" || fail "an incomplete block was not reported FAILED: $(report)"
+grep -qP '^cut\tPRESENT' <<<"$(report)" && fail "an incomplete block was reported PRESENT"
+cmp -s "$work/out/cut.md" "$work/out/cut.before" || fail "note_block changed a file holding an incomplete block"
+grep -q '!!! bofj-kitt setup: cut FAILED' "$work/err" || fail "an incomplete block was not loud"
+# A complete block carries both markers, begin before end, and its lines.
+[[ "$(grep -c '^<!-- estate-rules end -->$' "$nf")" -eq 1 ]] || fail "the end marker is missing or doubled in a new file"
 mkdir -p "$work/out/ro" && : > "$work/out/ro/blocker"
 run note_block rules3 "$work/out/ro/blocker/CLAUDE.md" estate-rules 'x' || fail "note_block returned non-zero when it could not write"
 grep -qP '^rules3\tFAILED\twrite ' <<<"$(report)" || fail "an unwritable path was not reported FAILED: $(report)"
