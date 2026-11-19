@@ -133,6 +133,29 @@ Two places print `!!!` lines, both on purpose:
 that tool, and the record says why. `kyq`, `deed` and `k9` are
 `UNAVAILABLE` on purpose until a pinned release of each exists.
 
+== The standing-rules pointer
+
+The setup script's first item, `standing-rules`, appends a marked block to
+`/root/.claude/CLAUDE.md` (root's home) that tells every new cloud session
+to read the estate standing rules before any work, and to ask the owner every
+question by selector. It is a `via: "note"` item, rendered to the
+`note_block` helper:
+
+* The block sits between `<!-- estate-standing-rules begin -->` and
+  `<!-- estate-standing-rules end -->`. If the begin marker is already there
+  the item reports `PRESENT` and writes nothing.
+* The file is appended to, never rewritten, so text the owner already put in
+  `~/.claude/CLAUDE.md` is kept. A write it cannot make is reported `FAILED`
+  loudly; the script still exits 0.
+* *The URL is a placeholder.* It points at `STANDING-RULES.adoc` on `main` of
+  `metadatastician/standards`, but the final raw URL has not been issued.
+  Change `lines` in `environments.kyaml` when it is, and render again. The
+  owner ruled on 2026-11-15 that every new session must see these rules (the
+  hub of hubs relayed it; the owner confirmed this change through the
+  selector on 2026-11-19).
+* Because this is a setup-script change, the saved setup rebuilds on the
+  first session after the owner pastes the new script.
+
 == Isabelle (measured 2026-11-14)
 
 The setup pins `Isabelle2026_linux.tar.gz` by SHA-256 and unpacks it at

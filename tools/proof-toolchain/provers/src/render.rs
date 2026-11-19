@@ -90,6 +90,12 @@ asset() { # id format(tar.gz|tar.zst|tar.gz-tree|bin) dest url sha256 [member, t
   else case "$fmt" in tar.zst|tar.gz-tree) rm -rf "$dest" ;; *) ;; esac
     rep "$id" FAILED "unpack $fmt to $dest"; fi
   rm -rf "$t"; }
+note_block() { # id file marker line...: append a marked block once; never rewrite the file
+  local id="$1" f="$2" m="$3"; shift 3
+  if grep -qsFx "<!-- $m begin -->" "$f"; then rep "$id" PRESENT "$m block in $f"
+  elif mkdir -p "$(dirname "$f")" && { printf '\n<!-- %s begin -->\n' "$m"; printf '%s\n' "$@"
+    printf '<!-- %s end -->\n' "$m"; } >> "$f"; then rep "$id" INSTALLED "$m block in $f"
+  else rep "$id" FAILED "write $f"; fi; }
 apt-get update -q >/dev/null 2>&1 || rep apt-index FAILED "apt-get update"
 "#;
 
@@ -160,6 +166,42 @@ fn setup_script(class: &str, r: &Value, manifest_sha: &str) -> Result<String, St
                     line.push_str(&format!(" {}", q(s(item, "member", &ctx)?, &ctx)?));
                 } else if !matches!(format, "tar.zst" | "tar.gz-tree" | "bin") {
                     return Err(format!("{ctx}: unsupported format {format}"));
+                }
+                out.push_str(&line);
+                out.push('\n');
+            }
+            "note" => {
+                // A marked block appended to a file, once: never a rewrite.
+                let file = s(item, "file", &ctx)?;
+                if !file.starts_with('/') || file.contains("..") {
+                    return Err(format!("{ctx}: file must be an absolute path without '..'"));
+                }
+                let marker = s(item, "marker", &ctx)?;
+                if marker.is_empty()
+                    || !marker
+                        .bytes()
+                        .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+                {
+                    return Err(format!(
+                        "{ctx}: marker must be lowercase letters, digits and '-'"
+                    ));
+                }
+                let lines = item["lines"]
+                    .as_array()
+                    .filter(|l| !l.is_empty() && l.len() <= 8)
+                    .ok_or(format!("{ctx}: 'lines' must list 1 to 8 strings"))?;
+                let mut line = format!(
+                    "note_block {} {} {}",
+                    q(id, &ctx)?,
+                    q(file, &ctx)?,
+                    q(marker, &ctx)?
+                );
+                for l in lines {
+                    let text = l
+                        .as_str()
+                        .filter(|t| !t.is_empty())
+                        .ok_or(format!("{ctx}: every line must be a non-empty string"))?;
+                    line.push_str(&format!(" \\\n  {}", q(text, &ctx)?));
                 }
                 out.push_str(&line);
                 out.push('\n');
@@ -455,6 +497,33 @@ mod tests {
         let mut bad = r.clone();
         bad["setup"][0]["format"] = "zip".into();
         assert!(setup_script("t", &bad, "m").is_err());
+    }
+
+    #[test]
+    fn note_item_renders_a_marked_block_call() {
+        let item = serde_json::json!({"id": "rules", "via": "note", "file": "/root/.claude/CLAUDE.md", "marker": "estate-rules", "lines": ["one", "two"]});
+        let r = serde_json::json!({"setup": [item], "allowed-hosts": []});
+        let out = setup_script("t", &r, "m").unwrap();
+        assert!(out.contains(
+            "note_block 'rules' '/root/.claude/CLAUDE.md' 'estate-rules' \\\n  'one' \\\n  'two'\n"
+        ));
+        for (key, bad) in [
+            ("file", serde_json::json!("relative/CLAUDE.md")),
+            ("file", serde_json::json!("/root/../etc/passwd")),
+            ("marker", serde_json::json!("Has Space")),
+            ("marker", serde_json::json!("")),
+            ("lines", serde_json::json!([])),
+            ("lines", serde_json::json!([""])),
+            ("lines", serde_json::json!(["it's"])),
+            (
+                "lines",
+                serde_json::json!(["a", "b", "c", "d", "e", "f", "g", "h", "i"]),
+            ),
+        ] {
+            let mut v = r.clone();
+            v["setup"][0][key] = bad.clone();
+            assert!(setup_script("t", &v, "m").is_err(), "accepted {key}={bad}");
+        }
     }
 
     #[test]

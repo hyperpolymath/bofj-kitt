@@ -112,4 +112,32 @@ for h in isabelle.in.tum.de dists.isabelle.cit.tum.de; do
 done
 [[ "$(wc -l <"$repo_root/tools/environments/rendered/agent-session/allowed-hosts.txt")" -le 20 ]] || fail "the allowlist exceeds 20 hosts"
 
-echo "PASS: setup helpers report PRESENT/INSTALLED/FAILED/UNAVAILABLE, verify SHA-256 before installing, and never fail the script"
+
+# note_block appends a marked block to a file once, keeps what the file
+# already held, never rewrites it, and reports a write it cannot make.
+nf="$work/out/home/.claude/CLAUDE.md"
+run note_block rules "$nf" estate-rules 'line one' 'line two' || fail "note_block returned non-zero on a new file"
+grep -qP '^rules\tINSTALLED\testate-rules block in ' <<<"$(report)" || fail "note_block did not report INSTALLED: $(report)"
+[[ "$(grep -c '^<!-- estate-rules begin -->$' "$nf")" -eq 1 ]] || fail "the begin marker is missing or doubled in a new file"
+grep -qx 'line two' "$nf" || fail "note_block did not write its lines"
+run note_block rules "$nf" estate-rules 'line one' 'line two' || fail "note_block returned non-zero on a rerun"
+[[ "$(grep -c '^<!-- estate-rules begin -->$' "$nf")" -eq 1 ]] || fail "a rerun duplicated the block"
+grep -qP '^rules\tPRESENT\testate-rules block in ' <<<"$(report)" || fail "a rerun was not PRESENT: $(report)"
+printf 'owner text\nmore owner text\n' > "$work/out/existing.md"
+run note_block rules2 "$work/out/existing.md" estate-rules 'added' || fail "note_block returned non-zero on an existing file"
+[[ "$(head -n 2 "$work/out/existing.md")" == $'owner text\nmore owner text' ]] || fail "note_block rewrote the text the file already held"
+grep -qx 'added' "$work/out/existing.md" || fail "note_block did not append to an existing file"
+mkdir -p "$work/out/ro" && : > "$work/out/ro/blocker"
+run note_block rules3 "$work/out/ro/blocker/CLAUDE.md" estate-rules 'x' || fail "note_block returned non-zero when it could not write"
+grep -qP '^rules3\tFAILED\twrite ' <<<"$(report)" || fail "an unwritable path was not reported FAILED: $(report)"
+grep -q '!!! bofj-kitt setup: rules3 FAILED' "$work/err" || fail "a failed write was not loud"
+
+# The rendered line: root's CLAUDE.md, an https standing-rules pointer, and
+# the owner-questions rule. Its URL is a placeholder until the final one is
+# issued, so only its shape is checked here.
+rules_line="$(grep -A3 "^note_block 'standing-rules' " "$script" | tr -d '\\\n')" || fail "no standing-rules note_block line in $script"
+grep -q "^note_block 'standing-rules' '/root/.claude/CLAUDE.md' 'estate-standing-rules'" <<<"$rules_line" || fail "standing-rules does not target root's CLAUDE.md: $rules_line"
+grep -qE "'https://[^' ]+STANDING-RULES\.adoc'" <<<"$rules_line" || fail "standing-rules has no https STANDING-RULES.adoc pointer: $rules_line"
+grep -q 'Ask the owner every question by selector' <<<"$rules_line" || fail "standing-rules omits the owner-questions rule"
+
+echo "PASS: setup helpers report PRESENT/INSTALLED/FAILED/UNAVAILABLE, verify SHA-256 before installing, append the standing-rules block without rewriting a file, and never fail the script"
