@@ -18,8 +18,28 @@ kyX's job per ruling D313, never by hand in bulk. Largest groups:
 
 No `bofj-kitt_chora.deed`. The template carries `rsr-template-repo_chora.deed`
 whose clauses (`anchor`, `agentic`, `ecosystem`, `status`, `neurosym`,
-`playbook`) replace the `.a2ml` files above. `CLADE.a2ml` (uuid `f46cc03d-…`)
-holds the identity the deed header must carry.
+`playbook`) replace the `.a2ml` files above.
+
+`CLADE.a2ml` is the retired form that mixes identity, placement and lineage in
+one file. Its identity and lineage content translate into the deed's `(identity)`
+and `(lineage)` clauses, and its lifecycle content into `STATE.deed`. Nothing is
+copied across blindly:
+
+* The deed's `:repo-uuid` is the v8 id minted once from the repo's birth path and
+  taken from chora-registry. The `f46cc03d-…` value in this repo's `CLADE.a2ml`
+  is a v5, the old identity, and is never copied. `:beholding-chora` is also
+  resolved from the registry.
+* The `rm` primary and `gv` secondary placement is read from chora-registry. It
+  is not decided from this file; the legacy value is only compared.
+* No `CLADE.deed` is produced from it. That file is a repo's own content
+  organisation, which is a different thing from its identity.
+
+Source: standards `1-formats/deed/mappings/clade-to-repo-deed.adoc`, section 3
+and P-1 (read at standards `745fc74`, 2026-11-18).
+
+_Correction, 2026-11-19._ This section first said that `CLADE.a2ml` "holds the
+identity the deed header must carry". That overstated it: the id and the
+placement come from chora-registry, as above.
 
 == YAML that should be KYAML
 
