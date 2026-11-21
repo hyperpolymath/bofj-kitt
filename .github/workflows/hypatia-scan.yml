@@ -54,7 +54,7 @@ jobs:
       HYPATIA_SHA: 'be98f74ce93df200752f3798efa1305bfa3e0e10'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -66,14 +66,14 @@ jobs:
       # Same VM bug as the RSR oracle (#333, #335). Do not move to 28.x until a
       # pinned 28.x build scans #338's head 7821940 with no crash.
       - name: Setup Elixir 1.19.4 / OTP 27.3.4.19 for Hypatia scanner
-        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        uses: erlef/setup-beam@v1.24.1
         with:
           elixir-version: '1.19.4'
           otp-version: '27.3.4.19'
 
       - name: Cache pinned Hypatia build
         id: cache-hypatia
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@v6.1.0
         with:
           path: |
             ~/hypatia
@@ -146,7 +146,7 @@ jobs:
       # scan that never produced a file is already visible as a red step here.
       - name: Upload Hypatia findings for the verdict grid
         if: ${{ always() }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: hypatia-scan-findings
           path: |
@@ -158,7 +158,7 @@ jobs:
 
       - name: Upload Hypatia SARIF to GitHub Code Scanning
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        uses: github/codeql-action/upload-sarif@v4.39.3
         with:
           sarif_file: hypatia.sarif
           category: hypatia

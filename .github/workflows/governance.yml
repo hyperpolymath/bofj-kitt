@@ -29,12 +29,12 @@ jobs:
       STANDARDS_PIN: 'f0b3cd4c464d33e1584f8528c17bce104555e256'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Checkout pinned standards policy scripts
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           repository: metadatastician/standards
           ref: f0b3cd4c464d33e1584f8528c17bce104555e256
