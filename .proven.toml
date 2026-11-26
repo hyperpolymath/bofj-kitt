@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: MPL-2.0
+# Manifest for this repository (schema proven/manifest/v1); see
+# hyperpolymath/proven-cicd-and-workflows docs/PROVEN-ADOPTION.adoc.
+schema = "proven/manifest/v1"
+
+# Explicit commands are required here: the Justfile test, test-smoke and e2e
+# recipes are unfilled stubs that print "passed" without running anything, and
+# tests/e2e.sh is an unmodified template. They must not be picked up by the
+# umbrella's recipe/convention lookup.
+
+# Offline shell tests (stub curl, ldd, provers and a scratch HOME; no network).
+[categories.unit.shell]
+command = "for t in tests/*_test.sh tests/workflows/*_test.sh; do bash \"$t\" || exit 1; done"
+
+[categories.unit.rust]
+command = "cd tools/proof-toolchain/provers && cargo test"
+
+[categories.build.rust]
+command = "cd tools/proof-toolchain/provers && cargo build --release"
+
+[categories.build.shell]
+na = "shell scripts are interpreted; there is nothing to build"
+
+[categories.smoke.waiver]
+reason = "no smoke test exists: Justfile test-smoke is an empty TODO stub and tests/e2e.sh is an unmodified template"
+until = "2027-01-15"
+
+[categories.p2p.waiver]
+reason = "no peer-to-peer or integration test exists: tests/e2e.sh is an unmodified template (TODO #101)"
+until = "2027-01-15"
+
+[languages.ignore.idris2]
+reason = "verification/proofs/idris2/*.idr is checked by scripts/proof-check.sh (just proof-check-all) with the prover installed, not by this gate; Idris2 has no runner in release 0.1"
+
+[languages.ignore.agda]
+reason = "verification/proofs/agda is checked by scripts/proof-check.sh with the prover installed, not by this gate; no runner in release 0.1"
+
+[languages.ignore.coq]
+reason = "verification/proofs/coq (.v) is checked by scripts/proof-check.sh with the prover installed, not by this gate; no runner in release 0.1"
+
+[languages.ignore.lean]
+reason = "verification/proofs/lean4 is checked by scripts/proof-check.sh with the prover installed, not by this gate; no runner in release 0.1"
+
+[languages.ignore.tlaplus]
+reason = "verification/proofs/tlaplus is a model spec; no runner in release 0.1"

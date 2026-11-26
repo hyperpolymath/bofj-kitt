@@ -36,6 +36,7 @@ coordination.k9            # repo-local session binding (template-mandated)
 # ─── Conventional dotfiles (tool-required at root) ───────────────────────────
 .editorconfig
 .envrc
+.proven.toml             # proven umbrella gate manifest (schema proven/manifest/v1); must sit at the repo root
 .gitattributes
 .gitignore
 .tool-versions
